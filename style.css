@@ -1,0 +1,36 @@
+.container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1em;
+}
+
+.canvas-container {
+    flex: 1 1 70%;
+    display: flex;
+    flex-wrap: wrap;
+    max-width: 650px;
+}
+
+canvas {
+    flex: 1 1 100%;
+}
+
+#panel {
+    flex: 1 1 30%;
+    box-shadow: -2px -2px 10px 0px rgba(0, 0, 0, 0.3);
+    padding: 2em 1em 2em 1em;
+    border-radius: 4px;
+    gap: 10em;
+}
+
+#panel fieldset:not(:last-of-type) {
+    margin-bottom: 1em;
+}
+
+fieldset {
+    border-radius: 4px;
+}
+
+legend {
+    font-weight: bold;
+}
