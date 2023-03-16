@@ -1,6 +1,11 @@
 import { apodization, tukey } from "./apodization.js";
-import { divergingDelayModel, focusedDelayModel, planeDelayModel } from "./delayModels.js";
-import { gaussianTaperedSine, getPressure } from "./wavePropagation.js";
+import {
+    gaussianTaperedSine,
+    getPressure,
+    divergingDelayModel,
+    focusedDelayModel,
+    planeDelayModel
+} from "./wavePropagation.js";
 
 
 
