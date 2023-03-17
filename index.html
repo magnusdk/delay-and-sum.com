@@ -124,7 +124,7 @@
         import { getPressure } from './js/wavePropagation.js';
         import { Point, PointManager } from './js/pointDragging.js';
         import { drawPressureField } from './js/gui/pressureField.js';
-        import { uiState } from './js/state.js';
+        import { uiState, simulationParams } from './js/state.js';
 
         const salmon = "#FFC2D5"
         const pink = "#FF195E"
@@ -136,24 +136,6 @@
         const ctx = canvas.getContext("2d");
         const timelineCanvas = document.getElementById("timelineCanvas");
         const timelineCtx = timelineCanvas.getContext("2d");
-
-
-        // Create a Map of the parameters
-        const simulationParams = new Map();
-        simulationParams.set("time", 0.81);
-        simulationParams.set("arrayCenterX", 0.5);
-        simulationParams.set("arrayCenterY", 1.0);
-        simulationParams.set("focusPointX", 0.6);
-        simulationParams.set("focusPointY", 0.5);
-        simulationParams.set("selectedPointX", 0.6);
-        simulationParams.set("selectedPointY", 0.2);
-        simulationParams.set("waveType", 1);
-        simulationParams.set("centerFrequency", 100);
-        simulationParams.set("pulseLength", 0.0001);
-        simulationParams.set("valueScale", 1);
-        simulationParams.set("valueScaleFactor", 60);
-        simulationParams.set("apertureWindow", 1);  // 0 = no weighting, 1 = Tukey weighting
-
 
         window.updateNumElements = function (numElements) {
             if (numElements == undefined) {
