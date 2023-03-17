@@ -139,18 +139,22 @@
             let elementsPosX = [];
             let elementsPosY = [];
             let elementsWeight = [];
-            const halfNumElements = Math.floor(numElements / 2);
-            const spacing = 0.5 / numElements;
-            for (let i = 0; i < numElements; i++) {
-                // TODO: Fix spacing such that the elements are centered
-                const x = 0.5 + (i - halfNumElements) * spacing;
-                elementsPosX.push(x);
+            if (numElements == 1) {
+                elementsPosX.push(0.5);
                 elementsPosY.push(1.0);
-                if (simulationParams.get("apertureWindow")== 0)
-                    elementsWeight.push(1);
-                else if (simulationParams.get("apertureWindow") == 1)
-                    elementsWeight.push(tukey((x - 0.25), 0.5, 1))
+                elementsWeight.push(1);
+            } else {
+                for (let i = 0; i < numElements; i++) {
+                    const x = 0.25 + 0.5 * i / (numElements - 1);
+                    elementsPosX.push(x);
+                    elementsPosY.push(1.0);
+                    if (simulationParams.get("apertureWindow") == 0)
+                        elementsWeight.push(1);
+                    else if (simulationParams.get("apertureWindow") == 1) 
+                        elementsWeight.push(tukey((x - 0.25), 0.5, 1))
+                }
             }
+            console.log(elementsPosX);
             simulationParams.set("numElements", numElements);
             simulationParams.set("elementsPosX", elementsPosX);
             simulationParams.set("elementsPosY", elementsPosY);
