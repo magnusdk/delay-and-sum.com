@@ -1,4 +1,4 @@
-function drawRangeVector(canvas, simulationParams, stateUI) {
+function drawRangeVector(canvas, simulationParams, uiState) {
     // Draw a line from the array center through the focus point and off screen
     // Note: this is incorrect! It should be drawn from the center of the circle arc, originating from the virtual source
     const dy = simulationParams.get("focusPointY") - simulationParams.get("arrayCenterY");
@@ -24,13 +24,13 @@ function drawRangeVector(canvas, simulationParams, stateUI) {
     ctx.setLineDash([5, 20]);
     ctx.lineWidth = 5;
     ctx.lineCap = "round";
-    ctx.strokeStyle = stateUI.pink;
+    ctx.strokeStyle = uiState.pink;
     ctx.globalAlpha = 0.2;
     ctx.stroke();
     ctx.restore();
 }
 
-function drawSelectedPoint(canvas, simulationParams, stateUI) {
+function drawSelectedPoint(canvas, simulationParams, uiState) {
     const center = [
         simulationParams.get("selectedPointX") * canvas.width,
         (1 - simulationParams.get("selectedPointY")) * canvas.height
@@ -40,14 +40,14 @@ function drawSelectedPoint(canvas, simulationParams, stateUI) {
     ctx.save();
     ctx.beginPath();
     ctx.arc(...center, 5, 0, 2 * Math.PI);
-    ctx.fillStyle = stateUI.blue;
+    ctx.fillStyle = uiState.blue;
     ctx.fill();
     ctx.restore();
 }
 
-function drawSelectedLine(canvas, simulationParams, stateUI) {
-    const lineStart = stateUI.sampleImpulseResponseLineStart;
-    const lineEnd = stateUI.sampleImpulseResponseLineEnd;
+function drawSelectedLine(canvas, simulationParams, uiState) {
+    const lineStart = uiState.sampleImpulseResponseLineStart;
+    const lineEnd = uiState.sampleImpulseResponseLineEnd;
 
     const ctx = canvas.getContext("2d");
     ctx.save();
@@ -57,7 +57,7 @@ function drawSelectedLine(canvas, simulationParams, stateUI) {
     ctx.moveTo(lineStart[0] * canvas.width, (1 - lineStart[1]) * canvas.height);
     ctx.lineTo(lineEnd[0] * canvas.width, (1 - lineEnd[1]) * canvas.height);
     ctx.lineWidth = 3;
-    ctx.strokeStyle = stateUI.blue;
+    ctx.strokeStyle = uiState.blue;
     ctx.setLineDash([]);
     ctx.lineCap = "round";
     ctx.stroke();
@@ -66,12 +66,12 @@ function drawSelectedLine(canvas, simulationParams, stateUI) {
     ctx.beginPath();
     ctx.arc(lineStart[0] * canvas.width, (1 - lineStart[1]) * canvas.height, 5, 0, 2 * Math.PI);
     ctx.arc(lineEnd[0] * canvas.width, (1 - lineEnd[1]) * canvas.height, 5, 0, 2 * Math.PI);
-    ctx.fillStyle = stateUI.blue;
+    ctx.fillStyle = uiState.blue;
     ctx.fill();
     ctx.restore();
 }
 
-function drawVirtualSource(canvas, simulationParams, stateUI) {
+function drawVirtualSource(canvas, simulationParams, uiState) {
     const center = [
         simulationParams.get("focusPointX") * canvas.width,
         (1 - simulationParams.get("focusPointY")) * canvas.height
@@ -80,17 +80,17 @@ function drawVirtualSource(canvas, simulationParams, stateUI) {
     const ctx = canvas.getContext("2d");
     ctx.beginPath();
     ctx.arc(...center, 5, 0, 2 * Math.PI);
-    ctx.fillStyle = stateUI.pink;
+    ctx.fillStyle = uiState.pink;
     ctx.fill();
 }
 
-export function drawPressureField(canvas, simulationParams, stateUI) {
-    drawRangeVector(canvas, simulationParams, stateUI);
-    if (stateUI.sampleImpulseResponse == "point") {
-        drawSelectedPoint(canvas, simulationParams, stateUI);
+export function drawPressureField(canvas, simulationParams, uiState) {
+    drawRangeVector(canvas, simulationParams, uiState);
+    if (uiState.sampleImpulseResponse == "point") {
+        drawSelectedPoint(canvas, simulationParams, uiState);
     }
-    else if (stateUI.sampleImpulseResponse == "line") {
-        drawSelectedLine(canvas, simulationParams, stateUI);
+    else if (uiState.sampleImpulseResponse == "line") {
+        drawSelectedLine(canvas, simulationParams, uiState);
     }
-    drawVirtualSource(canvas, simulationParams, stateUI);
+    drawVirtualSource(canvas, simulationParams, uiState);
 }

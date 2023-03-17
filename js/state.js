@@ -1,4 +1,4 @@
-export const stateUI = {
+export const uiState = {
     // Our color palette :)
     salmon: "#FFC2D5",
     pink: "#FF195E",

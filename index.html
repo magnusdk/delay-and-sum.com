@@ -124,7 +124,7 @@
         import { getPressure } from './js/wavePropagation.js';
         import { Point, PointManager } from './js/pointDragging.js';
         import { drawPressureField } from './js/gui/pressureField.js';
-        import { stateUI } from './js/state.js';
+        import { uiState } from './js/state.js';
 
         const salmon = "#FFC2D5"
         const pink = "#FF195E"
@@ -179,7 +179,7 @@
             simulationParams.set("elementsPosX", elementsPosX);
             simulationParams.set("elementsPosY", elementsPosY);
             simulationParams.set("elementsWeight", elementsWeight);
-            stateUI.shouldRedraw = true;
+            uiState.shouldRedraw = true;
 
             const sliderValue = document.getElementById("numElements").nextElementSibling.children[0];
             sliderValue.innerHTML = numElements;
@@ -190,7 +190,7 @@
         const pressureField = new PressureField();
         window.pressureField = pressureField;
         window.simulationParams = simulationParams;
-        window.stateUI = stateUI;
+        window.uiState = uiState;
 
         const impulseResponse = new ImpulseResponse(timelineCanvas.width);
         const selectedPoint = new Point(
@@ -199,23 +199,23 @@
             (point) => {
                 simulationParams.set("selectedPointX", point.x);
                 simulationParams.set("selectedPointY", point.y);
-                stateUI.shouldRedraw = true;
+                uiState.shouldRedraw = true;
             })
         const sampleImpulseResponseLineStart = new Point(
-            stateUI.sampleImpulseResponseLineStart[0],
-            stateUI.sampleImpulseResponseLineStart[1],
+            uiState.sampleImpulseResponseLineStart[0],
+            uiState.sampleImpulseResponseLineStart[1],
             (point) => {
-                stateUI.sampleImpulseResponseLineStart = [point.x, point.y];
-                stateUI.shouldRedraw = true;
+                uiState.sampleImpulseResponseLineStart = [point.x, point.y];
+                uiState.shouldRedraw = true;
             },
             false
         )
         const sampleImpulseResponseLineEnd = new Point(
-            stateUI.sampleImpulseResponseLineEnd[0],
-            stateUI.sampleImpulseResponseLineEnd[1],
+            uiState.sampleImpulseResponseLineEnd[0],
+            uiState.sampleImpulseResponseLineEnd[1],
             (point) => {
-                stateUI.sampleImpulseResponseLineEnd = [point.x, point.y];
-                stateUI.shouldRedraw = true;
+                uiState.sampleImpulseResponseLineEnd = [point.x, point.y];
+                uiState.shouldRedraw = true;
             },
             false
         )
@@ -226,7 +226,7 @@
                 (point) => {
                     simulationParams.set("focusPointX", point.x);
                     simulationParams.set("focusPointY", point.y);
-                    stateUI.shouldRedraw = true;
+                    uiState.shouldRedraw = true;
                 }),
             selectedPoint,
             sampleImpulseResponseLineStart,
@@ -238,7 +238,7 @@
                 0.5,
                 (point) => {
                     simulationParams.set("time", point.x);
-                    stateUI.shouldRedraw = true;
+                    uiState.shouldRedraw = true;
                 }),
         ]);
 
@@ -255,9 +255,9 @@
             timelineCtx.stroke();
 
             let _simulationParams = simulationParams;
-            if (stateUI.sampleImpulseResponse == "line") {
-                const lineStart = stateUI.sampleImpulseResponseLineStart;
-                const lineEnd = stateUI.sampleImpulseResponseLineEnd;
+            if (uiState.sampleImpulseResponse == "line") {
+                const lineStart = uiState.sampleImpulseResponseLineStart;
+                const lineEnd = uiState.sampleImpulseResponseLineEnd;
                 const lineLength = Math.sqrt((lineEnd[0] - lineStart[0]) ** 2 + (lineEnd[1] - lineStart[1]) ** 2);
                 const numSamples = 100;
                 const samplesX = [];
@@ -288,7 +288,7 @@
 
 
         function animate() {
-            if (stateUI.shouldRedraw) {
+            if (uiState.shouldRedraw) {
                 ctx.fillStyle = darkBlue;
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -305,9 +305,9 @@
 
                 pressureField.update(simulationParams);
                 ctx.drawImage(pressureField.canvas, 0, 0, canvas.width, canvas.height);
-                drawPressureField(canvas, simulationParams, stateUI)
+                drawPressureField(canvas, simulationParams, uiState)
                 drawTimeline()
-                stateUI.shouldRedraw = false;
+                uiState.shouldRedraw = false;
             }
             requestAnimationFrame(animate);
         }
@@ -318,11 +318,11 @@
         // Set up slider components
         function updateSimulationParam(name, value) {
             simulationParams.set(name, value);
-            stateUI.shouldRedraw = true;
+            uiState.shouldRedraw = true;
         }
         function updateUIParam(name, value) {
-            stateUI[name] = value;
-            stateUI.shouldRedraw = true;
+            uiState[name] = value;
+            uiState.shouldRedraw = true;
         }
         // Special case for sampleImpulseResponse
         function updateImpulseResponseSamplingMode(mode) {
