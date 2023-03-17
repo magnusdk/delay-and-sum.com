@@ -126,12 +126,6 @@
         import { drawPressureField } from './js/gui/pressureField.js';
         import { uiState, simulationParams } from './js/state.js';
 
-        const salmon = "#FFC2D5"
-        const pink = "#FF195E"
-        const cyan = "#00F0FF"
-        const blue = "#0085FF"
-        const darkBlue = "#1D5199"
-
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
         const timelineCanvas = document.getElementById("timelineCanvas");
@@ -152,7 +146,7 @@
                 const x = 0.5 + (i - halfNumElements) * spacing;
                 elementsPosX.push(x);
                 elementsPosY.push(1.0);
-                if (simulationParams.get("apertureWindow") == 0)
+                if (simulationParams.get("apertureWindow")== 0)
                     elementsWeight.push(1);
                 else if (simulationParams.get("apertureWindow") == 1)
                     elementsWeight.push(tukey((x - 0.25), 0.5, 1))
@@ -161,7 +155,7 @@
             simulationParams.set("elementsPosX", elementsPosX);
             simulationParams.set("elementsPosY", elementsPosY);
             simulationParams.set("elementsWeight", elementsWeight);
-            uiState.shouldRedraw = true;
+            uiState.set("shouldRedraw", true);
 
             const sliderValue = document.getElementById("numElements").nextElementSibling.children[0];
             sliderValue.innerHTML = numElements;
@@ -181,23 +175,23 @@
             (point) => {
                 simulationParams.set("selectedPointX", point.x);
                 simulationParams.set("selectedPointY", point.y);
-                uiState.shouldRedraw = true;
+                uiState.set("shouldRedraw", true);
             })
         const sampleImpulseResponseLineStart = new Point(
-            uiState.sampleImpulseResponseLineStart[0],
-            uiState.sampleImpulseResponseLineStart[1],
+            uiState.get("sampleImpulseResponseLineStart")[0],
+            uiState.get("sampleImpulseResponseLineStart")[1],
             (point) => {
-                uiState.sampleImpulseResponseLineStart = [point.x, point.y];
-                uiState.shouldRedraw = true;
+                uiState.set("sampleImpulseResponseLineStart", [point.x, point.y]);
+                uiState.set("shouldRedraw", true);
             },
             false
         )
         const sampleImpulseResponseLineEnd = new Point(
-            uiState.sampleImpulseResponseLineEnd[0],
-            uiState.sampleImpulseResponseLineEnd[1],
+            uiState.get("sampleImpulseResponseLineEnd")[0],
+            uiState.get("sampleImpulseResponseLineEnd")[1],
             (point) => {
-                uiState.sampleImpulseResponseLineEnd = [point.x, point.y];
-                uiState.shouldRedraw = true;
+                uiState.set("sampleImpulseResponseLineEnd", [point.x, point.y]);
+                uiState.set("shouldRedraw", true);
             },
             false
         )
@@ -208,7 +202,7 @@
                 (point) => {
                     simulationParams.set("focusPointX", point.x);
                     simulationParams.set("focusPointY", point.y);
-                    uiState.shouldRedraw = true;
+                    uiState.set("shouldRedraw", true);
                 }),
             selectedPoint,
             sampleImpulseResponseLineStart,
@@ -220,7 +214,7 @@
                 0.5,
                 (point) => {
                     simulationParams.set("time", point.x);
-                    uiState.shouldRedraw = true;
+                    uiState.set("shouldRedraw", true);
                 }),
         ]);
 
@@ -232,14 +226,14 @@
             timelineCtx.moveTo(simulationParams.get("time") * timelineCanvas.width, timelineCanvas.height / 10);
             timelineCtx.lineTo(simulationParams.get("time") * timelineCanvas.width, timelineCanvas.height / 10 * 9);
             timelineCtx.lineWidth = 3;
-            timelineCtx.strokeStyle = pink;
+            timelineCtx.strokeStyle = uiState.get("pink");
             timelineCtx.lineCap = "round";
             timelineCtx.stroke();
 
             let _simulationParams = simulationParams;
-            if (uiState.sampleImpulseResponse == "line") {
-                const lineStart = uiState.sampleImpulseResponseLineStart;
-                const lineEnd = uiState.sampleImpulseResponseLineEnd;
+            if (uiState.get("sampleImpulseResponse") == "line") {
+                const lineStart = uiState.get("sampleImpulseResponseLineStart");
+                const lineEnd = uiState.get("sampleImpulseResponseLineEnd");
                 const lineLength = Math.sqrt((lineEnd[0] - lineStart[0]) ** 2 + (lineEnd[1] - lineStart[1]) ** 2);
                 const numSamples = 100;
                 const samplesX = [];
@@ -262,7 +256,7 @@
                 const value = impulseResponseSamples[t];
                 timelineCtx.lineTo(t, timelineCanvas.height / 2 - value * timelineCanvas.height / 2 * 2);
             }
-            timelineCtx.strokeStyle = darkBlue;
+            timelineCtx.strokeStyle = uiState.get("darkBlue");
             timelineCtx.lineWidth = 3;
             timelineCtx.lineJoin = "round";
             timelineCtx.stroke();
@@ -270,8 +264,8 @@
 
 
         function animate() {
-            if (uiState.shouldRedraw) {
-                ctx.fillStyle = darkBlue;
+            if (uiState.get("shouldRedraw")) {
+                ctx.fillStyle = uiState.get("darkBlue");
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
                 // Draw a blue sector scan (a slice of a circle)
@@ -289,7 +283,7 @@
                 ctx.drawImage(pressureField.canvas, 0, 0, canvas.width, canvas.height);
                 drawPressureField(canvas, simulationParams, uiState)
                 drawTimeline()
-                uiState.shouldRedraw = false;
+                uiState.set("shouldRedraw", false);
             }
             requestAnimationFrame(animate);
         }
@@ -300,11 +294,11 @@
         // Set up slider components
         function updateSimulationParam(name, value) {
             simulationParams.set(name, value);
-            uiState.shouldRedraw = true;
+            uiState.set("shouldRedraw", true);
         }
         function updateUIParam(name, value) {
-            uiState[name] = value;
-            uiState.shouldRedraw = true;
+            uiState.set(name, value);
+            uiState.set("shouldRedraw", true);
         }
         // Special case for sampleImpulseResponse
         function updateImpulseResponseSamplingMode(mode) {
