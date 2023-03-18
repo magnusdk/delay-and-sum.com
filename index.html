@@ -113,6 +113,15 @@
                     <label for="sampleImpulseResponseLine">Sample line</label>
                 </div>
             </fieldset>
+
+            <fieldset>
+                <legend>Delay Model Parameters</legend>
+                <div>
+                    <input type="radio" id="refocusWavefrontModel" name="wavefrontModel" value="refocus"
+                        checked onchange="window.updateUIParam('wavefrontModel', 'refocus');">
+                    <label for="refocusWavefrontModel">REFoCUS</label>
+                </div>
+            </fieldset>
         </div>
     </div>
 

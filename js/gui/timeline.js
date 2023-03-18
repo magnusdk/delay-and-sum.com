@@ -1,6 +1,58 @@
+
+
+import { divergingDelayModel, focusedDelayModel, planeDelayModel } from "../wavePropagation.js";
+
+function refocusDelaySamples(simulationParams, uiState) {
+    const elementsPosX = simulationParams.get("elementsPosX");
+    const elementsPosY = simulationParams.get("elementsPosY");
+    const elementsWeight = simulationParams.get("elementsWeight");
+    const arrayCenterX = simulationParams.get("arrayCenterX");
+    const arrayCenterY = simulationParams.get("arrayCenterY");
+    const focusPointX = simulationParams.get("focusPointX");
+    const focusPointY = simulationParams.get("focusPointY");
+    const waveType = simulationParams.get("waveType");
+
+    const x = simulationParams.get("selectedPointX");
+    const y = simulationParams.get("selectedPointY");
+
+    const delays = [];
+    for (let i = 0; i < elementsPosX.length; i++) {
+        const elementX = elementsPosX[i];
+        const elementY = elementsPosY[i];
+        let t0 = 0;
+        if (waveType === 0) {
+            t0 = planeDelayModel(elementX, elementY, arrayCenterX, arrayCenterY, focusPointX, focusPointY);
+        } else if (waveType === 1) {
+            t0 = focusedDelayModel(elementX, elementY, arrayCenterX, arrayCenterY, focusPointX, focusPointY);
+        } else if (waveType === 2) {
+            t0 = divergingDelayModel(elementX, elementY, arrayCenterX, arrayCenterY, focusPointX, focusPointY);
+        }
+        const distance = Math.sqrt(Math.pow(x - elementX, 2) + Math.pow(y - elementY, 2));
+        delays.push(distance - t0);
+    }
+    return [delays, elementsWeight];
+}
+
+
 export function drawTimeline(canvas, impulseResponse, simulationParams, uiState) {
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const [delays, elementsWeight] = refocusDelaySamples(simulationParams, uiState);
+    for (let i = 0; i < delays.length; i++) {
+        const delay = delays[i];
+        const weight = elementsWeight[i];
+        const t = delay * canvas.width;
+
+        const lineHalfLength = weight * canvas.height / 10 * 4.5;
+        ctx.beginPath();
+        ctx.moveTo(t, canvas.height / 2 - lineHalfLength);
+        ctx.lineTo(t, canvas.height / 2 + lineHalfLength);
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = uiState.get("blue");
+        ctx.lineCap = "round";
+        ctx.stroke();
+    }
 
     // Draw a red line at the current time
     ctx.beginPath();
