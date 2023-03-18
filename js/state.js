@@ -19,6 +19,9 @@ export const uiState = new Map(
 export const simulationParams = new Map(
     [
         ["time", 0.81],
+        ["elementsPosX", []],
+        ["elementsPosY", []],
+        ["elementsWeight", []],
         ["arrayCenterX", 0.5],
         ["arrayCenterY", 1.0],
         ["focusPointX", 0.6],
