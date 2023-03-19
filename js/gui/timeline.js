@@ -2,6 +2,29 @@
 
 import { divergingDelayModel, focusedDelayModel, planeDelayModel } from "../wavePropagation.js";
 
+function simpleVirtualSource(simulationParams, uiState) {
+    const arrayCenterX = simulationParams.get("arrayCenterX");
+    const arrayCenterY = simulationParams.get("arrayCenterY");
+    const focusPointX = simulationParams.get("focusPointX");
+    const focusPointY = simulationParams.get("focusPointY");
+    const waveType = simulationParams.get("waveType");
+
+    const x = simulationParams.get("selectedPointX");
+    const y = simulationParams.get("selectedPointY");
+
+    const pointSourceDistance = Math.sqrt((x - focusPointX) ** 2 + (y - focusPointY) ** 2)
+    const arraySourceDistance = Math.sqrt((arrayCenterX - focusPointX) ** 2 + (arrayCenterY - focusPointY) ** 2)
+
+    let delay = 0
+    if (focusPointY < y) {
+        delay = arraySourceDistance - pointSourceDistance
+    } else {
+        delay = arraySourceDistance + pointSourceDistance
+    }
+    return [[delay], [1]];
+}
+
+
 function refocusDelaySamples(simulationParams, uiState) {
     const elementsPosX = simulationParams.get("elementsPosX");
     const elementsPosY = simulationParams.get("elementsPosY");
@@ -38,7 +61,12 @@ export function drawTimeline(canvas, impulseResponse, simulationParams, uiState)
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    const [delays, elementsWeight] = refocusDelaySamples(simulationParams, uiState);
+    let [delays, elementsWeight] = [[], []]
+    if (uiState.get("wavefrontModel") == "simpleVirtualSource")
+        [delays, elementsWeight] = simpleVirtualSource(simulationParams, uiState);
+    else if (uiState.get("wavefrontModel") == "refocus")
+        [delays, elementsWeight] = refocusDelaySamples(simulationParams, uiState);
+
     for (let i = 0; i < delays.length; i++) {
         const delay = delays[i];
         const weight = elementsWeight[i];

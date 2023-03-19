@@ -117,8 +117,13 @@
             <fieldset>
                 <legend>Delay Model Parameters</legend>
                 <div>
+                    <input type="radio" id="simpleVirtualSource" name="wavefrontModel" value="simpleVirtualSource"
+                        checked onchange="window.updateUIParam('wavefrontModel', 'simpleVirtualSource');">
+                    <label for="simpleVirtualSource">Simple Virtual Source</label>
+                </div>
+                <div>
                     <input type="radio" id="refocusWavefrontModel" name="wavefrontModel" value="refocus"
-                        checked onchange="window.updateUIParam('wavefrontModel', 'refocus');">
+                        onchange="window.updateUIParam('wavefrontModel', 'refocus');">
                     <label for="refocusWavefrontModel">REFoCUS</label>
                 </div>
             </fieldset>
