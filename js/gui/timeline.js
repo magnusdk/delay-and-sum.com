@@ -72,7 +72,7 @@ export function drawTimeline(canvas, impulseResponse, simulationParams, uiState)
         const weight = elementsWeight[i];
         const t = delay * canvas.width;
 
-        const lineHalfLength = weight * canvas.height / 10 * 4.5;
+        const lineHalfLength = weight * canvas.height / 10 * 4;
         ctx.beginPath();
         ctx.moveTo(t, canvas.height / 2 - lineHalfLength);
         ctx.lineTo(t, canvas.height / 2 + lineHalfLength);
@@ -84,8 +84,8 @@ export function drawTimeline(canvas, impulseResponse, simulationParams, uiState)
 
     // Draw a red line at the current time
     ctx.beginPath();
-    ctx.moveTo(simulationParams.get("time") * canvas.width, canvas.height / 10);
-    ctx.lineTo(simulationParams.get("time") * canvas.width, canvas.height / 10 * 9);
+    ctx.moveTo(simulationParams.get("time") * canvas.width, canvas.height / 20);
+    ctx.lineTo(simulationParams.get("time") * canvas.width, canvas.height / 20 * 19);
     ctx.lineWidth = 3;
     ctx.strokeStyle = uiState.get("pink");
     ctx.lineCap = "round";
