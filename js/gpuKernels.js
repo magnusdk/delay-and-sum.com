@@ -1,17 +1,15 @@
 import { apodization, tukey } from "./apodization.js";
 import {
-    gaussianTaperedSine,
-    getPressure,
     divergingDelayModel,
-    focusedDelayModel,
-    planeDelayModel
+    focusedDelayModel, gaussianTaperedSine,
+    getPressure, planeDelayModel
 } from "./wavePropagation.js";
-
 
 
 function createPressureFieldKernel(gpu) {
     const kernel = gpu.createKernel(
         function (
+            gridExtent,
             time,
             numElements,
             elementsX,
@@ -27,8 +25,12 @@ function createPressureFieldKernel(gpu) {
             valueScale, // 0 = linear, 1 = decibels
             valueScaleFactor, // Scale factor for linear scale, dynamic range for decibels scale
         ) {
-            const x = this.thread.x / this.constants.width;
-            const y = this.thread.y / this.constants.height;
+            let x = this.thread.x / this.constants.width;
+            let y = this.thread.y / this.constants.height;
+
+            // Map x and y to the grid extent
+            x = gridExtent[0] + x * (gridExtent[1] - gridExtent[0]);
+            y = gridExtent[2] + y * (gridExtent[3] - gridExtent[2]);
 
             let value = 0;
             for (let i = 0; i < this.constants.maxNumElements; i++) {
@@ -104,6 +106,7 @@ export class PressureField {
             elementsWeight.push(0);
         }
         this.kernel(
+            params.get("gridExtent"),
             params.get("time"),
             params.get("numElements"),
             elementsPosX,

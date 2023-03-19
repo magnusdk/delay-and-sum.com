@@ -20,6 +20,7 @@ export const uiState = new Map(
 
 export const simulationParams = new Map(
     [
+        ["gridExtent", [0, 1, 0, 1]],
         ["time", 0.81],
         ["elementsPosX", []],
         ["elementsPosY", []],
