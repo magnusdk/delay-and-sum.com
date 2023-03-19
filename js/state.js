@@ -14,7 +14,7 @@ export const uiState = new Map(
         ["sampleImpulseResponseLineStart", [0.55, 0.2]],
         ["sampleImpulseResponseLineEnd", [0.65, 0.2]],
 
-        ["wavefrontModel", "simpleVirtualSource"]
+        ["wavefrontModel", "hideWavefrontModel"]
     ]
 );
 
