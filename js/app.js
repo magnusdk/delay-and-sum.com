@@ -86,7 +86,7 @@ class Foo {
                             const phase = (dist(x - elX, z - elZ) / c - (t + t0)) * f;
                             const gauss = Math.exp(-Math.pow(phase / pulseLength * 2, 2));
                             real += Math.sin(phase * Math.PI * 2) * gauss
-                            imag = Math.cos(phase * Math.PI * 2) * gauss
+                            imag += Math.cos(phase * Math.PI * 2) * gauss
                         }
                     }
                 }
