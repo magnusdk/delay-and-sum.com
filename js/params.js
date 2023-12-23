@@ -34,7 +34,7 @@ export const defaultParams = {
     pulseLength: 1,
     centerFrequency: 3e6,
     gain: 0,  // dB
-    displayMode: 0,  // 0: phase, 1: envelope, 2: intensity
+    displayMode: 0,  // -1: hide, 0: phase, 1: envelope, 2: intensity
 }
 
 defaultParams.width = Math.abs(defaultParams.xMax - defaultParams.xMin);

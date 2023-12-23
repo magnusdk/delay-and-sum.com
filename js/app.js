@@ -87,7 +87,11 @@ class Foo {
                         env = env ** 2;
                     }
                     this.color(0, 0, 0, env);
-                } else {
+                } else if (displayMode == -1) {
+                    // Hide post-processing mode
+                    this.color(0, 0, 0, 0);
+                }
+                else {
                     this.color(
                         real > 0 ? pinkR : blueR,
                         real > 0 ? pinkG : blueG,
