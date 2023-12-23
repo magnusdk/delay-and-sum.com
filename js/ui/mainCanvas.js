@@ -1,74 +1,9 @@
 import { Colors } from "/js/ui/colors.js";
 import { params } from "/js/params.js";
+import { drawPlaneWave, drawInsonifiedAreaPlaneWave } from "/js/ui/waveDrawing/plane.js";
+import { drawDivergingWave, drawInsonifiedAreaDivergingWave } from "/js/ui/waveDrawing/diverging.js";
+import { drawFocusedWave, drawInsonifiedAreaFocusedWave } from "/js/ui/waveDrawing/focused.js";
 
-
-function drawVirtualSourceCircle(ctx, grid, probe, virtualSource) {
-    const distance = (Math.sqrt(
-        Math.pow(virtualSource[0] - probe.center[0], 2) +
-        Math.pow(virtualSource[1] - probe.center[1], 2),
-    ) - params.time) * params.soundSpeed;
-    const sign = Math.sign(distance);
-    const radius = Math.abs(grid.toCanvasSize(distance));
-    const [x, z] = grid.toCanvasCoords(...virtualSource);
-
-    ctx.save();
-    ctx.beginPath();
-    ctx.strokeStyle = Colors.hexToRGB(Colors.insonifiedVirtualCircle, 0.5);
-    ctx.lineWidth = 3;
-    ctx.arc(x, z, radius, 0, 2 * Math.PI);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.strokeStyle = Colors.sonifiedVirtualCircle;
-    ctx.lineCap = "round";
-
-    let angleLeft = Math.atan2(
-        virtualSource[1] - probe.zMin,
-        virtualSource[0] - probe.xMin,
-    ) - (sign > 0 ? Math.PI : 0);
-    let angleRight = Math.atan2(
-        virtualSource[1] - probe.zMax,
-        virtualSource[0] - probe.xMax,
-    ) - (sign > 0 ? Math.PI : 0);
-    // Swap angles if the virtual source is behind the probe
-    const side = Math.sign(
-        (probe.xMax - probe.xMin) * (virtualSource[1] - probe.zMin) -
-        (probe.zMax - probe.zMin) * (virtualSource[0] - probe.xMin),
-    );
-    if (side > 0) {
-        [angleLeft, angleRight] = [angleRight, angleLeft];
-    }
-    ctx.arc(x, z, radius, angleRight, angleLeft);
-    ctx.stroke();
-    ctx.restore();
-}
-
-
-function drawInsonifiedArea(ctx, grid, probe, virtualSource) {
-    ctx.save();
-    ctx.fillStyle = Colors.hexToRGB(Colors.sonifiedArea, 0.3);
-    const angleLeft = Math.atan2(
-        virtualSource[1] - probe.zMin,
-        virtualSource[0] - probe.xMin,
-    );
-    const angleRight = Math.atan2(
-        virtualSource[1] - probe.zMax,
-        virtualSource[0] - probe.xMax,
-    );
-    ctx.beginPath();
-    ctx.moveTo(...grid.toCanvasCoords(probe.xMax, probe.zMax));
-    ctx.lineTo(...grid.toCanvasCoords(probe.xMin, probe.zMin));
-    ctx.lineTo(...grid.toCanvasCoords(
-        probe.xMin + Math.cos(angleLeft) * 1000,
-        probe.zMin + Math.sin(angleLeft) * 1000,
-    ));
-    ctx.lineTo(...grid.toCanvasCoords(
-        probe.xMin + Math.cos(angleRight) * 1000,
-        probe.zMin + Math.sin(angleRight) * 1000,
-    ));
-    ctx.fill();
-
-    ctx.restore();
-}
 
 export class MainCanvas {
     constructor(canvas, grid, probe, draggableManager, opts) {
@@ -167,11 +102,34 @@ export class MainCanvas {
         }
 
         if (this.opts["drawInsonifiedArea"]) {
-            drawInsonifiedArea(this.ctx, this.grid, this.probe, params.virtualSource);
+            if (params.transmittedWaveType == 0) {
+                // Focused wave
+                drawInsonifiedAreaFocusedWave(this.ctx, this.grid, this.probe, params.virtualSource);
+            }
+            else if (params.transmittedWaveType == 1) {
+                // Plane wave
+                drawInsonifiedAreaPlaneWave(this.ctx, this.grid, this.probe, params.virtualSource);
+            } else if (params.transmittedWaveType == 2) {
+                // Diverging wave
+                drawInsonifiedAreaDivergingWave(this.ctx, this.grid, this.probe, params.virtualSource);
+            } else {
+                drawInsonifiedArea(this.ctx, this.grid, this.probe, params.virtualSource);
+            }
         }
         this.drawProbe();
-        if (this.opts["drawVirtualSourceCircle"]) {
-            drawVirtualSourceCircle(this.ctx, this.grid, this.probe, params.virtualSource);
+        if (this.opts["drawVirtualSourceAssumptions"]) {
+            if (params.transmittedWaveType == 0) {
+                // Focused wave
+                drawFocusedWave(this.ctx, this.grid, this.probe, params.virtualSource, params.time, params.soundSpeed);
+            } else if (params.transmittedWaveType == 1) {
+                // Plane wave
+                drawPlaneWave(this.ctx, this.grid, this.probe, params.virtualSource, params.time, params.soundSpeed);
+            } else if (params.transmittedWaveType == 2) {
+                // Diverging wave
+                drawDivergingWave(this.ctx, this.grid, this.probe, params.virtualSource, params.time, params.soundSpeed);
+            } else {
+                drawVirtualSourceAssumptions(this.ctx, this.grid, this.probe, params.virtualSource);
+            }
         }
     }
 
