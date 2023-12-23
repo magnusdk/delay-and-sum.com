@@ -8,6 +8,32 @@ import { params, loadParamsFromURL, resetParams, defaultParams, updateParam } fr
 // import { renderXTicks, renderZTicks } from "/js/ui/ticks.js";
 
 
+function dist(x, z) {
+    return Math.sqrt(x ** 2 + z ** 2);
+}
+
+function focusedWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) {
+    const originToVirtualSourceDist = dist(virtualSourceX - waveOriginX, virtualSourceZ - waveOriginZ);
+    const elToVirtualSourceDist = dist(virtualSourceX - elX, virtualSourceZ - elZ);
+    return elToVirtualSourceDist - originToVirtualSourceDist
+}
+
+function planeWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) {
+    const virtualSourceDist = dist(virtualSourceX - waveOriginX, virtualSourceZ - waveOriginZ);
+    // Place the virtual source really far away. The grid is assumed to be small, so 10 meters should be enough!
+    const dx = (virtualSourceX - waveOriginX) / virtualSourceDist * 1
+    const dz = (virtualSourceZ - waveOriginZ) / virtualSourceDist * 1
+    return focusedWaveDistance(dx, dz, waveOriginX, waveOriginZ, elX, elZ)
+}
+
+function divergingWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) {
+    // Reflect the virtual source across the wave origin
+    const dx = waveOriginX - (virtualSourceX - waveOriginX)
+    const dz = waveOriginZ - (virtualSourceZ - waveOriginZ)
+    // Flip the sign of the distance to make it be behind the probe
+    return -focusedWaveDistance(dx, dz, waveOriginX, waveOriginZ, elX, elZ)
+}
+
 
 class Foo {
     constructor(grid) {
@@ -21,7 +47,7 @@ class Foo {
             function (
                 t,
                 elementsX, elementsZ, numElements,
-                waveOriginX, waveOriginZ,
+                waveOriginX, waveOriginZ, transmittedWaveType,
                 virtualSourcesX, virtualSourcesZ, numVirtualSources,
                 f, pulseLength, c,
                 gain, displayMode,
@@ -41,28 +67,26 @@ class Foo {
                 let real = 0;
                 let imag = 0;
                 for (let i = 0; i < maxNumVirtualSources; i++) {
-                    const virtualSourceX = virtualSourcesX[i];
-                    const virtualSourceZ = virtualSourcesZ[i];
-                    const originToVirtualSourceDist = Math.sqrt(
-                        (virtualSourceX - waveOriginX) ** 2
-                        + (virtualSourceZ - waveOriginZ) ** 2
-                    );
-
+                    let virtualSourceX = virtualSourcesX[i];
+                    let virtualSourceZ = virtualSourcesZ[i];
                     for (let j = 0; j < maxNumElements; j++) {
                         if (j < numElements && i < numVirtualSources) {
                             const elX = elementsX[j];
                             const elZ = elementsZ[j];
-                            const elToVirtualSourceDist = Math.sqrt(
-                                (virtualSourceX - elX) ** 2
-                                + (virtualSourceZ - elZ) ** 2
-                            );
-                            const t0 = (elToVirtualSourceDist - originToVirtualSourceDist) / c;
 
-                            const dist = Math.sqrt((x - elX) ** 2 + (z - elZ) ** 2);
-                            const phase = (dist / c - (t + t0)) * f;
+                            let t0 = 0;
+                            if (transmittedWaveType == 0) {
+                                t0 = focusedWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) / c;
+                            } else if (transmittedWaveType == 1) {
+                                t0 = planeWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) / c;
+                            } else if (transmittedWaveType == 2) {
+                                t0 = divergingWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) / c;
+                            }
+
+                            const phase = (dist(x - elX, z - elZ) / c - (t + t0)) * f;
                             const gauss = Math.exp(-Math.pow(phase / pulseLength * 2, 2));
                             real += Math.sin(phase * Math.PI * 2) * gauss
-                            imag += Math.cos(phase * Math.PI * 2) * gauss
+                            imag = Math.cos(phase * Math.PI * 2) * gauss
                         }
                     }
                 }
@@ -81,11 +105,13 @@ class Foo {
 
                 if (displayMode >= 1) {
                     // Amplitude or intensity post-processing mode
-                    let env = Math.sqrt(Math.pow(real, 2) + Math.pow(imag, 2)) / Math.sqrt(2);
+                    let env = dist(real, imag) / Math.sqrt(2);
                     if (displayMode == 2) {
                         // Intensity post-processing mode
                         env = env ** 2;
                     }
+                    // TODO: Use defined color palette
+                    this.color(1, 0.7, 0.4, env);
                     this.color(0, 0, 0, env);
                 } else if (displayMode == -1) {
                     // Hide post-processing mode
@@ -102,6 +128,7 @@ class Foo {
             })
             .setOutput([this.gpu.canvas.width, this.gpu.canvas.height])
             .setGraphical(true)
+            .setFunctions([dist, focusedWaveDistance, planeWaveDistance, divergingWaveDistance])
             .setConstants({
                 "canvasWidth": this.gpu.canvas.width,
                 "canvasHeight": this.gpu.canvas.height,
@@ -135,7 +162,7 @@ class Foo {
         this.kernel(
             params.time,
             elementsX, elementsZ, params.probeNumElements,
-            waveOriginX, waveOriginZ,
+            waveOriginX, waveOriginZ, params.transmittedWaveType,
             virtualSourcesX, virtualSourcesZ, virtualSourcesX.length,
             params.centerFrequency, params.pulseLength, params.soundSpeed,
             params.gain, params.displayMode,
@@ -171,8 +198,8 @@ export class App {
             this.draggableManager,
             {
                 fancyProbe: true,
-                drawInsonifiedArea: false,
-                drawVirtualSourceCircle: true,
+                drawInsonifiedArea: true,
+                drawVirtualSourceAssumptions: true,
             },
         );
         this.tooltipManager = new TooltipManager();
@@ -183,7 +210,6 @@ export class App {
     start() {
         loadParamsFromURL();
         this.probe.loadParams();
-        params.time = 0;
 
         const maxTime = params.sectorDepthsMax / params.soundSpeed * 1.5;
         var sign = 1;

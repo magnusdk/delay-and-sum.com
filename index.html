@@ -20,6 +20,14 @@
     <fieldset>
         <legend>Transmitted wave parameters</legend>
         <div class="control">
+            <label for="selectWaveType">Wave type:</label>
+            <select id="selectWaveType" name="transmittedWaveType" onchange="document.app.updateParam(this.name, this.value);">
+                <option value="0">Focused</option>
+                <option value="1">Plane</option>
+                <option value="2">Diverging</option>
+        </div>
+
+        <div class="control">
             <label>Center frequency:
                 <input type="text" class="slider-value" name="centerFrequency" min="0.10" max="6.00" value="3.00"
                     oninput="document.inputUpdated(this, multiplier=1e6)">

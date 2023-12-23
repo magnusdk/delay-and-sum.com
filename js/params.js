@@ -19,6 +19,7 @@ export const defaultParams = {
 
 
     //// Beamforming and sampling parameters
+    transmittedWaveType: 1,  // 0: focused, 1: plane, 2: diverging
     virtualSource: [0.002, 0.01],
     samplePoint: [0.002, 0.015],
 
