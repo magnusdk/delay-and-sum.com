@@ -151,7 +151,7 @@ class Foo {
                 "gridXMax": params.xMax,
                 "gridZMin": params.zMin,
                 "gridZMax": params.zMax,
-                "maxNumElements": 200,
+                "maxNumElements": 256,
                 "maxNumVirtualSources": 1,
             })
     }
