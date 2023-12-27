@@ -1,8 +1,8 @@
 import { Colors } from "/js/ui/colors.js";
 import { params } from "/js/params.js";
-import { drawPlaneWave, drawInsonifiedAreaPlaneWave } from "/js/ui/waveDrawing/plane.js";
-import { drawDivergingWave, drawInsonifiedAreaDivergingWave } from "/js/ui/waveDrawing/diverging.js";
-import { drawFocusedWave, drawInsonifiedAreaFocusedWave } from "/js/ui/waveDrawing/focused.js";
+import { drawPlaneWave, drawSonifiedAreaPlaneWave } from "/js/ui/waveDrawing/plane.js";
+import { drawDivergingWave, drawSonifiedAreaDivergingWave } from "/js/ui/waveDrawing/diverging.js";
+import { drawFocusedWave, drawSonifiedAreaFocusedWave } from "/js/ui/waveDrawing/focused.js";
 
 
 export class MainCanvas {
@@ -103,19 +103,19 @@ export class MainCanvas {
             this.backgroundCtx.restore();
         }
 
-        if (this.opts["drawInsonifiedArea"]) {
+        if (this.opts["drawSonifiedArea"]) {
             if (params.transmittedWaveType == 0) {
                 // Focused wave
-                drawInsonifiedAreaFocusedWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
+                drawSonifiedAreaFocusedWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
             }
             else if (params.transmittedWaveType == 1) {
                 // Plane wave
-                drawInsonifiedAreaPlaneWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
+                drawSonifiedAreaPlaneWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
             } else if (params.transmittedWaveType == 2) {
                 // Diverging wave
-                drawInsonifiedAreaDivergingWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
+                drawSonifiedAreaDivergingWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
             } else {
-                drawInsonifiedArea(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
+                drawSonifiedArea(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
             }
         }
         this.drawProbe();

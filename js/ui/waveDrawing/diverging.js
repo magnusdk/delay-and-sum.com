@@ -28,7 +28,7 @@ export function drawDivergingWave(ctx, grid, probe, virtualSource, time, soundSp
 
     ctx.save();
     ctx.beginPath();
-    ctx.strokeStyle = Colors.hexToRGB(Colors.insonifiedVirtualCircle, 0.5);
+    ctx.strokeStyle = Colors.insonifiedVirtualCircle;
     ctx.lineWidth = 3;
     ctx.arc(x, z, radiusCanvasSpace, 0, 2 * Math.PI);
     ctx.stroke();
@@ -64,7 +64,7 @@ export function drawDivergingWave(ctx, grid, probe, virtualSource, time, soundSp
     const _offscreenLength = 1;  // This should be enough length to extend past the canvas for very small grids.
     // Line going through center of probe and extending past canvas in both directions
     ctx.save();
-    ctx.strokeStyle = Colors.hexToRGB(Colors.insonifiedVirtualCircle, 0.5);
+    ctx.strokeStyle = Colors.insonifiedVirtualCircle;
     ctx.lineWidth = 3;
     ctx.setLineDash([8, 10]);
     ctx.beginPath();
@@ -90,7 +90,7 @@ export function drawDivergingWave(ctx, grid, probe, virtualSource, time, soundSp
 }
 
 
-export function drawInsonifiedAreaDivergingWave(ctx, grid, probe, virtualSource) {
+export function drawSonifiedAreaDivergingWave(ctx, grid, probe, virtualSource) {
     const distance = Math.sqrt(
         (virtualSource[0] - probe.center[0]) ** 2 +
         (virtualSource[1] - probe.center[1]) ** 2
@@ -114,7 +114,7 @@ export function drawInsonifiedAreaDivergingWave(ctx, grid, probe, virtualSource)
     );
     const _offscreenLength = 2;  // This should be enough length to extend past the canvas for very small grids.
     ctx.save();
-    ctx.fillStyle = Colors.hexToRGB(Colors.sonifiedArea, 0.3);
+    ctx.fillStyle = Colors.sonifiedArea;
     ctx.beginPath();
     ctx.moveTo(...grid.toCanvasCoords(probe.xMin, probe.zMin));
     ctx.lineTo(...grid.toCanvasCoords(
@@ -131,7 +131,7 @@ export function drawInsonifiedAreaDivergingWave(ctx, grid, probe, virtualSource)
 
     // Draw line from each corner to virtual source
     ctx.lineWidth = 3;
-    ctx.strokeStyle = Colors.hexToRGB(Colors.sonifiedArea, 0.3);
+    ctx.strokeStyle = Colors.sonifiedArea;
     ctx.lineWidth = 3;
     ctx.lineCap = "round";
     ctx.setLineDash([4, 5]);

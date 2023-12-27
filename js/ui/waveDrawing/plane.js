@@ -21,7 +21,7 @@ export function drawPlaneWave(ctx, grid, probe, virtualSource, time, soundSpeed)
     ];
     ctx.save();
     ctx.lineWidth = 3;
-    ctx.strokeStyle = Colors.hexToRGB(Colors.insonifiedVirtualCircle, 0.5);
+    ctx.strokeStyle = Colors.insonifiedVirtualCircle;
     ctx.beginPath();
     ctx.moveTo(...grid.toCanvasCoords(
         lineStartPoint[0] - Math.cos(angle90) * _offscreenLength,
@@ -48,7 +48,7 @@ export function drawPlaneWave(ctx, grid, probe, virtualSource, time, soundSpeed)
 
     // Line going through center of probe and extending past canvas in both directions
     ctx.save();
-    ctx.strokeStyle = Colors.hexToRGB(Colors.insonifiedVirtualCircle, 0.5);
+    ctx.strokeStyle = Colors.insonifiedVirtualCircle;
     ctx.lineWidth = 3;
     ctx.setLineDash([8, 10]);
     ctx.beginPath();
@@ -65,7 +65,7 @@ export function drawPlaneWave(ctx, grid, probe, virtualSource, time, soundSpeed)
 }
 
 
-export function drawInsonifiedAreaPlaneWave(ctx, grid, probe, virtualSource) {
+export function drawSonifiedAreaPlaneWave(ctx, grid, probe, virtualSource) {
     const angle = Math.atan2(
         virtualSource[1] - probe.center[1],
         virtualSource[0] - probe.center[0],
@@ -74,7 +74,7 @@ export function drawInsonifiedAreaPlaneWave(ctx, grid, probe, virtualSource) {
 
     // Draw area from probe corners with angle
     ctx.save();
-    ctx.fillStyle = Colors.hexToRGB(Colors.sonifiedArea, 0.3);
+    ctx.fillStyle = Colors.sonifiedArea;
     ctx.beginPath();
     ctx.moveTo(...grid.toCanvasCoords(probe.xMin, probe.zMin));
     ctx.lineTo(...grid.toCanvasCoords(probe.xMax, probe.zMax));

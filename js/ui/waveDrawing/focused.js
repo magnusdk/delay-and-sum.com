@@ -18,7 +18,7 @@ export function drawFocusedWave(ctx, grid, probe, virtualSource, time, soundSpee
 
     ctx.save();
     ctx.beginPath();
-    ctx.strokeStyle = Colors.hexToRGB(Colors.insonifiedVirtualCircle, 0.5);
+    ctx.strokeStyle = Colors.insonifiedVirtualCircle;
     ctx.lineWidth = 3;
     ctx.arc(x, z, radiusCanvasSpace, 0, 2 * Math.PI);
     ctx.stroke();
@@ -46,7 +46,7 @@ export function drawFocusedWave(ctx, grid, probe, virtualSource, time, soundSpee
     ctx.stroke();
 
     ctx.beginPath();
-    ctx.strokeStyle = Colors.hexToRGB(Colors.insonifiedVirtualCircle, 0.5);
+    ctx.strokeStyle = Colors.insonifiedVirtualCircle;
     ctx.lineWidth = 3;
     // dashed line
     ctx.setLineDash([8, 10]);
@@ -65,9 +65,9 @@ export function drawFocusedWave(ctx, grid, probe, virtualSource, time, soundSpee
 }
 
 
-export function drawInsonifiedAreaFocusedWave(ctx, grid, probe, virtualSource) {
+export function drawSonifiedAreaFocusedWave(ctx, grid, probe, virtualSource) {
     ctx.save();
-    ctx.fillStyle = Colors.hexToRGB(Colors.sonifiedArea, 0.3);
+    ctx.fillStyle = Colors.sonifiedArea;
     const angleLeft = Math.atan2(
         virtualSource[1] - probe.zMin,
         virtualSource[0] - probe.xMin,

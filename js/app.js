@@ -43,7 +43,7 @@ export class App {
             this.draggableManager,
             {
                 drawProbeLine: true,
-                drawInsonifiedArea: false,
+                drawSonifiedArea: true,
                 drawVirtualSourceGeometry: true,
                 sectorScanBackground: false,
                 gridLines: true,
