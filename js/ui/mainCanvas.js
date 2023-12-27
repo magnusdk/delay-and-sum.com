@@ -21,8 +21,7 @@ export class MainCanvas {
     drawProbe() {
         this.backgroundCtx.save();
         // Draw probe
-        const elRadiusPx = 3;
-        const probeHeightPx = 5;
+        const elRadiusPx = this.grid.toCanvasSize(1e-4);
 
         // Draw probe around elements
         if (this.opts["drawProbeLine"]) {
@@ -32,37 +31,19 @@ export class MainCanvas {
             this.backgroundCtx.strokeStyle = Colors.probe;
             // rounded butts
             this.backgroundCtx.lineCap = "round";
-            this.backgroundCtx.lineWidth = 3;
+            this.backgroundCtx.lineWidth = this.grid.toCanvasSize(1e-4);
 
             this.backgroundCtx.beginPath();
             this.backgroundCtx.moveTo(xMin, zMin);
             this.backgroundCtx.lineTo(xMax, zMax);
             this.backgroundCtx.stroke();
-            //this.ctx.fillStyle = Colors.probe;
-            //const dx = xMin - xMax;
-            //const dz = zMin - zMax;
-            //const angle = Math.atan2(dz, dx);
-            //const angle90 = angle + Math.PI / 2;
-            //const sinAngle = Math.sin(angle);
-            //const cosAngle = Math.cos(angle);
-            //const sinAngle90 = Math.sin(angle90);
-            //const cosAngle90 = Math.cos(angle90);
-            //const p1 = [xMin + sinAngle90 * elRadiusPx, zMin - cosAngle90 * elRadiusPx];
-            //const p2 = [xMax - sinAngle90 * elRadiusPx, zMax + cosAngle90 * elRadiusPx];
-            //const p3 = [xMax - sinAngle * probeHeightPx, zMax + cosAngle * probeHeightPx];
-            //const p4 = [xMin - sinAngle * probeHeightPx, zMin + cosAngle * probeHeightPx];
-            //this.ctx.moveTo(...p1);
-            //this.ctx.lineTo(...p2);
-            //this.ctx.lineTo(...p3);
-            //this.ctx.lineTo(...p4);
-            //this.ctx.fill();
         }
 
         // Draw probe element outlines
         for (let i = 0; i < this.probe.numElements; i++) {
             let [x, z] = this.grid.toCanvasCoords(this.probe.x[i], this.probe.z[i]);
             this.backgroundCtx.strokeStyle = Colors.probeElementsOutline;
-            this.backgroundCtx.lineWidth = 4;
+            this.backgroundCtx.lineWidth = this.grid.toCanvasSize(2e-4);
             this.backgroundCtx.beginPath();
             this.backgroundCtx.arc(x, z, elRadiusPx, 0, 2 * Math.PI);
             this.backgroundCtx.stroke();
@@ -138,7 +119,7 @@ export class MainCanvas {
     drawGrid(xStep, zStep) {
         this.foregroundCtx.save();
         this.foregroundCtx.strokeStyle = Colors.grid;
-        this.foregroundCtx.lineWidth = 1;
+        this.foregroundCtx.lineWidth = Math.max(1, this.grid.toCanvasSize(0.25e-4));
         this.foregroundCtx.beginPath();
         for (let x = params.xMin; x <= params.xMax; x += xStep) {
             const [xCanvas, zCanvas] = this.grid.toCanvasCoords(x, params.zMin);
@@ -180,17 +161,17 @@ export class MainCanvas {
             if (draggablePoint.isDragging) {
                 this.foregroundCtx.fillStyle = color;
                 this.foregroundCtx.beginPath();
-                this.foregroundCtx.arc(x, z, 5, 0, 2 * Math.PI);
+                this.foregroundCtx.arc(x, z, this.grid.toCanvasSize(2e-4), 0, 2 * Math.PI);
                 this.foregroundCtx.fill();
             } else if (draggablePoint == this.draggableManager.hovering) {
                 this.foregroundCtx.fillStyle = color;
                 this.foregroundCtx.beginPath();
-                this.foregroundCtx.arc(x, z, 8, 0, 2 * Math.PI);
+                this.foregroundCtx.arc(x, z, this.grid.toCanvasSize(3e-4), 0, 2 * Math.PI);
                 this.foregroundCtx.fill();
             } else {
                 this.foregroundCtx.fillStyle = color;
                 this.foregroundCtx.beginPath();
-                this.foregroundCtx.arc(x, z, 5, 0, 2 * Math.PI);
+                this.foregroundCtx.arc(x, z, this.grid.toCanvasSize(2e-4), 0, 2 * Math.PI);
                 this.foregroundCtx.fill();
             }
         }

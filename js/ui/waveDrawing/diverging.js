@@ -29,7 +29,7 @@ export function drawDivergingWave(ctx, grid, probe, virtualSource, time, soundSp
     ctx.save();
     ctx.beginPath();
     ctx.strokeStyle = Colors.insonifiedVirtualCircle;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = grid.toCanvasSize(2e-4);
     ctx.arc(x, z, radiusCanvasSpace, 0, 2 * Math.PI);
     ctx.stroke();
     ctx.beginPath();
@@ -65,8 +65,8 @@ export function drawDivergingWave(ctx, grid, probe, virtualSource, time, soundSp
     // Line going through center of probe and extending past canvas in both directions
     ctx.save();
     ctx.strokeStyle = Colors.insonifiedVirtualCircle;
-    ctx.lineWidth = 3;
-    ctx.setLineDash([8, 10]);
+    ctx.lineWidth = grid.toCanvasSize(2e-4);
+    ctx.setLineDash([grid.toCanvasSize(3e-4), grid.toCanvasSize(5e-4)]);
     ctx.beginPath();
     ctx.moveTo(...grid.toCanvasCoords(
         probe.center[0] - Math.cos(angle) * _offscreenLength,
@@ -82,9 +82,9 @@ export function drawDivergingWave(ctx, grid, probe, virtualSource, time, soundSp
     ctx.save();
     ctx.beginPath();
     ctx.strokeStyle = Colors.virtualSource;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = grid.toCanvasSize(2e-4);
     ctx.arc(...grid.toCanvasCoords(virtualSource[0], virtualSource[1]), 6, 0, 2 * Math.PI);
-    ctx.setLineDash([4, 5]);
+    ctx.setLineDash([grid.toCanvasSize(3e-4), grid.toCanvasSize(5e-4)]);
     ctx.stroke();
     ctx.restore();
 }
@@ -130,11 +130,10 @@ export function drawSonifiedAreaDivergingWave(ctx, grid, probe, virtualSource) {
     ctx.fill();
 
     // Draw line from each corner to virtual source
-    ctx.lineWidth = 3;
     ctx.strokeStyle = Colors.sonifiedArea;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = grid.toCanvasSize(2e-4);
     ctx.lineCap = "round";
-    ctx.setLineDash([4, 5]);
+    ctx.setLineDash([grid.toCanvasSize(3e-4), grid.toCanvasSize(5e-4)]);
     ctx.beginPath();
     ctx.moveTo(...grid.toCanvasCoords(probe.xMin, probe.zMin));
     ctx.lineTo(...grid.toCanvasCoords(...virtualSource));

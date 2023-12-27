@@ -20,7 +20,7 @@ export function drawPlaneWave(ctx, grid, probe, virtualSource, time, soundSpeed)
         probe.center[1] + Math.sin(angle) * distance,
     ];
     ctx.save();
-    ctx.lineWidth = 3;
+    ctx.lineWidth = grid.toCanvasSize(2e-4);
     ctx.strokeStyle = Colors.insonifiedVirtualCircle;
     ctx.beginPath();
     ctx.moveTo(...grid.toCanvasCoords(
@@ -49,8 +49,8 @@ export function drawPlaneWave(ctx, grid, probe, virtualSource, time, soundSpeed)
     // Line going through center of probe and extending past canvas in both directions
     ctx.save();
     ctx.strokeStyle = Colors.insonifiedVirtualCircle;
-    ctx.lineWidth = 3;
-    ctx.setLineDash([8, 10]);
+    ctx.lineWidth = grid.toCanvasSize(2e-4);
+    ctx.setLineDash([grid.toCanvasSize(3e-4), grid.toCanvasSize(5e-4)]);
     ctx.beginPath();
     ctx.moveTo(...grid.toCanvasCoords(
         probe.center[0] - Math.cos(angle) * _offscreenLength,
