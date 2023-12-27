@@ -35,3 +35,4 @@ Colors.defaultPoint = Colors.black;
 Colors.sonifiedArea = Colors.cyan;
 Colors.sonifiedVirtualCircle = Colors.pink;
 Colors.insonifiedVirtualCircle = Colors.lightPink;
+Colors.grid = Colors.hexToRGB(Colors.black, 0.1);

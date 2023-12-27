@@ -25,7 +25,7 @@ export class MainCanvas {
         const probeHeightPx = 5;
 
         // Draw probe around elements
-        if (this.opts["fancyProbe"]) {
+        if (this.opts["drawProbeLine"]) {
             let [xMin, zMin] = this.grid.toCanvasCoords(this.probe.xMin, this.probe.zMin);
             let [xMax, zMax] = this.grid.toCanvasCoords(this.probe.xMax, this.probe.zMax);
 
@@ -119,7 +119,7 @@ export class MainCanvas {
             }
         }
         this.drawProbe();
-        if (this.opts["drawVirtualSourceAssumptions"]) {
+        if (this.opts["drawVirtualSourceGeometry"]) {
             if (params.transmittedWaveType == 0) {
                 // Focused wave
                 drawFocusedWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource, params.time, params.soundSpeed);
@@ -130,16 +130,39 @@ export class MainCanvas {
                 // Diverging wave
                 drawDivergingWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource, params.time, params.soundSpeed);
             } else {
-                drawVirtualSourceAssumptions(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
+                drawVirtualSourceGeometry(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
             }
         }
     }
 
-    drawTopUI() {
-        // Draw draggable points
+    drawGrid(xStep, zStep) {
         this.foregroundCtx.save();
+        this.foregroundCtx.strokeStyle = Colors.grid;
+        this.foregroundCtx.lineWidth = 1;
+        this.foregroundCtx.beginPath();
+        for (let x = params.xMin; x <= params.xMax; x += xStep) {
+            const [xCanvas, zCanvas] = this.grid.toCanvasCoords(x, params.zMin);
+            this.foregroundCtx.moveTo(xCanvas, zCanvas);
+            this.foregroundCtx.lineTo(xCanvas, zCanvas + this.foregroundCanvas.height);
+        }
+        for (let z = params.zMin; z <= params.zMax; z += zStep) {
+            const [xCanvas, zCanvas] = this.grid.toCanvasCoords(params.xMin, z);
+            this.foregroundCtx.moveTo(xCanvas, zCanvas);
+            this.foregroundCtx.lineTo(xCanvas + this.foregroundCanvas.width, zCanvas);
+        }
+        this.foregroundCtx.stroke();
+        this.foregroundCtx.restore();
+    }
+
+    drawTopUI() {
         // Clear the canvas (must be transparent)
         this.foregroundCtx.clearRect(0, 0, this.foregroundCanvas.width, this.foregroundCanvas.height);
+
+        if (this.opts["gridLines"]) {
+            this.drawGrid(0.001, 0.001);
+        }
+        // Draw draggable points
+        this.foregroundCtx.save();
         for (const [name, draggablePoint] of Object.entries(this.draggableManager.draggablePoints)) {
             if (draggablePoint.opts["hidden"]) {
                 continue;
