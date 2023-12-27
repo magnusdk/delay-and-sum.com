@@ -10,13 +10,12 @@
 </head>
 
 <body>
-    <div id="canvasContainer">
+    <div id="mainCanvasContainer">
         <canvas id="backgroundCanvas" width="1000" height="1000"></canvas>
         <canvas id="simulationCanvas" width="1000" height="1000"></canvas>
         <canvas id="foregroundCanvas" width="1000" height="1000"></canvas>
     </div>
     <div id="controlsContainer" class="controlsContainer"></div>
-    <button onclick="document.app.resetParams(); document.loadParams();">Reset Params</button>
 
     <script src="/js/gpu.min.js"></script>
     <script type="module">
