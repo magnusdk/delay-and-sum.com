@@ -19,12 +19,12 @@ export const defaultParams = {
 
 
     //// Beamforming and sampling parameters
-    transmittedWaveType: 1,  // 0: focused, 1: plane, 2: diverging
+    transmittedWaveType: 0,  // 0: focused, 1: plane, 2: diverging
     virtualSource: [0.002, 0.01],
     samplePoint: [0.002, 0.015],
 
     probeType: "linear",
-    probeNumElements: 32,
+    probeNumElements: 64,
     probeLeft: [-0.003, 0],
     probeRight: [0.003, 0],
 
@@ -32,6 +32,7 @@ export const defaultParams = {
     //// Simulation parameters
     time: 0,
     soundSpeed: 1540,
+    soundSpeedAssumedTx: 1540,
     pulseLength: 1,
     centerFrequency: 3e6,
     gain: 0,  // dB

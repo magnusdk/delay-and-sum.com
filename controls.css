@@ -1,0 +1,56 @@
+.controlsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+
+    padding: 20px;
+    border: 1px solid black;
+    border-radius: 5px;
+    box-shadow: 0 5px 10px rgba(0, 0, 0, 0.5);
+}
+
+.control label {
+    font-weight: bold;
+}
+
+.control label::after {
+    content: ': ';
+}
+
+.control .units::before {
+    content: ' ';
+}
+
+.control .slider-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.control .slider-wrapper .min-value {
+    width: 2em;
+    text-align: right;
+}
+
+.control .slider-wrapper .max-value {
+    width: 2em;
+    text-align: left;
+}
+
+.control .slider-wrapper input[type=range] {
+    width: 100%;
+}
+
+.control select {
+    /* Add some additional spacing to dropdowns since they don't have a slider */
+    margin-bottom: 5px;
+}
+
+
+/* Style inputs and dropdowns to have same border as controlsContainer */
+input[type=text],
+input[type=number],
+select {
+    border: 1px solid black;
+    border-radius: 5px;
+}

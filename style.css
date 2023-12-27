@@ -1,70 +1,33 @@
-:root {
-    --font-size-normal: 14px;
-    --font-size-small: 12px;
-
-    /* Colors */
-    --light-pink-color: #FFC2D5;
-    --pink-color: #FF195E;
-    --cyan-color: #00F0FF;
-    --blue-color: #0085FF;
-    --dark-blue-color: #1D5199;
-}
-
-
 body {
-    font-size: var(--font-size-normal);
-    font-family: system-ui;
+    font-size: 14px;
+    font-family: sans-serif;
 }
 
-fieldset {
-    border: 1px solid black;
-    border-radius: 5px;
-    margin: 10px 0px;
-    padding: 20px;
+
+#canvasContainer {
+    position: relative;
+    width: 500px;
+    height: 500px;
 }
 
-fieldset legend {
-    font-weight: bold;
-}
-
-.control {
+#backgroundCanvas,
+#simulationCanvas,
+#foregroundCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    font-size: var(--font-size-small);
+    height: 100%;
 }
 
-.control label {
-    font-weight: bold;
+#backgroundCanvas {
+    z-index: 1;
 }
 
-.control label .units {
-    font-weight: normal;
+#simulationCanvas {
+    z-index: 2;
 }
 
-.control:not(:last-child) {
-    margin-bottom: 10px;
-}
-
-.control .slider-wrapper,
-.control select {
-    display: flex;
-}
-
-.control .slider-wrapper input[type="range"] {
-    width: 100%;
-}
-
-.slider-value {
-    font-size: var(--font-size-small);
-    width: 0;
-}
-
-.min-value,
-.max-value {
-    font-size: var(--font-size-small);
-    margin: 0 5px;
-    width: 2em;
-}
-
-.min-value {
-    text-align: right;
+#foregroundCanvas {
+    z-index: 3;
 }

@@ -2,23 +2,24 @@ import { params } from "/js/params.js";
 
 
 export class Grid {
-    constructor(canvas) {
+    constructor(canvasWidth, canvasHeight) {
         if (params.width != params.height) throw new Error("params.width must equal params.height");
-        this.canvas = canvas;
+        this.canvasWidth = canvasWidth;
+        this.canvasHeight = canvasHeight;
     }
 
     toCanvasCoords(x, z) {
         const xNorm = (x - params.xMin) / params.width;
         const zNorm = (z - params.zMin) / params.height;
         return [
-            xNorm * this.canvas.width,
-            zNorm * this.canvas.height
+            xNorm * this.canvasWidth,
+            zNorm * this.canvasHeight
         ];
     }
 
     fromCanvasCoords(x, z) {
-        const xNorm = x / this.canvas.width;
-        const zNorm = z / this.canvas.height;
+        const xNorm = x / this.canvasWidth;
+        const zNorm = z / this.canvasHeight;
         return [
             xNorm * params.width + params.xMin,
             zNorm * params.height + params.zMin
@@ -28,6 +29,6 @@ export class Grid {
 
     toCanvasSize(h) {
         if (params.width != params.height) throw new Error("params.width must equal params.height");
-        return h / params.height * this.canvas.height;
+        return h / params.height * this.canvasHeight;
     }
 }

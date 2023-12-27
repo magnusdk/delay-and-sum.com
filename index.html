@@ -5,172 +5,34 @@
 <head>
     <meta charset="utf-8" />
     <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="controls.css" />
     <title>🌊</title>
 </head>
 
 <body>
     <div id="canvasContainer">
-        <!--<canvas id="zTicksCanvas" width="50" height="500"></canvas>-->
-        <canvas id="mainCanvas" width="500" height="500" style="width: 500px"></canvas>
-        <!--<canvas id="xTicksCanvas" width="500" height="20"></canvas>-->
+        <canvas id="backgroundCanvas" width="1000" height="1000"></canvas>
+        <canvas id="simulationCanvas" width="1000" height="1000"></canvas>
+        <canvas id="foregroundCanvas" width="1000" height="1000"></canvas>
     </div>
-
+    <div id="controlsContainer" class="controlsContainer"></div>
     <button onclick="document.app.resetParams(); document.loadParams();">Reset Params</button>
 
-    <fieldset>
-        <legend>Transmitted wave parameters</legend>
-        <div class="control">
-            <label for="selectWaveType">Wave type:</label>
-            <select id="selectWaveType" name="transmittedWaveType" onchange="document.app.updateParam(this.name, this.value);">
-                <option value="0">Focused</option>
-                <option value="1">Plane</option>
-                <option value="2">Diverging</option>
-        </div>
-
-        <div class="control">
-            <label>Center frequency:
-                <input type="text" class="slider-value" name="centerFrequency" min="0.10" max="6.00" value="3.00"
-                    oninput="document.inputUpdated(this, multiplier=1e6)">
-                <span class="units">MHz</span>
-            </label>
-            <div class="slider-wrapper">
-                <span class="min-value">0.1</span>
-                <input type="range" name="centerFrequency" min="0.10" max="6.00" step="0.01" value="3.00"
-                    oninput="document.sliderUpdated(this, 2, multiplier=1e6);">
-                <span class="max-value">6</span>
-            </div>
-        </div>
-
-        <div class="control">
-            <label>Pulse length:
-                <input type="text" class="slider-value" name="pulseLength" min="0.1" max="100" value="1.0"
-                    oninput="document.inputUpdated(this)">
-                <span class="units">wavelengths</span>
-            </label>
-            <div class="slider-wrapper">
-                <span class="min-value">0.1</span>
-                <input type="range" name="pulseLength" min="0.1" max="100" step="0.1" value="1"
-                    oninput="document.sliderUpdated(this, 1);">
-                <span class="max-value">100</span>
-            </div>
-        </div>
-
-        <div class="control">
-            <label>Number of elements:
-                <input type="text" class="slider-value" name="probeNumElements" min="1" max="200" value="1"
-                    oninput="document.inputUpdated(this)">
-            </label>
-            <div class="slider-wrapper">
-                <span class="min-value">1</span>
-                <input type="range" name="probeNumElements" min="1" max="200" step="1" value="1"
-                    oninput="document.sliderUpdated(this);">
-                <span class="max-value">200</span>
-            </div>
-        </div>
-    </fieldset>
-
-    <fieldset>
-        <legend>Display parameters</legend>
-        <div class="control">
-            <label>Gain:
-                <input type="text" class="slider-value" name="gain" min="-60" max="60" value="0"
-                    oninput="document.inputUpdated(this)">
-                <span class="units">dB</span>
-            </label>
-            <div class="slider-wrapper">
-                <span class="min-value">-60</span>
-                <input type="range" name="gain" min="-60" max="60" step="0.1" value="0"
-                    oninput="document.sliderUpdated(this, 1);">
-                <span class="max-value">60</span>
-            </div>
-        </div>
-
-        <div class="control">
-            <label for="select">Display mode:</label>
-            <select id="select" name="displayMode" onchange="document.app.updateParam(this.name, this.value);">
-                <option value="-1">Hide</option>
-                <option value="0">Phase</option>
-                <option value="1">Amplitude</option>
-                <option value="2">Intensity</option>
-        </div>
-        <br>
-        <div class="control">
-            <label for="time">Time:
-                <input type="text" class="slider-value" name="time" min="0" max="30" value="0"
-                    oninput="document.inputUpdated(this, 1/1000000)">
-                <span class="units">microsseconds</span>
-            </label>
-            <div class="slider-wrapper">
-                <span class="min-value">0</span>
-                <input type="range" name="time" min="0" max="30" step="0.001" value="0"
-                    oninput="document.sliderUpdated(this, 1, 1/1000000);">
-                <span class="max-value">1</span>
-            </div>
-        </div>
-    </fieldset>
     <script src="/js/gpu.min.js"></script>
     <script type="module">
         import { App } from './js/app.js';
         import { params } from './js/params.js';
+        import { initControls } from '/js/ui/controls.js';
+        import { loadParamsFromURL } from "/js/params.js";
 
-        const mainCanvas = document.getElementById('mainCanvas');
-        const xTicksCanvas = document.getElementById('xTicksCanvas');
-        const zTicksCanvas = document.getElementById('zTicksCanvas');
-        const timelineCanvas = document.getElementById('timelineCanvas');
         document.app = new App(
-            mainCanvas,
-            xTicksCanvas,
-            zTicksCanvas,
-            timelineCanvas
+            document.getElementById('backgroundCanvas'),
+            document.getElementById('simulationCanvas'),
+            document.getElementById('foregroundCanvas'),
+            document.getElementById('timelineCanvas'),
         );
+        loadParamsFromURL();
+        initControls(document.getElementById("controlsContainer"), document.app);
         document.app.start();
-
-
-        document.adjustInputSize = (input) => {
-            const valueLength = input.value.length;
-            input.style.width = `${valueLength}ch`;
-        }
-
-        document.inputUpdated = (input, multiplier = 1) => {
-            // Adjust size
-            document.adjustInputSize(input);
-            const sliderContainer = input.closest('.control');
-            const slider = sliderContainer.querySelector('input[type="range"]');
-            slider.value = input.value;
-            document.app.updateParam(input.name, input.value * multiplier);
-        }
-
-        document.sliderUpdated = (slider, format, multiplier = 1) => {
-            const sliderContainer = slider.closest('.control');
-            const inputElement = sliderContainer.querySelector('.slider-value');
-            let value = slider.value;
-            if (format == "scientific") {
-                value = Number(value).toExponential(1);
-                value = value.replace('+', '');
-            } else if (Number.isInteger(format)) {
-                value = Number(value).toFixed(format);
-            }
-            inputElement.value = value;
-            document.adjustInputSize(inputElement);
-            document.app.updateParam(slider.name, slider.value * multiplier);
-        }
-
-        document.loadParams = () => {
-            // adjust size of all inputs on page load
-            const keyboardInputs = document.querySelectorAll('.slider-value');
-            const sliderInputs = document.querySelectorAll('input[type="range"]');
-            const selectInputs = document.querySelectorAll('select');
-            for (let i = 0; i < keyboardInputs.length; i++) {
-                keyboardInputs[i].value = params[keyboardInputs[i].name];
-                document.adjustInputSize(keyboardInputs[i]);
-            }
-            for (let i = 0; i < sliderInputs.length; i++) {
-                sliderInputs[i].value = params[sliderInputs[i].name];
-            }
-            for (let i = 0; i < selectInputs.length; i++) {
-                selectInputs[i].value = params[selectInputs[i].name];
-            }
-        }
-        document.loadParams();
     </script>
 </body>

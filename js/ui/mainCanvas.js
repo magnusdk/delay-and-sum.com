@@ -6,9 +6,11 @@ import { drawFocusedWave, drawInsonifiedAreaFocusedWave } from "/js/ui/waveDrawi
 
 
 export class MainCanvas {
-    constructor(canvas, grid, probe, draggableManager, opts) {
-        this.canvas = canvas;
-        this.ctx = canvas.getContext("2d");
+    constructor(backgroundCanvas, foregroundCanvas, grid, probe, draggableManager, opts) {
+        this.backgroundCanvas = backgroundCanvas;
+        this.foregroundCanvas = foregroundCanvas;
+        this.backgroundCtx = this.backgroundCanvas.getContext("2d");
+        this.foregroundCtx = this.foregroundCanvas.getContext("2d");
         this.grid = grid;
         this.probe = probe
         this.draggableManager = draggableManager;
@@ -17,7 +19,7 @@ export class MainCanvas {
     }
 
     drawProbe() {
-        this.ctx.save();
+        this.backgroundCtx.save();
         // Draw probe
         const elRadiusPx = 3;
         const probeHeightPx = 5;
@@ -27,15 +29,15 @@ export class MainCanvas {
             let [xMin, zMin] = this.grid.toCanvasCoords(this.probe.xMin, this.probe.zMin);
             let [xMax, zMax] = this.grid.toCanvasCoords(this.probe.xMax, this.probe.zMax);
 
-            this.ctx.strokeStyle = Colors.probe;
+            this.backgroundCtx.strokeStyle = Colors.probe;
             // rounded butts
-            this.ctx.lineCap = "round";
-            this.ctx.lineWidth = 3;
+            this.backgroundCtx.lineCap = "round";
+            this.backgroundCtx.lineWidth = 3;
 
-            this.ctx.beginPath();
-            this.ctx.moveTo(xMin, zMin);
-            this.ctx.lineTo(xMax, zMax);
-            this.ctx.stroke();
+            this.backgroundCtx.beginPath();
+            this.backgroundCtx.moveTo(xMin, zMin);
+            this.backgroundCtx.lineTo(xMax, zMax);
+            this.backgroundCtx.stroke();
             //this.ctx.fillStyle = Colors.probe;
             //const dx = xMin - xMax;
             //const dz = zMin - zMax;
@@ -59,83 +61,85 @@ export class MainCanvas {
         // Draw probe element outlines
         for (let i = 0; i < this.probe.numElements; i++) {
             let [x, z] = this.grid.toCanvasCoords(this.probe.x[i], this.probe.z[i]);
-            this.ctx.strokeStyle = Colors.probeElementsOutline;
-            this.ctx.lineWidth = 4;
-            this.ctx.beginPath();
-            this.ctx.arc(x, z, elRadiusPx, 0, 2 * Math.PI);
-            this.ctx.stroke();
+            this.backgroundCtx.strokeStyle = Colors.probeElementsOutline;
+            this.backgroundCtx.lineWidth = 4;
+            this.backgroundCtx.beginPath();
+            this.backgroundCtx.arc(x, z, elRadiusPx, 0, 2 * Math.PI);
+            this.backgroundCtx.stroke();
         }
         // Draw probe element fillings
         for (let i = 0; i < this.probe.numElements; i++) {
             let [x, z] = this.grid.toCanvasCoords(this.probe.x[i], this.probe.z[i]);
-            this.ctx.fillStyle = Colors.probeElements;
-            this.ctx.beginPath();
-            this.ctx.arc(x, z, elRadiusPx, 0, 2 * Math.PI);
-            this.ctx.fill();
+            this.backgroundCtx.fillStyle = Colors.probeElements;
+            this.backgroundCtx.beginPath();
+            this.backgroundCtx.arc(x, z, elRadiusPx, 0, 2 * Math.PI);
+            this.backgroundCtx.fill();
         }
     }
 
     drawBackground() {
         if (this.opts["sectorScanBackground"]) {
             // Draw a white sector scan with a dark blue background
-            this.ctx.save();
-            this.ctx.fillStyle = Colors.background;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            this.ctx.beginPath();
+            this.backgroundCtx.save();
+            this.backgroundCtx.fillStyle = Colors.background;
+            this.backgroundCtx.fillRect(0, 0, this.foregroundCanvas.width, this.foregroundCanvas.height);
+            this.backgroundCtx.beginPath();
             const [x, z] = this.grid.toCanvasCoords(0, params.sectorDepthsMin);
-            this.ctx.moveTo(x, z);
-            this.ctx.arc(
+            this.backgroundCtx.moveTo(x, z);
+            this.backgroundCtx.arc(
                 x, z, this.grid.toCanvasSize(params.sectorDepthsMax - params.sectorDepthsMin),
                 Math.PI / 2 - params.sectorAzimuth / 2,
                 Math.PI / 2 + params.sectorAzimuth / 2,
             );
-            this.ctx.fillStyle = Colors.scanArea;
-            this.ctx.fill();
-            this.ctx.restore();
+            this.backgroundCtx.fillStyle = Colors.scanArea;
+            this.backgroundCtx.fill();
+            this.backgroundCtx.restore();
         } else {
             // Just clear the canvas
-            this.ctx.save();
-            this.ctx.fillStyle = Colors.scanArea;
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-            this.ctx.fill();
-            this.ctx.restore();
+            this.backgroundCtx.save();
+            this.backgroundCtx.fillStyle = Colors.scanArea;
+            this.backgroundCtx.fillRect(0, 0, this.foregroundCanvas.width, this.foregroundCanvas.height);
+            this.backgroundCtx.fill();
+            this.backgroundCtx.restore();
         }
 
         if (this.opts["drawInsonifiedArea"]) {
             if (params.transmittedWaveType == 0) {
                 // Focused wave
-                drawInsonifiedAreaFocusedWave(this.ctx, this.grid, this.probe, params.virtualSource);
+                drawInsonifiedAreaFocusedWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
             }
             else if (params.transmittedWaveType == 1) {
                 // Plane wave
-                drawInsonifiedAreaPlaneWave(this.ctx, this.grid, this.probe, params.virtualSource);
+                drawInsonifiedAreaPlaneWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
             } else if (params.transmittedWaveType == 2) {
                 // Diverging wave
-                drawInsonifiedAreaDivergingWave(this.ctx, this.grid, this.probe, params.virtualSource);
+                drawInsonifiedAreaDivergingWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
             } else {
-                drawInsonifiedArea(this.ctx, this.grid, this.probe, params.virtualSource);
+                drawInsonifiedArea(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
             }
         }
         this.drawProbe();
         if (this.opts["drawVirtualSourceAssumptions"]) {
             if (params.transmittedWaveType == 0) {
                 // Focused wave
-                drawFocusedWave(this.ctx, this.grid, this.probe, params.virtualSource, params.time, params.soundSpeed);
+                drawFocusedWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource, params.time, params.soundSpeed);
             } else if (params.transmittedWaveType == 1) {
                 // Plane wave
-                drawPlaneWave(this.ctx, this.grid, this.probe, params.virtualSource, params.time, params.soundSpeed);
+                drawPlaneWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource, params.time, params.soundSpeed);
             } else if (params.transmittedWaveType == 2) {
                 // Diverging wave
-                drawDivergingWave(this.ctx, this.grid, this.probe, params.virtualSource, params.time, params.soundSpeed);
+                drawDivergingWave(this.backgroundCtx, this.grid, this.probe, params.virtualSource, params.time, params.soundSpeed);
             } else {
-                drawVirtualSourceAssumptions(this.ctx, this.grid, this.probe, params.virtualSource);
+                drawVirtualSourceAssumptions(this.backgroundCtx, this.grid, this.probe, params.virtualSource);
             }
         }
     }
 
     drawTopUI() {
         // Draw draggable points
-        this.ctx.save();
+        this.foregroundCtx.save();
+        // Clear the canvas (must be transparent)
+        this.foregroundCtx.clearRect(0, 0, this.foregroundCanvas.width, this.foregroundCanvas.height);
         for (const [name, draggablePoint] of Object.entries(this.draggableManager.draggablePoints)) {
             if (draggablePoint.opts["hidden"]) {
                 continue;
@@ -151,23 +155,23 @@ export class MainCanvas {
             }
 
             if (draggablePoint.isDragging) {
-                this.ctx.fillStyle = color;
-                this.ctx.beginPath();
-                this.ctx.arc(x, z, 5, 0, 2 * Math.PI);
-                this.ctx.fill();
+                this.foregroundCtx.fillStyle = color;
+                this.foregroundCtx.beginPath();
+                this.foregroundCtx.arc(x, z, 5, 0, 2 * Math.PI);
+                this.foregroundCtx.fill();
             } else if (draggablePoint == this.draggableManager.hovering) {
-                this.ctx.fillStyle = color;
-                this.ctx.beginPath();
-                this.ctx.arc(x, z, 8, 0, 2 * Math.PI);
-                this.ctx.fill();
+                this.foregroundCtx.fillStyle = color;
+                this.foregroundCtx.beginPath();
+                this.foregroundCtx.arc(x, z, 8, 0, 2 * Math.PI);
+                this.foregroundCtx.fill();
             } else {
-                this.ctx.fillStyle = color;
-                this.ctx.beginPath();
-                this.ctx.arc(x, z, 5, 0, 2 * Math.PI);
-                this.ctx.fill();
+                this.foregroundCtx.fillStyle = color;
+                this.foregroundCtx.beginPath();
+                this.foregroundCtx.arc(x, z, 5, 0, 2 * Math.PI);
+                this.foregroundCtx.fill();
             }
         }
-        this.ctx.restore();
+        this.foregroundCtx.restore();
     }
 
     draw() {

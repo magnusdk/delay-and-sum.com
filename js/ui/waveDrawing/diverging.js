@@ -112,7 +112,7 @@ export function drawInsonifiedAreaDivergingWave(ctx, grid, probe, virtualSource)
         probe.zMax - virtualSource[1],
         probe.xMax - virtualSource[0],
     );
-    const _offscreenLength = 1;  // This should be enough length to extend past the canvas for very small grids.
+    const _offscreenLength = 2;  // This should be enough length to extend past the canvas for very small grids.
     ctx.save();
     ctx.fillStyle = Colors.hexToRGB(Colors.sonifiedArea, 0.3);
     ctx.beginPath();
