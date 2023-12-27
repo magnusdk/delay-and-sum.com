@@ -58,17 +58,12 @@ export class App {
         this.probe.loadParams();
 
         const maxTime = params.sectorDepthsMax / params.soundSpeed * 1.5;
-        var sign = 1;
         const draw = () => {
-            //this.mainCanvas.shouldRedraw = true;
-
             if (this.mainCanvas.shouldRedraw) {
                 this.mainCanvas.draw();
                 this.mainSimulationCanvas.draw(this.simulationCanvas, this.probe);
                 this.mainCanvas.shouldRedraw = false;
             }
-            //params.time += maxTime / 400 * sign;
-            //if ((params.time > maxTime) || params.time < 0) params.time=0;//sign *= -1;
             requestAnimationFrame(draw);
         }
         draw();
