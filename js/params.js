@@ -79,7 +79,7 @@ function _dumpParamsToURL() {
     let url = new URL(window.location.href);
     for (let key in overriddenParams) {
         let value = overriddenParams[key];
-        if (typeof value === "number" && value >= 1e4) {
+        if (typeof value === "number" && (value <= 1e-4 || value >= 1e4)) {
             value = value.toExponential(3);
         } else if (Array.isArray(value) && value.every(v => typeof v === "number")) {
             value = value.map(v => v.toExponential(3)).join(",");
