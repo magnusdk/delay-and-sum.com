@@ -280,7 +280,7 @@ export class TimelineCanvas {
             virtualSourcesX, virtualSourcesZ, virtualSourcesX.length,
             params.centerFrequency, params.pulseLength,
             params.soundSpeed, params.soundSpeedAssumedTx,
-            params.gain, params.displayMode,
+            params.timelineGain, params.displayMode,
         );
         const ctx = canvas.getContext("2d");
 

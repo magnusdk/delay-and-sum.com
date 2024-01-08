@@ -35,8 +35,9 @@ export const defaultParams = {
     soundSpeedAssumedTx: 1540,
     pulseLength: 1,
     centerFrequency: 3e6,
-    gain: 0,  // dB
     displayMode: 0,  // -1: hide, 0: phase, 1: envelope, 2: intensity
+    gain: 0,  // dB
+    timelineGain: 0,  // dB
 }
 
 defaultParams.width = Math.abs(defaultParams.xMax - defaultParams.xMin);

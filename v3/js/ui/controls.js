@@ -136,6 +136,11 @@ export function initControls(controlsDiv, app) {
         -60, 60, 0.01, "dB", 1, 2,
         (value) => app.updateParam("gain", value),
     ));
+    controlsDiv.appendChild(slider(
+        "timelineGain", "Timeline gain",
+        -60, 60, 0.01, "dB", 1, 2,
+        (value) => app.updateParam("timelineGain", value),
+    ));
     controlsDiv.appendChild(select(
         "displayMode", "Display mode",
         [[-1, "Hide"], [0, "Phase"], [1, "Envelope"], [2, "Intensity"]],
