@@ -289,7 +289,7 @@ export class TimelineCanvas {
         ctx.lineTo(canvas.width, canvas.height / 2);
         ctx.beginPath();
         ctx.strokeStyle = Colors.timelineSamples;
-        ctx.lineWidth = this.grid.toCanvasSize(0.5e-4);
+        ctx.lineWidth = this.grid.toCanvasSize(1e-4);
         ctx.lineJoin = "round";
         ctx.moveTo(0, canvas.height / 2);
         for (let i = 0; i < samples.length; i++) {
@@ -302,7 +302,7 @@ export class TimelineCanvas {
         //Draw a line at the current time
         ctx.save();
         ctx.strokeStyle = Colors.timelineTimeMarker;
-        ctx.lineWidth = this.grid.toCanvasSize(0.5e-4);
+        ctx.lineWidth = this.grid.toCanvasSize(1e-4);
         ctx.lineCap = "round";
         ctx.beginPath();
         ctx.moveTo(params.time / this.maxTime * canvas.width, canvas.height / 8);
