@@ -11,7 +11,8 @@ body {
 }
 
 #backgroundCanvas,
-#simulationCanvas,
+#secondarySimulationCanvas,
+#primarySimulationCanvas,
 #foregroundCanvas {
     position: absolute;
     top: 0;
@@ -28,10 +29,14 @@ body {
     z-index: 1;
 }
 
-#simulationCanvas {
+#secondarySimulationCanvas {
     z-index: 2;
 }
 
-#foregroundCanvas {
+#primarySimulationCanvas {
     z-index: 3;
+}
+
+#foregroundCanvas {
+    z-index: 4;
 }

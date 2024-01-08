@@ -5,24 +5,30 @@ import { DraggableManager } from "/v3/js/ui/draggableManager.js";
 import { MainCanvas } from "/v3/js/ui/mainCanvas.js";
 import { LinearProbe } from "/v3/js/probe.js";
 import { resetParams, updateParam } from "/v3/js/params.js";
-import { MainSimulationCanvas, TimelineCanvas } from "/v3/js/ui/simulation.js";
+import { PrimarySimulationCanvas, SecondarySimulationCanvas, TimelineCanvas } from "/v3/js/ui/simulation.js";
 
 
 export class App {
     constructor(
         backgroundCanvasElement,
-        simulationCanvasElement,
+        primarySimulationCanvasElement,
+        secondarySimulationCanvasElement,
         foregroundCanvasElement,
         timelineCanvasElement
     ) {
-        this.backgroundCanvas = backgroundCanvasElement;
-        this.simulationCanvas = simulationCanvasElement;
-        this.foregroundCanvas = foregroundCanvasElement;
+        this.backgroundCanvasElement = backgroundCanvasElement;
+        this.primarySimulationCanvasElement = primarySimulationCanvasElement;
+        this.secondarySimulationCanvasElement = secondarySimulationCanvasElement;
+        this.foregroundCanvasElement = foregroundCanvasElement;
         this.timelineCanvasElement = timelineCanvasElement;
 
-        this.mainSimulationCanvas = new MainSimulationCanvas(
-            this.simulationCanvas.width,
-            this.simulationCanvas.height
+        this.primarySimulationCanvas = new PrimarySimulationCanvas(
+            this.primarySimulationCanvasElement.width,
+            this.primarySimulationCanvasElement.height
+        );
+        this.secondarySimulationCanvas = new SecondarySimulationCanvas(
+            this.secondarySimulationCanvasElement.width,
+            this.secondarySimulationCanvasElement.height
         );
 
         this.probe = new LinearProbe();
@@ -33,11 +39,14 @@ export class App {
         this.draggableManager.addPoint("probeRight", { hidden: true, "relative": true });
         this.draggableManager.addMidPoint("probeLeft", "probeRight", { hidden: true });
 
-        this.grid = new Grid(this.simulationCanvas.width, this.simulationCanvas.height);
+        this.grid = new Grid(
+            this.primarySimulationCanvasElement.width,
+            this.primarySimulationCanvasElement.height,
+        );
         this.timelineCanvas = new TimelineCanvas(this.grid);
         this.mainCanvas = new MainCanvas(
-            this.backgroundCanvas,
-            this.foregroundCanvas,
+            this.backgroundCanvasElement,
+            this.foregroundCanvasElement,
             this.grid,
             this.probe,
             this.draggableManager,
@@ -52,6 +61,9 @@ export class App {
         this.tooltipManager = new TooltipManager();
 
         this.connectEventListeners();
+
+        primarySimulationCanvasElement.replaceWith(this.primarySimulationCanvas.canvas);
+        secondarySimulationCanvas.replaceWith(this.secondarySimulationCanvas.canvas);
     }
 
     start() {
@@ -59,7 +71,8 @@ export class App {
         const draw = () => {
             if (this.mainCanvas.shouldRedraw) {
                 this.mainCanvas.draw();
-                this.mainSimulationCanvas.draw(this.simulationCanvas, this.probe);
+                this.primarySimulationCanvas.update(this.probe);
+                //this.secondarySimulationCanvas.update(this.probe);
                 this.mainCanvas.shouldRedraw = false;
 
                 // TODO: Only update when needed or move shouldRedraw outside of mainCanvas
@@ -72,8 +85,8 @@ export class App {
 
 
     connectEventListeners() {
-        this.foregroundCanvas.addEventListener("mousemove", (e) => {
-            let [x, z] = getCanvasPointFromMouseEvent(this.foregroundCanvas, e);
+        this.foregroundCanvasElement.addEventListener("mousemove", (e) => {
+            let [x, z] = getCanvasPointFromMouseEvent(this.foregroundCanvasElement, e);
             [x, z] = this.grid.fromCanvasCoords(x, z);
             this.tooltipManager.update(e.clientX, e.clientY, x, z);
             this.tooltipManager.show();
@@ -82,19 +95,19 @@ export class App {
             this.probe.loadParams();
             this.mainCanvas.shouldRedraw = true;
         });
-        this.foregroundCanvas.addEventListener("mousedown", (e) => {
-            let [x, z] = getCanvasPointFromMouseEvent(this.foregroundCanvas, e);
+        this.foregroundCanvasElement.addEventListener("mousedown", (e) => {
+            let [x, z] = getCanvasPointFromMouseEvent(this.foregroundCanvasElement, e);
             [x, z] = this.grid.fromCanvasCoords(x, z);
             this.draggableManager.startDragging(x, z);
             this.mainCanvas.shouldRedraw = true;
         });
-        this.foregroundCanvas.addEventListener("mouseup", (e) => {
-            let [x, z] = getCanvasPointFromMouseEvent(this.foregroundCanvas, e);
+        this.foregroundCanvasElement.addEventListener("mouseup", (e) => {
+            let [x, z] = getCanvasPointFromMouseEvent(this.foregroundCanvasElement, e);
             [x, z] = this.grid.fromCanvasCoords(x, z);
             this.draggableManager.stopDragging(x, z);
             this.mainCanvas.shouldRedraw = true;
         });
-        this.foregroundCanvas.addEventListener("mouseleave", (e) => {
+        this.foregroundCanvasElement.addEventListener("mouseleave", (e) => {
             this.tooltipManager.hide();
         });
 

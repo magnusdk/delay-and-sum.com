@@ -172,10 +172,38 @@ function timelinekernel(
     ];
 }
 
+function maximumIntensityKernel(
+    elementsX, elementsZ, numElements,
+    waveOriginX, waveOriginZ, transmittedWaveType,
+    virtualSourcesX, virtualSourcesZ, numVirtualSources,
+    f, pulseLength, soundSpeed, soundSpeedAssumedTx,
+    gain, displayMode,
+) {
+    const { constants: { maxNumElements, maxNumVirtualSources, numTimeSteps, minTime, maxTime } } = this;
+    const [x, z] = getPosition();
+    let maxEnv = 0.0;
+    for (let i = 0; i < numTimeSteps; i++) {
+        const t = i / numTimeSteps * maxTime + minTime;
+        const [real, imag] = pressureFieldAtPoint(
+            x, z, t,
+            elementsX, elementsZ, numElements,
+            waveOriginX, waveOriginZ, transmittedWaveType,
+            virtualSourcesX, virtualSourcesZ, numVirtualSources,
+            f, pulseLength, soundSpeed, soundSpeedAssumedTx,
+            maxNumElements, maxNumVirtualSources,
+        );
+        const env = dist(real, imag);
+        maxEnv = Math.max(maxEnv, env);
+    }
+    maxEnv = maxEnv ** 2 / 100;
+    this.color(0, 0, 0, maxEnv * 10 ** (gain / 20));
+}
 
-export class MainSimulationCanvas {
+
+export class PrimarySimulationCanvas {
     constructor(width, height) {
         this.canvas = document.createElement("canvas");
+        this.canvas.id = "primarySimulationCanvas";
         this.canvas.width = width;
         this.canvas.height = height;
         this.gl = this.canvas.getContext('webgl2', { premultipliedAlpha: false });
@@ -198,7 +226,7 @@ export class MainSimulationCanvas {
             });
     }
 
-    draw(canvas, probe) {
+    update(probe) {
         const [elementsX, elementsZ] = [probe.x, probe.z];
         const virtualSourcesX = [params.virtualSource[0]];
         const virtualSourcesZ = [params.virtualSource[1]];
@@ -223,12 +251,64 @@ export class MainSimulationCanvas {
             params.soundSpeed, params.soundSpeedAssumedTx,
             params.gain, params.displayMode,
         );
-        const ctx = canvas.getContext("2d");
+    }
+}
 
-        ctx.save();
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(this.canvas, 0, 0);
-        ctx.restore();
+
+export class SecondarySimulationCanvas {
+    constructor(width, height) {
+        this.canvas = document.createElement("canvas");
+        this.canvas.id = "secondarySimulationCanvas";
+        this.canvas.width = width;
+        this.canvas.height = height;
+        this.gl = this.canvas.getContext('webgl2', { premultipliedAlpha: false });
+        this.gpu = new GPUX({ canvas: this.canvas, webGl: this.gl });
+        this.minTime = -params.pulseLength / params.centerFrequency * 10;
+        this.maxTime = params.sectorDepthsMax / params.soundSpeed * 1.5;
+        this.simulationKernel = this.gpu.createKernel(maximumIntensityKernel)
+            .setOutput([this.gpu.canvas.width, this.gpu.canvas.height])
+            .setGraphical(true)
+            .setFunctions([getPosition, pressureFieldAtPoint, dist, pulse, focusedWaveDistance, planeWaveDistance, divergingWaveDistance, postProcesspixel])
+            .setConstants({
+                "canvasWidth": this.gpu.canvas.width,
+                "canvasHeight": this.gpu.canvas.height,
+                "gridWidth": params.width,
+                "gridHeight": params.height,
+                "gridXMin": params.xMin,
+                "gridXMax": params.xMax,
+                "gridZMin": params.zMin,
+                "gridZMax": params.zMax,
+                "maxNumElements": 256,
+                "maxNumVirtualSources": 1,
+                "numTimeSteps": 400,
+                "minTime": this.minTime,
+                "maxTime": this.maxTime,
+            });
+    }
+
+    update(probe) {
+        const [elementsX, elementsZ] = [probe.x, probe.z];
+        const virtualSourcesX = [params.virtualSource[0]];
+        const virtualSourcesZ = [params.virtualSource[1]];
+
+        const [waveOriginX, waveOriginZ] = probe.center;
+        // Ensure correct size of arrays
+        while (elementsX.length < this.simulationKernel.constants.maxNumElements) {
+            elementsX.push(0);
+            elementsZ.push(0);
+        }
+        while (virtualSourcesX.length < this.simulationKernel.constants.maxNumVirtualSources) {
+            virtualSourcesX.push(0);
+            virtualSourcesZ.push(0);
+        }
+        this.simulationKernel(
+            elementsX, elementsZ, params.probeNumElements,
+            waveOriginX, waveOriginZ, params.transmittedWaveType,
+            virtualSourcesX, virtualSourcesZ, virtualSourcesX.length,
+            params.centerFrequency, params.pulseLength,
+            params.soundSpeed, params.soundSpeedAssumedTx,
+            params.gain, params.displayMode,
+        );
     }
 }
 
