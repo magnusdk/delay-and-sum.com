@@ -1,5 +1,5 @@
-import { params } from "/js/params.js";
-// import { renderXTicks, renderZTicks } from "/js/ui/ticks.js";
+import { params } from "/v3/js/params.js";
+// import { renderXTicks, renderZTicks } from "/v3/js/ui/ticks.js";
 
 
 export class LinearProbe {

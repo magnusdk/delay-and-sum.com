@@ -1,4 +1,4 @@
-import { params, updateParam } from "/js/params.js";
+import { params, updateParam } from "/v3/js/params.js";
 
 
 export class Draggable {

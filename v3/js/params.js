@@ -1,4 +1,4 @@
-import { debounce } from "/js/util.js";
+import { debounce } from "/v3/js/util.js";
 
 export const defaultParams = {
 
@@ -21,7 +21,7 @@ export const defaultParams = {
     //// Beamforming and sampling parameters
     transmittedWaveType: 0,  // 0: focused, 1: plane, 2: diverging
     virtualSource: [0.002, 0.01],
-    samplePoint: [0.002, 0.015],
+    samplePoint: [-0.004, 0.012],
 
     probeType: "linear",
     probeNumElements: 64,

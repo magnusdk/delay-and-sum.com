@@ -1,4 +1,4 @@
-import { params } from "/js/params.js";
+import { params } from "/v3/js/params.js";
 
 
 function rescaleInputWidth(inputEl, numDecimals) {
@@ -101,13 +101,6 @@ export function slider(id, label, min, max, step, unitsLabel, scalingFactor, num
 
 
 export function initControls(controlsDiv, app) {
-    // Time slider
-    controlsDiv.appendChild(slider(
-        "time", "Time",
-        0, 20, 0.001, "ms", 1e-6, 3,
-        (value) => app.updateParam("time", value),
-    ));
-
     controlsDiv.appendChild(select(
         "transmittedWaveType", "Transmitted wave type",
         [[0, "Focused"], [1, "Plane"], [2, "Diverging"]],

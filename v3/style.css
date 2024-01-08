@@ -20,6 +20,10 @@ body {
     height: 100%;
 }
 
+#timelineCanvas {
+    width: 500px;
+}
+
 #backgroundCanvas {
     z-index: 1;
 }

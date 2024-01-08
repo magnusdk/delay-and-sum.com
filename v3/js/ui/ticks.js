@@ -1,4 +1,4 @@
-import { Colors } from "/js/ui/colors.js";
+import { Colors } from "/v3/js/ui/colors.js";
 
 
 export function renderXTicks(canvas, grid) {

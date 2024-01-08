@@ -1,4 +1,5 @@
-import { params } from "/js/params.js";
+import { params, updateParam } from "/v3/js/params.js";
+import { Colors } from "/v3/js/ui/colors.js";
 
 
 function dist(x, z) {
@@ -33,7 +34,7 @@ function getPosition() {
         constants: {
             canvasWidth, canvasHeight,
             gridWidth, gridHeight,
-            gridXMin, gridXMax, gridZMin, gridZMax,
+            gridXMin, gridZMin
         }
     } = this;
     x = x / canvasWidth * gridWidth + gridXMin;
@@ -43,7 +44,7 @@ function getPosition() {
 
 function postProcesspixel(real, imag, gain, displayMode) {
     // Color selection. Correspond to pink for positive phase, blue for 
-    // negative phase (following palette in /js/ui/colors.js).
+    // negative phase (following palette in /v3/js/ui/colors.js).
     const pinkR = 1;
     const pinkG = 0.09803921568627451;
     const pinkB = 0.3686274509803922;
@@ -51,9 +52,9 @@ function postProcesspixel(real, imag, gain, displayMode) {
     const blueG = 0.5215686274509804;
     const blueB = 1;
 
+    const env = dist(real, imag);
     if (displayMode >= 1) {
         // Amplitude or intensity post-processing mode
-        let env = dist(real, imag) / Math.sqrt(2);
         if (displayMode == 2) {
             // Intensity post-processing mode
             env = env ** 2;
@@ -65,7 +66,6 @@ function postProcesspixel(real, imag, gain, displayMode) {
         this.color(0, 0, 0, 0);
     }
     else {
-        let env = dist(real, imag) / Math.sqrt(2);
         this.color(
             real > 0 ? pinkR : blueR,
             real > 0 ? pinkG : blueG,
@@ -84,22 +84,20 @@ function pulse(phase, pulseLength) {
 }
 
 
-function mainSimulationkernel(
-    t,
+function pressureFieldAtPoint(
+    x, z, t,
     elementsX, elementsZ, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
     virtualSourcesX, virtualSourcesZ, numVirtualSources,
     f, pulseLength, soundSpeed, soundSpeedAssumedTx,
-    gain, displayMode,
+    maxNumElements, maxNumVirtualSources,
 ) {
-    const { constants: { maxNumElements, maxNumVirtualSources } } = this;
-    const [x, z] = getPosition();
     let real = 0;
     let imag = 0;
     for (let i = 0; i < maxNumVirtualSources; i++) {
         if (i >= numVirtualSources) break;
-        let virtualSourceX = virtualSourcesX[i];
-        let virtualSourceZ = virtualSourcesZ[i];
+        const virtualSourceX = virtualSourcesX[i];
+        const virtualSourceZ = virtualSourcesZ[i];
         for (let j = 0; j < maxNumElements; j++) {
             if (j >= numElements) break;
             const elX = elementsX[j];
@@ -120,7 +118,58 @@ function mainSimulationkernel(
         }
     }
     //real /= numElements; imag /= numElements;
+    return [real, imag];
+}
+
+
+function mainSimulationkernel(
+    t,
+    elementsX, elementsZ, numElements,
+    waveOriginX, waveOriginZ, transmittedWaveType,
+    virtualSourcesX, virtualSourcesZ, numVirtualSources,
+    f, pulseLength, soundSpeed, soundSpeedAssumedTx,
+    gain, displayMode,
+) {
+    const { constants: { maxNumElements, maxNumVirtualSources } } = this;
+    const [x, z] = getPosition();
+    const [real, imag] = pressureFieldAtPoint(
+        x, z, t,
+        elementsX, elementsZ, numElements,
+        waveOriginX, waveOriginZ, transmittedWaveType,
+        virtualSourcesX, virtualSourcesZ, numVirtualSources,
+        f, pulseLength, soundSpeed, soundSpeedAssumedTx,
+        maxNumElements, maxNumVirtualSources,
+    );
     postProcesspixel(real, imag, gain, displayMode);
+}
+
+
+function timelinekernel(
+    samplePointX, samplePointZ,
+    elementsX, elementsZ, numElements,
+    waveOriginX, waveOriginZ, transmittedWaveType,
+    virtualSourcesX, virtualSourcesZ, numVirtualSources,
+    f, pulseLength, soundSpeed, soundSpeedAssumedTx,
+    gain, displayMode,
+) {
+    const {
+        thread: { x },
+        constants: { canvasWidth, maxNumElements, maxNumVirtualSources, maxTime }
+    } = this;
+    const t = x / canvasWidth * maxTime
+    const [real, imag] = pressureFieldAtPoint(
+        samplePointX, samplePointZ, t,
+        elementsX, elementsZ, numElements,
+        waveOriginX, waveOriginZ, transmittedWaveType,
+        virtualSourcesX, virtualSourcesZ, numVirtualSources,
+        f, pulseLength, soundSpeed, soundSpeedAssumedTx,
+        maxNumElements, maxNumVirtualSources,
+    );
+    const env = dist(real, imag);
+    return [
+        real * 10 ** (gain / 20),
+        env * 10 ** (gain / 20)
+    ];
 }
 
 
@@ -134,7 +183,7 @@ export class MainSimulationCanvas {
         this.simulationKernel = this.gpu.createKernel(mainSimulationkernel)
             .setOutput([this.gpu.canvas.width, this.gpu.canvas.height])
             .setGraphical(true)
-            .setFunctions([getPosition, dist, pulse, focusedWaveDistance, planeWaveDistance, divergingWaveDistance, postProcesspixel])
+            .setFunctions([getPosition, pressureFieldAtPoint, dist, pulse, focusedWaveDistance, planeWaveDistance, divergingWaveDistance, postProcesspixel])
             .setConstants({
                 "canvasWidth": this.gpu.canvas.width,
                 "canvasHeight": this.gpu.canvas.height,
@@ -146,7 +195,7 @@ export class MainSimulationCanvas {
                 "gridZMax": params.zMax,
                 "maxNumElements": 256,
                 "maxNumVirtualSources": 1,
-            })
+            });
     }
 
     draw(canvas, probe) {
@@ -180,5 +229,99 @@ export class MainSimulationCanvas {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(this.canvas, 0, 0);
         ctx.restore();
+    }
+}
+
+
+
+export class TimelineCanvas {
+    constructor(grid) {
+        this.grid = grid;
+        this.canvas = document.createElement("canvas");
+        this.canvas.width = grid.canvasWidth;
+        this.canvas.height = grid.canvasHeight;
+        this.gl = this.canvas.getContext('webgl2', { premultipliedAlpha: false });
+        this.gpu = new GPUX({ canvas: this.canvas, webGl: this.gl });
+        this.maxTime = params.sectorDepthsMax / params.soundSpeed * 1.5;
+        this.kernel = this.gpu.createKernel(timelinekernel)
+            .setOutput([this.gpu.canvas.width])
+            .setFunctions([pressureFieldAtPoint, dist, pulse, focusedWaveDistance, planeWaveDistance, divergingWaveDistance])
+            .setConstants({
+                "canvasWidth": this.gpu.canvas.width,
+                "canvasHeight": this.gpu.canvas.height,
+                "maxNumElements": 256,
+                "maxNumVirtualSources": 1,
+                "maxTime": this.maxTime,
+            });
+    }
+
+    draw(canvas, probe) {
+        const [elementsX, elementsZ] = [probe.x, probe.z];
+        const virtualSourcesX = [params.virtualSource[0]];
+        const virtualSourcesZ = [params.virtualSource[1]];
+        const samplePointX = params.samplePoint[0];
+        const samplePointZ = params.samplePoint[1];
+
+        // center of probe
+        const [waveOriginX, waveOriginZ] = probe.center;
+        // Ensure correct size of arrays
+        while (elementsX.length < this.kernel.constants.maxNumElements) {
+            elementsX.push(0);
+            elementsZ.push(0);
+        }
+        while (virtualSourcesX.length < this.kernel.constants.maxNumVirtualSources) {
+            virtualSourcesX.push(0);
+            virtualSourcesZ.push(0);
+        }
+        const samples = this.kernel(
+            samplePointX, samplePointZ,
+            elementsX, elementsZ, params.probeNumElements,
+            waveOriginX, waveOriginZ, params.transmittedWaveType,
+            virtualSourcesX, virtualSourcesZ, virtualSourcesX.length,
+            params.centerFrequency, params.pulseLength,
+            params.soundSpeed, params.soundSpeedAssumedTx,
+            params.gain, params.displayMode,
+        );
+        const ctx = canvas.getContext("2d");
+
+        ctx.save();
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.beginPath();
+        ctx.strokeStyle = Colors.timelineSamples;
+        ctx.lineWidth = this.grid.toCanvasSize(0.5e-4);
+        ctx.lineJoin = "round";
+        ctx.moveTo(0, canvas.height / 2);
+        for (let i = 0; i < samples.length; i++) {
+            ctx.lineTo(i, canvas.height / 2 - samples[i][0] * 30);
+        }
+        ctx.lineTo(canvas.width, canvas.height / 2);
+        ctx.stroke();
+        ctx.restore();
+
+        //Draw a line at the current time
+        ctx.save();
+        ctx.strokeStyle = Colors.timelineTimeMarker;
+        ctx.lineWidth = this.grid.toCanvasSize(0.5e-4);
+        ctx.lineCap = "round";
+        ctx.beginPath();
+        ctx.moveTo(params.time / this.maxTime * canvas.width, canvas.height / 8);
+        ctx.lineTo(params.time / this.maxTime * canvas.width, canvas.height / 8 * 7);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    dragTime(x) {
+        if (this.dragging) {
+            updateParam("time", x * this.maxTime);
+        }
+    }
+
+    startDragging(x) {
+        updateParam("time", x * this.maxTime);
+        this.dragging = true;
+    }
+    stopDragging(x) {
+        this.dragging = false;
     }
 }

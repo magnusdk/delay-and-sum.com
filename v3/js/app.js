@@ -1,24 +1,23 @@
-import { TooltipManager } from "/js/ui/tooltipManager.js";
-import { getCanvasPointFromMouseEvent } from "/js/util.js";
-import { Grid } from "/js/grid.js";
-import { DraggableManager } from "/js/ui/draggableManager.js";
-import { MainCanvas } from "/js/ui/mainCanvas.js";
-import { LinearProbe } from "/js/probe.js";
-import { params, resetParams, updateParam } from "/js/params.js";
-// import { renderXTicks, renderZTicks } from "/js/ui/ticks.js";
-import { MainSimulationCanvas } from "/js/ui/simulation.js";
+import { TooltipManager } from "/v3/js/ui/tooltipManager.js";
+import { getCanvasPointFromMouseEvent } from "/v3/js/util.js";
+import { Grid } from "/v3/js/grid.js";
+import { DraggableManager } from "/v3/js/ui/draggableManager.js";
+import { MainCanvas } from "/v3/js/ui/mainCanvas.js";
+import { LinearProbe } from "/v3/js/probe.js";
+import { resetParams, updateParam } from "/v3/js/params.js";
+import { MainSimulationCanvas, TimelineCanvas } from "/v3/js/ui/simulation.js";
 
 
 export class App {
     constructor(
-        backgroundCanvas,
-        simulationCanvas,
-        foregroundCanvas,
+        backgroundCanvasElement,
+        simulationCanvasElement,
+        foregroundCanvasElement,
         timelineCanvasElement
     ) {
-        this.backgroundCanvas = backgroundCanvas;
-        this.simulationCanvas = simulationCanvas;
-        this.foregroundCanvas = foregroundCanvas;
+        this.backgroundCanvas = backgroundCanvasElement;
+        this.simulationCanvas = simulationCanvasElement;
+        this.foregroundCanvas = foregroundCanvasElement;
         this.timelineCanvasElement = timelineCanvasElement;
 
         this.mainSimulationCanvas = new MainSimulationCanvas(
@@ -35,6 +34,7 @@ export class App {
         this.draggableManager.addMidPoint("probeLeft", "probeRight", { hidden: true });
 
         this.grid = new Grid(this.simulationCanvas.width, this.simulationCanvas.height);
+        this.timelineCanvas = new TimelineCanvas(this.grid);
         this.mainCanvas = new MainCanvas(
             this.backgroundCanvas,
             this.foregroundCanvas,
@@ -56,13 +56,14 @@ export class App {
 
     start() {
         this.probe.loadParams();
-
-        const maxTime = params.sectorDepthsMax / params.soundSpeed * 1.5;
         const draw = () => {
             if (this.mainCanvas.shouldRedraw) {
                 this.mainCanvas.draw();
                 this.mainSimulationCanvas.draw(this.simulationCanvas, this.probe);
                 this.mainCanvas.shouldRedraw = false;
+
+                // TODO: Only update when needed or move shouldRedraw outside of mainCanvas
+                this.timelineCanvas.draw(this.timelineCanvasElement, this.probe);
             }
             requestAnimationFrame(draw);
         }
@@ -95,6 +96,26 @@ export class App {
         });
         this.foregroundCanvas.addEventListener("mouseleave", (e) => {
             this.tooltipManager.hide();
+        });
+
+        // Drag time over the timeline
+        this.timelineCanvasElement.addEventListener("mousemove", (e) => {
+            const [x, y] = getCanvasPointFromMouseEvent(this.timelineCanvasElement, e);
+            const t = x / this.timelineCanvasElement.width;
+            this.timelineCanvas.dragTime(t);
+            this.mainCanvas.shouldRedraw = true;
+        });
+        this.timelineCanvasElement.addEventListener("mousedown", (e) => {
+            const [x, y] = getCanvasPointFromMouseEvent(this.timelineCanvasElement, e);
+            const t = x / this.timelineCanvasElement.width;
+            this.timelineCanvas.startDragging(t);
+            this.mainCanvas.shouldRedraw = true;
+        });
+        this.timelineCanvasElement.addEventListener("mouseup", (e) => {
+            const [x, y] = getCanvasPointFromMouseEvent(this.timelineCanvasElement, e);
+            const t = x / this.timelineCanvasElement.width;
+            this.timelineCanvas.stopDragging(t);
+            this.mainCanvas.shouldRedraw = true;
         });
     }
 

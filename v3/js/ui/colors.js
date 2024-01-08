@@ -36,3 +36,5 @@ Colors.sonifiedArea = Colors.hexToRGB(Colors.cyan, 0.3);
 Colors.sonifiedVirtualCircle = Colors.pink;
 Colors.insonifiedVirtualCircle = Colors.hexToRGB(Colors.lightPink, 0.5);
 Colors.grid = Colors.hexToRGB(Colors.black, 0.1);
+Colors.timelineSamples = Colors.blue;
+Colors.timelineTimeMarker = Colors.pink;

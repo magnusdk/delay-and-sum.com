@@ -4,8 +4,8 @@
 
 <head>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="style.css" />
-    <link rel="stylesheet" href="controls.css" />
+    <link rel="stylesheet" href="v3/style.css" />
+    <link rel="stylesheet" href="v3/controls.css" />
     <title>🌊</title>
 </head>
 
@@ -15,14 +15,15 @@
         <canvas id="simulationCanvas" width="1000" height="1000"></canvas>
         <canvas id="foregroundCanvas" width="1000" height="1000"></canvas>
     </div>
+    <canvas id="timelineCanvas" width="1000" height="200"></canvas>
     <div id="controlsContainer" class="controlsContainer"></div>
 
-    <script src="/js/gpu.min.js"></script>
+    <script src="/v3/js/gpu.min.js"></script>
     <script type="module">
-        import { App } from './js/app.js';
-        import { params } from './js/params.js';
-        import { initControls } from '/js/ui/controls.js';
-        import { loadParamsFromURL } from "/js/params.js";
+        import { App } from './v3/js/app.js';
+        import { params } from './v3/js/params.js';
+        import { initControls } from '/v3/js/ui/controls.js';
+        import { loadParamsFromURL } from "/v3/js/params.js";
 
         document.app = new App(
             document.getElementById('backgroundCanvas'),

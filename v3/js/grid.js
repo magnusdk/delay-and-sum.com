@@ -1,4 +1,4 @@
-import { params } from "/js/params.js";
+import { params } from "/v3/js/params.js";
 
 
 export class Grid {

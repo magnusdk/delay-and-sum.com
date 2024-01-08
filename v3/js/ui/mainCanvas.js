@@ -1,8 +1,8 @@
-import { Colors } from "/js/ui/colors.js";
-import { params } from "/js/params.js";
-import { drawPlaneWave, drawSonifiedAreaPlaneWave } from "/js/ui/waveDrawing/plane.js";
-import { drawDivergingWave, drawSonifiedAreaDivergingWave } from "/js/ui/waveDrawing/diverging.js";
-import { drawFocusedWave, drawSonifiedAreaFocusedWave } from "/js/ui/waveDrawing/focused.js";
+import { Colors } from "/v3/js/ui/colors.js";
+import { params } from "/v3/js/params.js";
+import { drawPlaneWave, drawSonifiedAreaPlaneWave } from "/v3/js/ui/waveDrawing/plane.js";
+import { drawDivergingWave, drawSonifiedAreaDivergingWave } from "/v3/js/ui/waveDrawing/diverging.js";
+import { drawFocusedWave, drawSonifiedAreaFocusedWave } from "/v3/js/ui/waveDrawing/focused.js";
 
 
 export class MainCanvas {
