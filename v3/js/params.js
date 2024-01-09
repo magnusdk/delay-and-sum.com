@@ -38,7 +38,7 @@ export const defaultParams = {
     displayMode: 0,  // -1: hide, 0: phase, 1: envelope, 2: intensity
     gain: 0,  // dB
     timelineGain: 0,  // dB
-    calculateMaximumIntensity: true,
+    calculateMaximumIntensity: false,
 }
 
 defaultParams.width = Math.abs(defaultParams.xMax - defaultParams.xMin);
