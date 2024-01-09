@@ -41,11 +41,6 @@
     width: 100%;
 }
 
-.control select {
-    /* Add some additional spacing to dropdowns since they don't have a slider */
-    margin-bottom: 5px;
-}
-
 
 /* Style inputs and dropdowns to have same border as controlsContainer */
 input[type=text],

@@ -4,7 +4,7 @@ import { Grid } from "/v3/js/grid.js";
 import { DraggableManager } from "/v3/js/ui/draggableManager.js";
 import { MainCanvas } from "/v3/js/ui/mainCanvas.js";
 import { LinearProbe } from "/v3/js/probe.js";
-import { resetParams, updateParam } from "/v3/js/params.js";
+import { params, resetParams, updateParam } from "/v3/js/params.js";
 import { PrimarySimulationCanvas, SecondarySimulationCanvas, TimelineCanvas } from "/v3/js/ui/simulation.js";
 
 
@@ -72,7 +72,11 @@ export class App {
             if (this.mainCanvas.shouldRedraw) {
                 this.mainCanvas.draw();
                 this.primarySimulationCanvas.update(this.probe);
-                //this.secondarySimulationCanvas.update(this.probe);
+                if (params.calculateMaximumIntensity) {
+                    this.secondarySimulationCanvas.update(this.probe);
+                } else {
+                    this.secondarySimulationCanvas.clear();
+                }
                 this.mainCanvas.shouldRedraw = false;
 
                 // TODO: Only update when needed or move shouldRedraw outside of mainCanvas

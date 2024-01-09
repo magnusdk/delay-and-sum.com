@@ -310,6 +310,10 @@ export class SecondarySimulationCanvas {
             params.gain, params.displayMode,
         );
     }
+
+    clear(){
+        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
+    }
 }
 
 

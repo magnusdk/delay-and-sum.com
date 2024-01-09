@@ -98,9 +98,37 @@ export function slider(id, label, min, max, step, unitsLabel, scalingFactor, num
     return controlEl;
 }
 
+export function checkbox(id, label, callback) {
+    const controlEl = document.createElement("div");
+    controlEl.classList.add("control");
+
+    const labelEl = document.createElement("label");
+    labelEl.setAttribute("for", id);
+    labelEl.innerText = label;
+
+    const checkboxEl = document.createElement("input");
+    checkboxEl.setAttribute("type", "checkbox");
+    checkboxEl.setAttribute("id", id);
+    checkboxEl.checked = params[id];
+    checkboxEl.addEventListener("change", (e) => callback(e.target.checked));
+
+    controlEl.appendChild(labelEl);
+    controlEl.appendChild(checkboxEl);
+    return controlEl;
+}
+
 
 
 export function initControls(controlsDiv, app) {
+    controlsDiv.appendChild(select(
+        "displayMode", "Wave display mode",
+        [[-1, "Hide"], [0, "Phase"], [1, "Envelope"], [2, "Intensity"]],
+        (value) => app.updateParam("displayMode", value),
+    ));
+    controlsDiv.appendChild(checkbox(
+        "calculateMaximumIntensity", "Maximum intensity",
+        (value) => app.updateParam("calculateMaximumIntensity", value),
+    ));
     controlsDiv.appendChild(select(
         "transmittedWaveType", "Transmitted wave type",
         [[0, "Focused"], [1, "Plane"], [2, "Diverging"]],
@@ -128,7 +156,7 @@ export function initControls(controlsDiv, app) {
     ));
     controlsDiv.appendChild(slider(
         "pulseLength", "Pulse length",
-        0.1, 10, 0.01, "wavelengths", 1, 2,
+        0.1, 100, 0.01, "wavelengths", 1, 2,
         (value) => app.updateParam("pulseLength", value),
     ));
     controlsDiv.appendChild(slider(
@@ -140,10 +168,5 @@ export function initControls(controlsDiv, app) {
         "timelineGain", "Timeline gain",
         -60, 60, 0.01, "dB", 1, 2,
         (value) => app.updateParam("timelineGain", value),
-    ));
-    controlsDiv.appendChild(select(
-        "displayMode", "Display mode",
-        [[-1, "Hide"], [0, "Phase"], [1, "Envelope"], [2, "Intensity"]],
-        (value) => app.updateParam("displayMode", value),
     ));
 }
