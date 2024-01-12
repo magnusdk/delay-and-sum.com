@@ -3,7 +3,8 @@ import { params } from "/v3/js/params.js";
 
 function rescaleInputWidth(inputEl, numDecimals) {
     const asFloat = parseFloat(inputEl.value);
-    const numDigits = Math.max(Math.floor(Math.log10(asFloat)), 0) + 1;
+    const isNegative = asFloat < 0;
+    const numDigits = Math.max(Math.floor(Math.log10(Math.abs(asFloat))), 0) + 1 + isNegative;
     const width = Math.max(
         inputEl.value.length,
         numDigits + numDecimals + (numDecimals !== 0)  // Account for the period character
