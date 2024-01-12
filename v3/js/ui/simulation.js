@@ -146,7 +146,7 @@ function mainSimulationkernel(
 
 
 function timelinekernel(
-    maxTime,
+    minTime, maxTime,
     samplePointX, samplePointZ,
     elementsX, elementsZ, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
@@ -158,7 +158,7 @@ function timelinekernel(
         thread: { x },
         constants: { canvasWidth, maxNumElements, maxNumVirtualSources }
     } = this;
-    const t = x / canvasWidth * maxTime
+    const t = x / canvasWidth * (maxTime - minTime) + minTime;
     const [real, imag] = pressureFieldAtPoint(
         samplePointX, samplePointZ, t,
         elementsX, elementsZ, numElements,
@@ -350,6 +350,10 @@ export class TimelineCanvas {
         const virtualSourcesZ = [params.virtualSource[1]];
         const samplePointX = params.samplePoint[0];
         const samplePointZ = params.samplePoint[1];
+
+        // Set the min and max time rendered on the timeline.
+        // time=0 is when the center of the pulse passes through the center of the probe.
+        this.minTime = -5e-3 / params.soundSpeed;
         this.maxTime = (params.sectorDepthsMax * 2) * 2 ** -params.gridScale / params.soundSpeed;
 
         // center of probe
@@ -364,7 +368,7 @@ export class TimelineCanvas {
             virtualSourcesZ.push(0);
         }
         const samples = this.kernel(
-            this.maxTime,
+            this.minTime, this.maxTime,
             samplePointX, samplePointZ,
             elementsX, elementsZ, params.probeNumElements,
             waveOriginX, waveOriginZ, params.transmittedWaveType,
@@ -396,20 +400,21 @@ export class TimelineCanvas {
         ctx.lineWidth = Math.min(10, Math.max(4, this.grid.toCanvasSize(1e-4)));
         ctx.lineCap = "round";
         ctx.beginPath();
-        ctx.moveTo(params.time / this.maxTime * canvas.width, canvas.height / 8);
-        ctx.lineTo(params.time / this.maxTime * canvas.width, canvas.height / 8 * 7);
+        const x = (params.time - this.minTime) / (this.maxTime - this.minTime) * canvas.width;
+        ctx.moveTo(x, canvas.height / 8);
+        ctx.lineTo(x, canvas.height / 8 * 7);
         ctx.stroke();
         ctx.restore();
     }
 
     dragTime(x) {
         if (this.dragging) {
-            updateParam("time", x * this.maxTime);
+            updateParam("time", x * (this.maxTime - this.minTime) + this.minTime);
         }
     }
 
     startDragging(x) {
-        updateParam("time", x * this.maxTime);
+        updateParam("time", x * (this.maxTime - this.minTime) + this.minTime);
         this.dragging = true;
     }
     stopDragging(x) {
