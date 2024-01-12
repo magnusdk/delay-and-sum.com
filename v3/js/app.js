@@ -22,13 +22,19 @@ export class App {
         this.foregroundCanvasElement = foregroundCanvasElement;
         this.timelineCanvasElement = timelineCanvasElement;
 
+        this.grid = new Grid(
+            this.primarySimulationCanvasElement.width,
+            this.primarySimulationCanvasElement.height,
+        );
         this.primarySimulationCanvas = new PrimarySimulationCanvas(
             this.primarySimulationCanvasElement.width,
-            this.primarySimulationCanvasElement.height
+            this.primarySimulationCanvasElement.height,
+            this.grid,
         );
         this.secondarySimulationCanvas = new SecondarySimulationCanvas(
             this.secondarySimulationCanvasElement.width,
-            this.secondarySimulationCanvasElement.height
+            this.secondarySimulationCanvasElement.height,
+            this.grid,
         );
 
         this.probe = new LinearProbe();
@@ -39,10 +45,6 @@ export class App {
         this.draggableManager.addPoint("probeRight", { hidden: true, "relative": true });
         this.draggableManager.addMidPoint("probeLeft", "probeRight", { hidden: true });
 
-        this.grid = new Grid(
-            this.primarySimulationCanvasElement.width,
-            this.primarySimulationCanvasElement.height,
-        );
         this.timelineCanvas = new TimelineCanvas(this.grid);
         this.mainCanvas = new MainCanvas(
             this.backgroundCanvasElement,
@@ -67,6 +69,7 @@ export class App {
     }
 
     start() {
+        this.grid.update();
         this.probe.loadParams();
         const draw = () => {
             if (this.mainCanvas.shouldRedraw) {
@@ -138,12 +141,14 @@ export class App {
 
     updateParam(name, value) {
         updateParam(name, value);
+        this.grid.update();
         this.probe.loadParams();
         this.mainCanvas.shouldRedraw = true;
     }
 
     resetParams() {
         resetParams();
+        this.grid.update();
         this.probe.loadParams();
         this.mainCanvas.shouldRedraw = true;
     }

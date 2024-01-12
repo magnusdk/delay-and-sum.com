@@ -3,14 +3,11 @@ import { debounce } from "/v3/js/util.js";
 export const defaultParams = {
 
     //// Main grid coordinates
-    xMin: -0.0105,
-    xMax: 0.0105,
+    xMin: -0.0205,
+    xMax: 0.0205,
     zMin: -0.001,
-    zMax: 0.02,
-    // width
-    // height
-    closestDraggableDistance: 0.001,
-
+    zMax: 0.04,
+    gridScale: 1,
 
     //// Sector scan background parameters
     sectorDepthsMin: 0,
@@ -27,13 +24,14 @@ export const defaultParams = {
     probeNumElements: 64,
     probeLeft: [-0.003, 0],
     probeRight: [0.003, 0],
+    probeRadiusOfCurvature: 0.1,
 
 
     //// Simulation parameters
     time: 0,
     soundSpeed: 1540,
     soundSpeedAssumedTx: 1540,
-    pulseLength: 1,
+    pulseLength: 1.5,
     centerFrequency: 3e6,
     displayMode: 0,  // -1: hide, 0: phase, 1: envelope, 2: intensity
     gain: 0,  // dB
@@ -41,12 +39,9 @@ export const defaultParams = {
     calculateMaximumIntensity: false,
 }
 
-defaultParams.width = Math.abs(defaultParams.xMax - defaultParams.xMin);
-defaultParams.height = Math.abs(defaultParams.zMax - defaultParams.zMin);
-
 // Calculate params.sectorAzimuth such that the sector scan touches the sides of the grid.
 const depthLength = defaultParams.sectorDepthsMax - defaultParams.sectorDepthsMin;
-const radiusNorm = depthLength / defaultParams.height;
+const radiusNorm = depthLength / (defaultParams.zMax - defaultParams.zMin);
 defaultParams.sectorAzimuth = Math.asin(1 / (2 * radiusNorm)) * 2;
 
 
@@ -68,7 +63,7 @@ export function loadParamsFromURL() {
         if (value === null) continue;
         if (typeof params[key] === "number") {
             value = parseFloat(value);
-        }else if (typeof params[key] === "boolean") {
+        } else if (typeof params[key] === "boolean") {
             value = (value == "true");
         } else if (Array.isArray(params[key]) && params[key].every(v => typeof v === "number")) {
             value = value.split(",").map(v => parseFloat(v));

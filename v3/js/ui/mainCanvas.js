@@ -140,7 +140,8 @@ export class MainCanvas {
         this.foregroundCtx.clearRect(0, 0, this.foregroundCanvas.width, this.foregroundCanvas.height);
 
         if (this.opts["gridLines"]) {
-            this.drawGrid(0.001, 0.001);
+            // TODO: Fix grid lines wrt zooming
+            //this.drawGrid(0.001, 0.001);
         }
         // Draw draggable points
         this.foregroundCtx.save();

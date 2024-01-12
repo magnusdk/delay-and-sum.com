@@ -100,7 +100,7 @@ export class DraggableManager {
         for (const [_, draggablePoint] of Object.entries(this.draggablePoints)) {
             if (draggablePoint.opts["disabled"]) continue;
 
-            let closestDraggableDistance = params.closestDraggableDistance;
+            let closestDraggableDistance = 0.002 * 2 ** -params.gridScale;
             if (draggablePoint.opts["closestDistanceMultiplier"]) {
                 closestDraggableDistance *= draggablePoint.opts["closestDistanceMultiplier"];
             }

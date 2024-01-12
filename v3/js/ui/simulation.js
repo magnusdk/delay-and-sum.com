@@ -28,15 +28,13 @@ function divergingWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, wave
     return -focusedWaveDistance(dx, dz, waveOriginX, waveOriginZ, elX, elZ)
 }
 
-function getPosition() {
+function getPosition(gridXMin, gridXMax, gridZMin, gridZMax) {
     let {
         thread: { x, y },
-        constants: {
-            canvasWidth, canvasHeight,
-            gridWidth, gridHeight,
-            gridXMin, gridZMin
-        }
+        constants: { canvasWidth, canvasHeight }
     } = this;
+    const gridWidth = gridXMax - gridXMin;
+    const gridHeight = gridZMax - gridZMin;
     x = x / canvasWidth * gridWidth + gridXMin;
     let z = (1 - y / canvasHeight) * gridHeight + gridZMin;
     return [x, z];
@@ -70,7 +68,7 @@ function postProcesspixel(real, imag, gain, displayMode) {
             real > 0 ? pinkR : blueR,
             real > 0 ? pinkG : blueG,
             real > 0 ? pinkB : blueB,
-            Math.abs(real) * 10 ** (gain / 20),
+            env * 10 ** (gain / 20),
         );
     }
 }
@@ -123,6 +121,7 @@ function pressureFieldAtPoint(
 
 
 function mainSimulationkernel(
+    gridXMin, gridXMax, gridZMin, gridZMax,
     t,
     elementsX, elementsZ, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
@@ -131,7 +130,7 @@ function mainSimulationkernel(
     gain, displayMode,
 ) {
     const { constants: { maxNumElements, maxNumVirtualSources } } = this;
-    const [x, z] = getPosition();
+    const [x, z] = getPosition(gridXMin, gridXMax, gridZMin, gridZMax);
     const [real, imag] = pressureFieldAtPoint(
         x, z, t,
         elementsX, elementsZ, numElements,
@@ -173,6 +172,7 @@ function timelinekernel(
 }
 
 function maximumIntensityKernel(
+    gridXMin, gridXMax, gridZMin, gridZMax,
     elementsX, elementsZ, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
     virtualSourcesX, virtualSourcesZ, numVirtualSources,
@@ -180,7 +180,7 @@ function maximumIntensityKernel(
     gain, displayMode,
 ) {
     const { constants: { maxNumElements, maxNumVirtualSources, numTimeSteps, minTime, maxTime } } = this;
-    const [x, z] = getPosition();
+    const [x, z] = getPosition(gridXMin, gridXMax, gridZMin, gridZMax);
     let maxEnv = 0.0;
     for (let i = 0; i < numTimeSteps; i++) {
         const t = i / numTimeSteps * maxTime + minTime;
@@ -201,11 +201,12 @@ function maximumIntensityKernel(
 
 
 export class PrimarySimulationCanvas {
-    constructor(width, height) {
+    constructor(width, height, grid) {
         this.canvas = document.createElement("canvas");
         this.canvas.id = "primarySimulationCanvas";
         this.canvas.width = width;
         this.canvas.height = height;
+        this.grid = grid;
         this.gl = this.canvas.getContext('webgl2', { premultipliedAlpha: false });
         this.gpu = new GPUX({ canvas: this.canvas, webGl: this.gl });
         this.simulationKernel = this.gpu.createKernel(mainSimulationkernel)
@@ -215,12 +216,6 @@ export class PrimarySimulationCanvas {
             .setConstants({
                 "canvasWidth": this.gpu.canvas.width,
                 "canvasHeight": this.gpu.canvas.height,
-                "gridWidth": params.width,
-                "gridHeight": params.height,
-                "gridXMin": params.xMin,
-                "gridXMax": params.xMax,
-                "gridZMin": params.zMin,
-                "gridZMax": params.zMax,
                 "maxNumElements": 256,
                 "maxNumVirtualSources": 1,
             });
@@ -243,6 +238,7 @@ export class PrimarySimulationCanvas {
             virtualSourcesZ.push(0);
         }
         this.simulationKernel(
+            this.grid.xMin, this.grid.xMax, this.grid.zMin, this.grid.zMax,
             params.time,
             elementsX, elementsZ, params.probeNumElements,
             waveOriginX, waveOriginZ, params.transmittedWaveType,
@@ -256,11 +252,12 @@ export class PrimarySimulationCanvas {
 
 
 export class SecondarySimulationCanvas {
-    constructor(width, height) {
+    constructor(width, height, grid) {
         this.canvas = document.createElement("canvas");
         this.canvas.id = "secondarySimulationCanvas";
         this.canvas.width = width;
         this.canvas.height = height;
+        this.grid = grid;
         this.gl = this.canvas.getContext('webgl2', { premultipliedAlpha: false });
         this.gpu = new GPUX({ canvas: this.canvas, webGl: this.gl });
         this.minTime = -params.pulseLength / params.centerFrequency * 10;
@@ -272,12 +269,6 @@ export class SecondarySimulationCanvas {
             .setConstants({
                 "canvasWidth": this.gpu.canvas.width,
                 "canvasHeight": this.gpu.canvas.height,
-                "gridWidth": params.width,
-                "gridHeight": params.height,
-                "gridXMin": params.xMin,
-                "gridXMax": params.xMax,
-                "gridZMin": params.zMin,
-                "gridZMax": params.zMax,
                 "maxNumElements": 256,
                 "maxNumVirtualSources": 1,
                 "numTimeSteps": 400,
@@ -302,6 +293,7 @@ export class SecondarySimulationCanvas {
             virtualSourcesZ.push(0);
         }
         this.simulationKernel(
+            this.grid.xMin, this.grid.xMax, this.grid.zMin, this.grid.zMax,
             elementsX, elementsZ, params.probeNumElements,
             waveOriginX, waveOriginZ, params.transmittedWaveType,
             virtualSourcesX, virtualSourcesZ, virtualSourcesX.length,
@@ -311,7 +303,7 @@ export class SecondarySimulationCanvas {
         );
     }
 
-    clear(){
+    clear() {
         this.gl.clear(this.gl.COLOR_BUFFER_BIT);
     }
 }

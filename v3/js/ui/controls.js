@@ -135,6 +135,11 @@ export function initControls(controlsDiv, app) {
         (value) => app.updateParam("transmittedWaveType", value),
     ));
     controlsDiv.appendChild(slider(
+        "gridScale", "Zoom",
+        -2, 2, 0.01, "(base-2 exponential)", 1, 2,
+        (value) => app.updateParam("gridScale", value),
+    ));
+    controlsDiv.appendChild(slider(
         "centerFrequency", "Center frequency",
         0.1, 6, 0.01, "MHz", 1e6, 2,
         (value) => app.updateParam("centerFrequency", value),
@@ -144,6 +149,11 @@ export function initControls(controlsDiv, app) {
         1, 256, 1, "", 1, 0,
         (value) => app.updateParam("probeNumElements", value),
     ));
+    //controlsDiv.appendChild(slider(
+    //    "probeRadiusOfCurvature", "Radius of curvature",
+    //    -0.05, 0.05, 0.001, "m", 1, 3,
+    //    (value) => app.updateParam("probeRadiusOfCurvature", value),
+    //));
     controlsDiv.appendChild(slider(
         "soundSpeed", "Sound speed",
         100, 3000, 1, "m/s", 1, 0,
