@@ -144,6 +144,7 @@ function mainSimulationkernel(
 
 
 function timelinekernel(
+    maxTime,
     samplePointX, samplePointZ,
     elementsX, elementsZ, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
@@ -153,7 +154,7 @@ function timelinekernel(
 ) {
     const {
         thread: { x },
-        constants: { canvasWidth, maxNumElements, maxNumVirtualSources, maxTime }
+        constants: { canvasWidth, maxNumElements, maxNumVirtualSources }
     } = this;
     const t = x / canvasWidth * maxTime
     const [real, imag] = pressureFieldAtPoint(
@@ -165,10 +166,17 @@ function timelinekernel(
         maxNumElements, maxNumVirtualSources,
     );
     const env = dist(real, imag);
-    return [
-        real * 10 ** (gain / 20),
-        env * 10 ** (gain / 20)
-    ];
+    if (displayMode >= 1) {
+        // Amplitude or intensity post-processing mode
+        if (displayMode == 2) {
+            // Intensity post-processing mode
+            return env ** 2 * 10 ** (gain / 20);
+        } else {
+            return env * 10 ** (gain / 20)
+        }
+    } else {
+        return real * 10 ** (gain / 20)
+    }
 }
 
 function maximumIntensityKernel(
@@ -318,7 +326,6 @@ export class TimelineCanvas {
         this.canvas.height = grid.canvasHeight;
         this.gl = this.canvas.getContext('webgl2', { premultipliedAlpha: false });
         this.gpu = new GPUX({ canvas: this.canvas, webGl: this.gl });
-        this.maxTime = params.sectorDepthsMax / params.soundSpeed * 1.5;
         this.kernel = this.gpu.createKernel(timelinekernel)
             .setOutput([this.gpu.canvas.width])
             .setFunctions([pressureFieldAtPoint, dist, pulse, focusedWaveDistance, planeWaveDistance, divergingWaveDistance])
@@ -327,7 +334,6 @@ export class TimelineCanvas {
                 "canvasHeight": this.gpu.canvas.height,
                 "maxNumElements": 256,
                 "maxNumVirtualSources": 1,
-                "maxTime": this.maxTime,
             });
     }
 
@@ -337,6 +343,7 @@ export class TimelineCanvas {
         const virtualSourcesZ = [params.virtualSource[1]];
         const samplePointX = params.samplePoint[0];
         const samplePointZ = params.samplePoint[1];
+        this.maxTime = (params.sectorDepthsMax * 2) * 2 ** -params.gridScale / params.soundSpeed;
 
         // center of probe
         const [waveOriginX, waveOriginZ] = probe.center;
@@ -350,6 +357,7 @@ export class TimelineCanvas {
             virtualSourcesZ.push(0);
         }
         const samples = this.kernel(
+            this.maxTime,
             samplePointX, samplePointZ,
             elementsX, elementsZ, params.probeNumElements,
             waveOriginX, waveOriginZ, params.transmittedWaveType,
@@ -365,11 +373,11 @@ export class TimelineCanvas {
         ctx.lineTo(canvas.width, canvas.height / 2);
         ctx.beginPath();
         ctx.strokeStyle = Colors.timelineSamples;
-        ctx.lineWidth = this.grid.toCanvasSize(1e-4);
+        ctx.lineWidth = Math.min(5, Math.max(2, this.grid.toCanvasSize(1e-4)));
         ctx.lineJoin = "round";
         ctx.moveTo(0, canvas.height / 2);
         for (let i = 0; i < samples.length; i++) {
-            ctx.lineTo(i, canvas.height / 2 - samples[i][0] * 30);
+            ctx.lineTo(i, canvas.height / 2 - samples[i] * 30);
         }
         ctx.lineTo(canvas.width, canvas.height / 2);
         ctx.stroke();
@@ -378,7 +386,7 @@ export class TimelineCanvas {
         //Draw a line at the current time
         ctx.save();
         ctx.strokeStyle = Colors.timelineTimeMarker;
-        ctx.lineWidth = this.grid.toCanvasSize(1e-4);
+        ctx.lineWidth = Math.min(10, Math.max(4, this.grid.toCanvasSize(1e-4)));
         ctx.lineCap = "round";
         ctx.beginPath();
         ctx.moveTo(params.time / this.maxTime * canvas.width, canvas.height / 8);
