@@ -29,14 +29,17 @@ export class MainCanvas {
             let [xMax, zMax] = this.grid.toCanvasCoords(this.probe.xMax, this.probe.zMax);
 
             this.backgroundCtx.strokeStyle = Colors.probe;
-            // rounded butts
             this.backgroundCtx.lineCap = "round";
             this.backgroundCtx.lineWidth = this.grid.toCanvasSize(1e-4);
 
             this.backgroundCtx.beginPath();
             this.backgroundCtx.moveTo(xMin, zMin);
-            this.backgroundCtx.lineTo(xMax, zMax);
-            this.backgroundCtx.stroke();
+            for (let i = 0; i < this.probe.numElements; i++) {
+                let [x, z] = this.grid.toCanvasCoords(this.probe.x[i], this.probe.z[i]);
+                this.backgroundCtx.lineTo(x, z);
+            }
+                this.backgroundCtx.lineTo(xMax, zMax);
+                this.backgroundCtx.stroke();
         }
 
         // Draw probe element outlines
