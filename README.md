@@ -1,7 +1,7 @@
-# Wavefront Comparison App
+# delay-and-sum.com
 Simulate the spatial impulse response (SIR) of a wave!
 
-[Try the live version here.](https://delay-and-sum.com/v3.html)
+[Try the live version here.](https://delay-and-sum.com/)
 
 Powered by [GPU.js](https://github.com/gpujs/gpu.js) (and WebGL).
 
