@@ -255,6 +255,9 @@ export class PrimarySimulationCanvas {
             params.soundSpeed, params.soundSpeedAssumedTx,
             params.gain, params.displayMode,
         );
+        // Clear DOMCanvasElementCtx
+        this.DOMCanvasElementCtx.clearRect(0, 0, this.DOMCanvasElement.width, this.DOMCanvasElement.height);
+        this.DOMCanvasElementCtx.drawImage(this.canvas, 0, 0);
     }
 }
 

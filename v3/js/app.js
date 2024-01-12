@@ -27,6 +27,7 @@ export class App {
             this.primarySimulationCanvasElement.height,
         );
         this.primarySimulationCanvas = new PrimarySimulationCanvas(
+            this.primarySimulationCanvasElement,
             this.primarySimulationCanvasElement.width,
             this.primarySimulationCanvasElement.height,
             this.grid,
@@ -64,7 +65,11 @@ export class App {
 
         this.connectEventListeners();
 
-        primarySimulationCanvasElement.replaceWith(this.primarySimulationCanvas.canvas);
+        // We need to copy the image from primary canvas because of a alpha composition bug in Safari/iOS (I think)
+        // See this.primarySimulationCanvas.update() instead
+        //primarySimulationCanvasElement.replaceWith(this.primarySimulationCanvas.canvas);
+
+        // For the secondary canvas we can just draw directly to it, so we replace the element with the GPU.js canvas
         secondarySimulationCanvas.replaceWith(this.secondarySimulationCanvas.canvas);
     }
 
