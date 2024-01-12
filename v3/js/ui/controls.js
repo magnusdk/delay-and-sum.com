@@ -126,10 +126,11 @@ export function initControls(controlsDiv, app) {
         [[-1, "Hide"], [0, "Phase"], [1, "Envelope"], [2, "Intensity"]],
         (value) => app.updateParam("displayMode", value),
     ));
-    controlsDiv.appendChild(checkbox(
-        "calculateMaximumIntensity", "Maximum intensity",
-        (value) => app.updateParam("calculateMaximumIntensity", value),
-    ));
+    // TODO: Fix maximumIntensity calculation and uncomment this
+    //controlsDiv.appendChild(checkbox(
+    //    "calculateMaximumIntensity", "Maximum intensity",
+    //    (value) => app.updateParam("calculateMaximumIntensity", value),
+    //));
     controlsDiv.appendChild(select(
         "transmittedWaveType", "Transmitted wave type",
         [[0, "Focused"], [1, "Plane"], [2, "Diverging"]],
