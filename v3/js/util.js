@@ -1,11 +1,22 @@
 export function getCanvasPointFromMouseEvent(canvas, e) {
-    const rect = canvas.getBoundingClientRect();
-    const scaleX = canvas.width / rect.width;
-    const scaleY = canvas.height / rect.height;
-    return [
-        (e.clientX - rect.left) * scaleX,
-        (e.clientY - rect.top) * scaleY
-    ];
+	const rect = canvas.getBoundingClientRect();
+	const scaleX = canvas.width / rect.width;
+	const scaleY = canvas.height / rect.height;
+	return [
+		(e.clientX - rect.left) * scaleX,
+		(e.clientY - rect.top) * scaleY
+	];
+}
+
+export function getCanvasPointFromTouchEvent(canvasElement, touchEvent) {
+	const rect = canvasElement.getBoundingClientRect();
+	const touch = touchEvent.touches[0] || touchEvent.changedTouches[0];
+	const scaleX = canvasElement.width / rect.width;
+	const scaleY = canvasElement.height / rect.height;
+	return [
+		(touch.clientX - rect.left) * scaleX,
+		(touch.clientY - rect.top) * scaleY,
+	]
 }
 
 
@@ -23,7 +34,7 @@ export function debounce(function_, wait = 100, options = {}) {
 	}
 
 	// TODO: Deprecate the boolean parameter at some point.
-	const {immediate} = typeof options === 'boolean' ? {immediate: options} : options;
+	const { immediate } = typeof options === 'boolean' ? { immediate: options } : options;
 
 	let storedContext;
 	let storedArguments;

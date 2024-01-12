@@ -1,5 +1,5 @@
 import { TooltipManager } from "/v3/js/ui/tooltipManager.js";
-import { getCanvasPointFromMouseEvent } from "/v3/js/util.js";
+import { getCanvasPointFromMouseEvent, getCanvasPointFromTouchEvent } from "/v3/js/util.js";
 import { Grid } from "/v3/js/grid.js";
 import { DraggableManager } from "/v3/js/ui/draggableManager.js";
 import { MainCanvas } from "/v3/js/ui/mainCanvas.js";
@@ -95,52 +95,116 @@ export class App {
         draw();
     }
 
+    handleStartDraggingPoint(x, z) {
+        [x, z] = this.grid.fromCanvasCoords(x, z);
+        this.draggableManager.startDragging(x, z);
+        this.mainCanvas.shouldRedraw = true;
+    }
+    handleMoveDraggingPoint(x, z, clientX, clientY) {
+        [x, z] = this.grid.fromCanvasCoords(x, z);
+        this.tooltipManager.update(clientX, clientY, x, z);
+        this.tooltipManager.show();
+
+        this.draggableManager.update(x, z);
+        this.probe.loadParams();
+        this.mainCanvas.shouldRedraw = true;
+    }
+    handleEndDraggingPoint(x, z) {
+        [x, z] = this.grid.fromCanvasCoords(x, z);
+        this.draggableManager.stopDragging(x, z);
+        this.mainCanvas.shouldRedraw = true;
+        this.tooltipManager.hide();
+    }
+
+    handleStartDraggingTimeline(x) {
+        const t = x / this.timelineCanvasElement.width;
+        this.timelineCanvas.startDragging(t);
+        this.mainCanvas.shouldRedraw = true;
+    }
+    handleMoveDraggingTimeline(x) {
+        const t = x / this.timelineCanvasElement.width;
+        this.timelineCanvas.dragTime(t);
+        this.mainCanvas.shouldRedraw = true;
+    }
+    handleEndDraggingTimeline(x) {
+        const t = x / this.timelineCanvasElement.width;
+        this.timelineCanvas.stopDragging(t);
+        this.mainCanvas.shouldRedraw = true;
+    }
+
 
     connectEventListeners() {
-        this.foregroundCanvasElement.addEventListener("mousemove", (e) => {
-            let [x, z] = getCanvasPointFromMouseEvent(this.foregroundCanvasElement, e);
-            [x, z] = this.grid.fromCanvasCoords(x, z);
-            this.tooltipManager.update(e.clientX, e.clientY, x, z);
-            this.tooltipManager.show();
-
-            this.draggableManager.update(x, z);
-            this.probe.loadParams();
-            this.mainCanvas.shouldRedraw = true;
-        });
+        // Event listeners for mouse events
         this.foregroundCanvasElement.addEventListener("mousedown", (e) => {
             let [x, z] = getCanvasPointFromMouseEvent(this.foregroundCanvasElement, e);
-            [x, z] = this.grid.fromCanvasCoords(x, z);
-            this.draggableManager.startDragging(x, z);
-            this.mainCanvas.shouldRedraw = true;
+            this.handleStartDraggingPoint(x, z);
+        });
+        this.foregroundCanvasElement.addEventListener("mousemove", (e) => {
+            let [x, z] = getCanvasPointFromMouseEvent(this.foregroundCanvasElement, e);
+            this.handleMoveDraggingPoint(x, z, e.clientX, e.clientY);
         });
         this.foregroundCanvasElement.addEventListener("mouseup", (e) => {
             let [x, z] = getCanvasPointFromMouseEvent(this.foregroundCanvasElement, e);
-            [x, z] = this.grid.fromCanvasCoords(x, z);
-            this.draggableManager.stopDragging(x, z);
-            this.mainCanvas.shouldRedraw = true;
-        });
-        this.foregroundCanvasElement.addEventListener("mouseleave", (e) => {
+            this.handleEndDraggingPoint(x, z);
             this.tooltipManager.hide();
         });
-
-        // Drag time over the timeline
-        this.timelineCanvasElement.addEventListener("mousemove", (e) => {
-            const [x, y] = getCanvasPointFromMouseEvent(this.timelineCanvasElement, e);
-            const t = x / this.timelineCanvasElement.width;
-            this.timelineCanvas.dragTime(t);
-            this.mainCanvas.shouldRedraw = true;
-        });
+        this.foregroundCanvasElement.addEventListener("mouseleave", (e) => this.tooltipManager.hide());
         this.timelineCanvasElement.addEventListener("mousedown", (e) => {
             const [x, y] = getCanvasPointFromMouseEvent(this.timelineCanvasElement, e);
-            const t = x / this.timelineCanvasElement.width;
-            this.timelineCanvas.startDragging(t);
-            this.mainCanvas.shouldRedraw = true;
+            this.handleStartDraggingTimeline(x);
+        });
+        this.timelineCanvasElement.addEventListener("mousemove", (e) => {
+            const [x, y] = getCanvasPointFromMouseEvent(this.timelineCanvasElement, e);
+            this.handleMoveDraggingTimeline(x);
         });
         this.timelineCanvasElement.addEventListener("mouseup", (e) => {
             const [x, y] = getCanvasPointFromMouseEvent(this.timelineCanvasElement, e);
-            const t = x / this.timelineCanvasElement.width;
-            this.timelineCanvas.stopDragging(t);
-            this.mainCanvas.shouldRedraw = true;
+            this.handleEndDraggingTimeline(x);
+        });
+
+        // Event listeners for touch events
+        this.foregroundCanvasElement.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            let [x, z] = getCanvasPointFromTouchEvent(this.foregroundCanvasElement, e);
+            this.handleStartDraggingPoint(x, z);
+        });
+        this.foregroundCanvasElement.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+            let [x, z] = getCanvasPointFromTouchEvent(this.foregroundCanvasElement, e);
+            this.handleMoveDraggingPoint(x, z, e.touches[0].clientX, e.touches[0].clientY);
+        });
+        this.foregroundCanvasElement.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            let [x, z] = getCanvasPointFromTouchEvent(this.foregroundCanvasElement, e);
+            this.handleEndDraggingPoint(x, z);
+            this.tooltipManager.hide();
+        });
+        this.foregroundCanvasElement.addEventListener("touchcancel", (e) => {
+            e.preventDefault();
+            let [x, z] = getCanvasPointFromTouchEvent(this.foregroundCanvasElement, e);
+            this.handleEndDraggingPoint(x, z);
+            this.tooltipManager.hide();
+        });
+        this.timelineCanvasElement.addEventListener("touchstart", (e) => {
+            e.preventDefault();
+            if (e.touches.length > 0) {
+                const [x, y] = getCanvasPointFromTouchEvent(this.timelineCanvasElement, e);
+                this.handleStartDraggingTimeline(x);
+            }
+        });
+        this.timelineCanvasElement.addEventListener("touchmove", (e) => {
+            e.preventDefault();
+            if (e.touches.length > 0) {
+                const [x, y] = getCanvasPointFromTouchEvent(this.timelineCanvasElement, e);
+                this.handleMoveDraggingTimeline(x);
+            }
+        });
+        this.timelineCanvasElement.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            if (e.touches.length > 0) {
+                const [x, y] = getCanvasPointFromTouchEvent(this.timelineCanvasElement, e);
+                this.handleEndDraggingTimeline(x);
+            }
         });
 
         // Add global mouseup listener to stop dragging if mouse leaves the window
