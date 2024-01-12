@@ -115,7 +115,9 @@ function pressureFieldAtPoint(
             real += real1; imag += imag1;
         }
     }
-    //real /= numElements; imag /= numElements;
+    // Normalize wrt number of elements. Multiplying by 50 is completely arbitrary.
+    real = real / numElements * 50;
+    imag = imag / numElements * 50;
     return [real, imag];
 }
 
