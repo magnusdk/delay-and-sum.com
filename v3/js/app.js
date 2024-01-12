@@ -142,6 +142,13 @@ export class App {
             this.timelineCanvas.stopDragging(t);
             this.mainCanvas.shouldRedraw = true;
         });
+
+        // Add global mouseup listener to stop dragging if mouse leaves the window
+        window.addEventListener("mouseup", (e) => {
+            this.draggableManager.stopDragging();
+            this.timelineCanvas.stopDragging();
+            this.mainCanvas.shouldRedraw = true;
+        });
     }
 
     updateParam(name, value) {
