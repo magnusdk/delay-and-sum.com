@@ -1,9 +1,22 @@
 body {
     font-size: 14px;
     font-family: sans-serif;
-    display: flex;
+    margin: 0;
+    padding: 0;
 }
 
+.appContainer {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 40px;
+    justify-content: center;
+}
+
+.contentContainer {
+    max-width: 850px;
+    padding: 20px;
+    margin: 20px auto 20px auto;
+}
 
 #mainCanvasContainer {
     position: relative;

@@ -38,8 +38,8 @@ export class MainCanvas {
                 let [x, z] = this.grid.toCanvasCoords(this.probe.x[i], this.probe.z[i]);
                 this.backgroundCtx.lineTo(x, z);
             }
-                this.backgroundCtx.lineTo(xMax, zMax);
-                this.backgroundCtx.stroke();
+            this.backgroundCtx.lineTo(xMax, zMax);
+            this.backgroundCtx.stroke();
         }
 
         // Draw probe element outlines

@@ -62,8 +62,7 @@ function postProcesspixel(real, imag, gain, displayMode) {
     } else if (displayMode == -1) {
         // Hide post-processing mode
         this.color(0, 0, 0, 0);
-    }
-    else {
+    } else {
         this.color(
             real > 0 ? pinkR : blueR,
             real > 0 ? pinkG : blueG,
