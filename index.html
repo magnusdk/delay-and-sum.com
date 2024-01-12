@@ -4,313 +4,41 @@
 
 <head>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="style.css" />
-    <title>Compare Wavefront Models 🌊</title>
+    <link rel="stylesheet" href="v3/style.css" />
+    <link rel="stylesheet" href="v3/controls.css" />
+    <title>🌊</title>
+
+    <script defer data-domain="delay-and-sum.com" src="https://plausible.io/js/script.js"></script>
 </head>
 
 <body>
-    <div style="color: #072043; padding: 1em;">
-        <h1>Simulate transmitted waves</h1>
-        <p>The top panel contains the simulation of a wave based on many point scatterers along an array (centered at
-            the top of the panel). The bottom panel contains the timeline of the simulation.</p>
-        <ul>
-            <li>Plane wave mode simulates a plane wave traveling in the direction based on the red dot.</li>
-            <li>Focused wave mode focuses the wave on the red dot.</li>
-            <li>Diverging wave mode rotates the focus point 180 degrees around the array so that the focus point is
-                "behind" the array.</li>
-        </ul>
-        <p>Each wave consists of many smaller spherical waves — try setting "Number of elements" to 1 to see what it
-            looks like. Each individual wave is modeled as an expanding circle with a gaussian-tapered sine centered on
-            it. The frequency of the sine can be set by the "Center frequency" field, and the standard deviation of the
-            gaussian function can be set by the "Pulse length" field.</p>
-        <h2>Try this:</h2>
-        <ol>
-            <li>Drag the red dot around to change the focus point.</li>
-            <li>Drag the red line in the timeline panel to change the current time of the simulation.</li>
-            <li>Change the type of the simulated wave i the panel to the right (bottom of page if on a small screen).
-            </li>
-            <li>Change the center frequency and see the change in beamwidth, side-lobes, etc.</li>
-            <li>Change the pulse length just for fun.</li>
-            <li>Use the <a href="https://field-ii.dk">Field II</a> software for more advanced simulations.</li>
-            <li>Smile at a stranger :)</li>
-        </ol>
-        <p>This project is work-in-progress.</p>
-    </div>
-    <br>
-    <div class="container">
-        <div class="canvas-container">
-            <canvas id="canvas" width="500" height="500" style="width: 100%"></canvas>
-            <canvas id="timelineCanvas" width="1000" height="200" style="width: 100%;"></canvas>
+    <div id="simulationContainer">
+        <div id="mainCanvasContainer">
+            <canvas id="backgroundCanvas" width="1000" height="1000"></canvas>
+            <canvas id="secondarySimulationCanvas" width="100" height="100"></canvas>
+            <canvas id="primarySimulationCanvas" width="1000" height="1000"></canvas>
+            <canvas id="foregroundCanvas" width="1000" height="1000"></canvas>
         </div>
-        <div id="panel">
-            <fieldset>
-                <legend>Transmitted Wave Parameters</legend>
-                <div>
-                    <input type="radio" id="planeWave" name="waveType" value="0"
-                        onchange="window.updateSimulationParam('waveType', 0);">
-                    <label for="planeWave">Plane wave</label>
-                    <input type="radio" id="focusedWave" name="waveType" value="1" checked
-                        onchange="window.updateSimulationParam('waveType', 1);">
-                    <label for="focusedWave">Focused wave</label>
-                    <input type="radio" id="divergingWave" name="waveType" value="2"
-                        onchange="window.updateSimulationParam('waveType', 2);">
-                    <label for="divergingWave">Diverging wave</label>
-                </div>
-                <div class="slider">
-                    <input type="range" id="centerFrequency" name="centerFrequency" min="1" max="200" step="1">
-                    <label for="centerFrequency">Center frequency: <span class="slider-value"></span> Hz</label>
-                </div>
-                <div class="slider">
-                    <input type="range" id="pulseLength" name="pulseLength" min="0.00002" max="0.1" value="0.0001"
-                        step="0.00001">
-                    <label for="pulseLength">Pulse length: <span class="slider-value"></span> s</label>
-                </div>
-            </fieldset>
-
-            <fieldset>
-                <legend>Array Parameters</legend>
-                <div>
-                    <input type="range" id="numElements" name="numElements" min="1" max="200" value="100" step="1"
-                        oninput="window.updateNumElements(this.value)">
-                    <label for="numElements">Number of elements: <span class="slider-value"></span></label>
-                </div>
-                <div>
-                    <input type="radio" id="noApertureWindow" name="apertureWindow" value="0"
-                        onchange="window.updateSimulationParam('apertureWindow', 0); window.updateNumElements()">
-                    <label for="noApertureWindow">No aperture weighting</label>
-                    <input type="radio" id="tukeyApertureWindow" name="apertureWindow" value="1" checked
-                        onchange="window.updateSimulationParam('apertureWindow', 1); window.updateNumElements()">
-                    <label for="tukeyApertureWindow">Tukey aperture weighting</label>
-                </div>
-            </fieldset>
-
-            <fieldset>
-                <legend>Display Parameters</legend>
-                <div>
-                    <input type="radio" id="linearScale" name="valueScale" value="0"
-                        onchange="window.updateSimulationParam('valueScale', 0);">
-                    <label for="linearScale">Linear scale</label>
-                    <input type="radio" id="decibelScale" name="valueScale" value="1" checked
-                        onchange="window.updateSimulationParam('valueScale', 1);">
-                    <label for="decibelScale">Decibel scale</label>
-                </div>
-                <!-- Slider for valueScaleFactor -->
-                <div class="slider">
-                    <input type="range" id="valueScaleFactor" name="valueScaleFactor" min="0.1" max="120" step="0.1">
-                    <label for="valueScaleFactor">Scale factor: <span class="slider-value"></span></label>
-                </div>
-            </fieldset>
-
-            <fieldset>
-                <legend>Impulse Response Sampling Parameters</legend>
-                <div>
-                    <!-- Radio buttons for sampling a point or a line -->
-                    <input type="radio" id="sampleImpulseResponsePoint" name="sampleImpulseResponse" value="point"
-                        checked onchange="window.updateImpulseResponseSamplingMode('point');">
-                    <label for="sampleImpulseResponsePoint">Sample point</label>
-                    <input type="radio" id="sampleImpulseResponseLine" name="sampleImpulseResponse" value="line"
-                        onchange="window.updateImpulseResponseSamplingMode('line');">
-                    <label for="sampleImpulseResponseLine">Sample line</label>
-                </div>
-            </fieldset>
-
-            <fieldset>
-                <legend>Delay Model Parameters</legend>
-                <div>
-                    <input type="radio" id="hideWavefrontModel" name="wavefrontModel" value="hideWavefrontModel"
-                        checked onchange="window.updateUIParam('wavefrontModel', 'hideWavefrontModel');">
-                    <label for="hideWavefrontModel">Hide Wavefront Model Sample</label>
-                </div>
-                <div>
-                    <input type="radio" id="simpleVirtualSource" name="wavefrontModel" value="simpleVirtualSource"
-                        onchange="window.updateUIParam('wavefrontModel', 'simpleVirtualSource');">
-                    <label for="simpleVirtualSource">Simple Virtual Source</label>
-                </div>
-                <div>
-                    <input type="radio" id="refocusWavefrontModel" name="wavefrontModel" value="refocus"
-                        onchange="window.updateUIParam('wavefrontModel', 'refocus');">
-                    <label for="refocusWavefrontModel">REFoCUS</label>
-                </div>
-            </fieldset>
-        </div>
+        <canvas id="timelineCanvas" width="1000" height="200"></canvas>
     </div>
+    <div id="controlsContainer" class="controlsContainer"></div>
 
-
-    <script src="./js/gpu.min.js"></script>
+    <script src="/v3/js/gpu.min.js"></script>
     <script type="module">
-        import { PressureField, ImpulseResponse } from './js/gpuKernels.js';
-        import { tukey } from './js/apodization.js';
-        import { getPressure } from './js/wavePropagation.js';
-        import { Point, PointManager } from './js/pointDragging.js';
-        import { drawPressureField } from './js/gui/pressureField.js';
-        import { drawTimeline } from './js/gui/timeline.js';
-        import { uiState, simulationParams } from './js/state.js';
+        import { App } from './v3/js/app.js';
+        import { params } from './v3/js/params.js';
+        import { initControls } from '/v3/js/ui/controls.js';
+        import { loadParamsFromURL } from "/v3/js/params.js";
 
-        const canvas = document.getElementById("canvas");
-        const ctx = canvas.getContext("2d");
-        const timelineCanvas = document.getElementById("timelineCanvas");
-        const timelineCtx = timelineCanvas.getContext("2d");
-
-        window.updateNumElements = function (numElements) {
-            if (numElements == undefined) {
-                numElements = simulationParams.get("numElements");
-            }
-
-            let elementsPosX = [];
-            let elementsPosY = [];
-            let elementsWeight = [];
-            if (numElements == 1) {
-                elementsPosX.push(0.5);
-                elementsPosY.push(1.0);
-                elementsWeight.push(1);
-            } else {
-                for (let i = 0; i < numElements; i++) {
-                    const x = 0.25 + 0.5 * i / (numElements - 1);
-                    elementsPosX.push(x);
-                    elementsPosY.push(1.0);
-                    if (simulationParams.get("apertureWindow") == 0)
-                        elementsWeight.push(1);
-                    else if (simulationParams.get("apertureWindow") == 1) 
-                        elementsWeight.push(tukey((x - 0.25), 0.5, 1))
-                }
-            }
-            simulationParams.set("numElements", numElements);
-            simulationParams.set("elementsPosX", elementsPosX);
-            simulationParams.set("elementsPosY", elementsPosY);
-            simulationParams.set("elementsWeight", elementsWeight);
-            uiState.set("shouldRedraw", true);
-
-            const sliderValue = document.getElementById("numElements").nextElementSibling.children[0];
-            sliderValue.innerHTML = numElements;
-        }
-        window.updateNumElements(100);
-
-
-        const pressureField = new PressureField();
-        window.pressureField = pressureField;
-        window.simulationParams = simulationParams;
-        window.uiState = uiState;
-
-        const impulseResponse = new ImpulseResponse(timelineCanvas.width);
-        const selectedPoint = new Point(
-            simulationParams.get("selectedPointX"),
-            simulationParams.get("selectedPointY"),
-            (point) => {
-                simulationParams.set("selectedPointX", point.x);
-                simulationParams.set("selectedPointY", point.y);
-                uiState.set("shouldRedraw", true);
-            })
-        const sampleImpulseResponseLineStart = new Point(
-            uiState.get("sampleImpulseResponseLineStart")[0],
-            uiState.get("sampleImpulseResponseLineStart")[1],
-            (point) => {
-                uiState.set("sampleImpulseResponseLineStart", [point.x, point.y]);
-                uiState.set("shouldRedraw", true);
-            },
-            false
-        )
-        const sampleImpulseResponseLineEnd = new Point(
-            uiState.get("sampleImpulseResponseLineEnd")[0],
-            uiState.get("sampleImpulseResponseLineEnd")[1],
-            (point) => {
-                uiState.set("sampleImpulseResponseLineEnd", [point.x, point.y]);
-                uiState.set("shouldRedraw", true);
-            },
-            false
-        )
-        const pointManagerMainCanvas = new PointManager(canvas, [
-            new Point(
-                simulationParams.get("focusPointX"),
-                simulationParams.get("focusPointY"),
-                (point) => {
-                    simulationParams.set("focusPointX", point.x);
-                    simulationParams.set("focusPointY", point.y);
-                    uiState.set("shouldRedraw", true);
-                }),
-            selectedPoint,
-            sampleImpulseResponseLineStart,
-            sampleImpulseResponseLineEnd,
-        ]);
-        const pointManagerTimeCanvas = new PointManager(timelineCanvas, [
-            new Point(
-                simulationParams.get("time"),
-                0.5,
-                (point) => {
-                    simulationParams.set("time", point.x);
-                    uiState.set("shouldRedraw", true);
-                }),
-        ]);
-
-
-        function animate() {
-            if (uiState.get("shouldRedraw")) {
-                ctx.fillStyle = uiState.get("darkBlue");
-                ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-                // Draw a blue sector scan (a slice of a circle)
-                ctx.beginPath();
-                ctx.moveTo(canvas.width / 2, 0);
-                ctx.arc(
-                    canvas.width / 2, 0, canvas.height,
-                    Math.PI / 3,
-                    Math.PI / 3 * 2,
-                );
-                ctx.fillStyle = 'white';
-                ctx.fill();
-
-                pressureField.update(simulationParams);
-                ctx.drawImage(pressureField.canvas, 0, 0, canvas.width, canvas.height);
-                drawPressureField(canvas, simulationParams, uiState)
-                drawTimeline(timelineCanvas, impulseResponse, simulationParams, uiState)
-                uiState.set("shouldRedraw", false);
-            }
-            requestAnimationFrame(animate);
-        }
-        animate();
-
-
-
-        // Set up slider components
-        function updateSimulationParam(name, value) {
-            simulationParams.set(name, value);
-            uiState.set("shouldRedraw", true);
-        }
-        function updateUIParam(name, value) {
-            uiState.set(name, value);
-            uiState.set("shouldRedraw", true);
-        }
-        // Special case for sampleImpulseResponse
-        function updateImpulseResponseSamplingMode(mode) {
-            if (mode == "point") {
-                selectedPoint.active = true;
-                sampleImpulseResponseLineStart.active = false;
-                sampleImpulseResponseLineEnd.active = false;
-            } else if (mode == "line") {
-                selectedPoint.active = false;
-                sampleImpulseResponseLineStart.active = true;
-                sampleImpulseResponseLineEnd.active = true;
-            }
-            updateUIParam('sampleImpulseResponse', mode);
-        }
-        // Make it possible to call these functions from the HTML by attaching them to window
-        window.updateSimulationParam = updateSimulationParam;
-        window.updateUIParam = updateUIParam;
-        window.updateImpulseResponseSamplingMode = updateImpulseResponseSamplingMode;
-
-        const sliders = document.getElementsByClassName("slider");
-        for (let i = 0; i < sliders.length; i++) {
-            const label = sliders[i].getElementsByTagName("label")[0];
-            const input = sliders[i].getElementsByTagName("input")[0];
-            const span = label.getElementsByTagName("span")[0];
-            input.value = simulationParams.get(input.id);
-            span.innerHTML = input.value;
-            input.addEventListener("input", function () {
-                span.innerHTML = this.value;
-                updateSimulationParam(this.id, this.value);
-            });
-        }
-
+        document.app = new App(
+            document.getElementById('backgroundCanvas'),
+            document.getElementById('primarySimulationCanvas'),
+            document.getElementById('secondarySimulationCanvas'),
+            document.getElementById('foregroundCanvas'),
+            document.getElementById('timelineCanvas'),
+        );
+        loadParamsFromURL();
+        initControls(document.getElementById("controlsContainer"), document.app);
+        document.app.start();
     </script>
 </body>
-
-</html>

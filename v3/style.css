@@ -1,0 +1,43 @@
+body {
+    font-size: 14px;
+    font-family: sans-serif;
+    display: flex;
+}
+
+
+#mainCanvasContainer {
+    position: relative;
+    width: 500px;
+    height: 500px;
+}
+
+#backgroundCanvas,
+#secondarySimulationCanvas,
+#primarySimulationCanvas,
+#foregroundCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+#timelineCanvas {
+    width: 500px;
+}
+
+#backgroundCanvas {
+    z-index: 1;
+}
+
+#secondarySimulationCanvas {
+    z-index: 2;
+}
+
+#primarySimulationCanvas {
+    z-index: 3;
+}
+
+#foregroundCanvas {
+    z-index: 4;
+}
