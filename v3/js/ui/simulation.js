@@ -211,7 +211,9 @@ function maximumIntensityKernel(
 
 
 export class PrimarySimulationCanvas {
-    constructor(width, height, grid) {
+    constructor(DOMCanvasElement, width, height, grid) {
+        this.DOMCanvasElement = DOMCanvasElement;
+        this.DOMCanvasElementCtx = DOMCanvasElement.getContext("2d");
         this.canvas = document.createElement("canvas");
         this.canvas.id = "primarySimulationCanvas";
         this.canvas.width = width;
