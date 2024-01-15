@@ -13,12 +13,12 @@ function focusedWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOr
     return elToVirtualSourceDist - originToVirtualSourceDist
 }
 
-function planeWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) {
-    const virtualSourceDist = dist(virtualSourceX - waveOriginX, virtualSourceZ - waveOriginZ);
-    // Place the virtual source really far away. The grid is assumed to be small, so 10 meters should be enough!
-    const dx = (virtualSourceX - waveOriginX) / virtualSourceDist * 1
-    const dz = (virtualSourceZ - waveOriginZ) / virtualSourceDist * 1
-    return focusedWaveDistance(dx, dz, waveOriginX, waveOriginZ, elX, elZ)
+function planeWaveDistance(azimuth, waveOriginX, waveOriginZ, elX, elZ) {
+    const [dX, dY] = [elX - waveOriginX, elZ - waveOriginZ]
+    return (
+        dX * Math.sin(azimuth + Math.PI / 2) +
+        dY * Math.cos(azimuth + Math.PI / 2)
+    )
 }
 
 function divergingWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) {
@@ -87,7 +87,7 @@ function pressureFieldAtPoint(
     x, z, t,
     elementsX, elementsZ, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
-    virtualSourcesX, virtualSourcesZ, numVirtualSources,
+    virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
     f, pulseLength, soundSpeed, soundSpeedAssumedTx,
     maxNumElements, maxNumVirtualSources,
 ) {
@@ -97,6 +97,7 @@ function pressureFieldAtPoint(
         if (i >= numVirtualSources) break;
         const virtualSourceX = virtualSourcesX[i];
         const virtualSourceZ = virtualSourcesZ[i];
+        const virtualSourceAzimuth = virtualSourcesAzimuths[i];
         for (let j = 0; j < maxNumElements; j++) {
             if (j >= numElements) break;
             const elX = elementsX[j];
@@ -106,7 +107,7 @@ function pressureFieldAtPoint(
             if (transmittedWaveType == 0) {
                 t0 = focusedWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) / soundSpeedAssumedTx;
             } else if (transmittedWaveType == 1) {
-                t0 = planeWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) / soundSpeedAssumedTx;
+                t0 = planeWaveDistance(virtualSourceAzimuth, waveOriginX, waveOriginZ, elX, elZ) / soundSpeedAssumedTx;
             } else if (transmittedWaveType == 2) {
                 t0 = divergingWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) / soundSpeedAssumedTx;
             }
@@ -128,7 +129,7 @@ function mainSimulationkernel(
     t,
     elementsX, elementsZ, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
-    virtualSourcesX, virtualSourcesZ, numVirtualSources,
+    virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
     f, pulseLength, soundSpeed, soundSpeedAssumedTx,
     gain, displayMode,
 ) {
@@ -138,7 +139,7 @@ function mainSimulationkernel(
         x, z, t,
         elementsX, elementsZ, numElements,
         waveOriginX, waveOriginZ, transmittedWaveType,
-        virtualSourcesX, virtualSourcesZ, numVirtualSources,
+        virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
         f, pulseLength, soundSpeed, soundSpeedAssumedTx,
         maxNumElements, maxNumVirtualSources,
     );
@@ -152,7 +153,7 @@ function timelinekernel(
     samplePointX, samplePointZ,
     elementsX, elementsZ, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
-    virtualSourcesX, virtualSourcesZ, numVirtualSources,
+    virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
     f, pulseLength, soundSpeed, soundSpeedAssumedTx,
     gain, displayMode,
 ) {
@@ -165,7 +166,7 @@ function timelinekernel(
         samplePointX, samplePointZ, t,
         elementsX, elementsZ, numElements,
         waveOriginX, waveOriginZ, transmittedWaveType,
-        virtualSourcesX, virtualSourcesZ, numVirtualSources,
+        virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
         f, pulseLength, soundSpeed, soundSpeedAssumedTx,
         maxNumElements, maxNumVirtualSources,
     );
@@ -244,6 +245,10 @@ export class PrimarySimulationCanvas {
         const [elementsX, elementsZ] = [probe.x, probe.z];
         const virtualSourcesX = [params.virtualSource[0]];
         const virtualSourcesZ = [params.virtualSource[1]];
+        // Math.atan2 is buggy in GPU.js, so we calculate it on the CPU instead.
+        const virtualSourcesAzimuths = [
+            Math.atan2(virtualSourcesX[0] - probe.center[0], virtualSourcesZ[0] - probe.center[1]) + Math.PI / 2
+        ];
 
         // center of probe
         const [waveOriginX, waveOriginZ] = probe.center;
@@ -255,13 +260,14 @@ export class PrimarySimulationCanvas {
         while (virtualSourcesX.length < this.simulationKernel.constants.maxNumVirtualSources) {
             virtualSourcesX.push(0);
             virtualSourcesZ.push(0);
+            virtualSourcesAzimuths.push(0);
         }
         this.simulationKernel(
             ...params.cameraTransform,
             params.time,
             elementsX, elementsZ, params.probeNumElements,
             waveOriginX, waveOriginZ, params.transmittedWaveType,
-            virtualSourcesX, virtualSourcesZ, virtualSourcesX.length,
+            virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
             params.centerFrequency, params.pulseLength,
             params.soundSpeed, params.soundSpeedAssumedTx,
             params.gain, params.displayMode,
@@ -301,6 +307,10 @@ export class SecondarySimulationCanvas {
         const [elementsX, elementsZ] = [probe.x, probe.z];
         const virtualSourcesX = [params.virtualSource[0]];
         const virtualSourcesZ = [params.virtualSource[1]];
+        // Math.atan2 is buggy in GPU.js, so we calculate it on the CPU instead.
+        const virtualSourcesAzimuths = [
+            Math.atan2(virtualSourcesX[0] - probe.center[0], virtualSourcesZ[0] - probe.center[1]) + Math.PI / 2
+        ];
 
         const [waveOriginX, waveOriginZ] = probe.center;
         // Ensure correct size of arrays
@@ -311,12 +321,13 @@ export class SecondarySimulationCanvas {
         while (virtualSourcesX.length < this.simulationKernel.constants.maxNumVirtualSources) {
             virtualSourcesX.push(0);
             virtualSourcesZ.push(0);
+            virtualSourcesAzimuths.push(0);
         }
         this.simulationKernel(
             this.grid.xMin, this.grid.xMax, this.grid.zMin, this.grid.zMax,
             elementsX, elementsZ, params.probeNumElements,
             waveOriginX, waveOriginZ, params.transmittedWaveType,
-            virtualSourcesX, virtualSourcesZ, virtualSourcesX.length,
+            virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
             params.centerFrequency, params.pulseLength,
             params.soundSpeed, params.soundSpeedAssumedTx,
             params.gain, params.displayMode,
@@ -353,6 +364,10 @@ export class TimelineCanvas {
         const [elementsX, elementsZ] = [probe.x, probe.z];
         const virtualSourcesX = [params.virtualSource[0]];
         const virtualSourcesZ = [params.virtualSource[1]];
+        // Math.atan2 is buggy in GPU.js, so we calculate it on the CPU instead.
+        const virtualSourcesAzimuths = [
+            Math.atan2(virtualSourcesX[0] - probe.center[0], virtualSourcesZ[0] - probe.center[1]) + Math.PI / 2
+        ];
         const samplePointX = params.samplePoint[0];
         const samplePointZ = params.samplePoint[1];
 
@@ -371,13 +386,14 @@ export class TimelineCanvas {
         while (virtualSourcesX.length < this.kernel.constants.maxNumVirtualSources) {
             virtualSourcesX.push(0);
             virtualSourcesZ.push(0);
+            virtualSourcesAzimuths.push(0);
         }
         const samples = this.kernel(
             this.minTime, this.maxTime,
             samplePointX, samplePointZ,
             elementsX, elementsZ, params.probeNumElements,
             waveOriginX, waveOriginZ, params.transmittedWaveType,
-            virtualSourcesX, virtualSourcesZ, virtualSourcesX.length,
+            virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
             params.centerFrequency, params.pulseLength,
             params.soundSpeed, params.soundSpeedAssumedTx,
             params.timelineGain, params.displayMode,
