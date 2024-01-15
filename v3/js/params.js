@@ -3,11 +3,13 @@ import { debounce } from "/v3/js/util.js";
 export const defaultParams = {
 
     //// Main grid coordinates
-    xMin: -0.0205,
-    xMax: 0.0205,
-    zMin: -0.001,
+    xMin: -0.02,
+    xMax: 0.02,
+    zMin: 0,
     zMax: 0.04,
     gridScale: 1,
+    cameraX: 0,
+    cameraZ: -0.001,
 
     //// Sector scan background parameters
     sectorDepthsMin: 0,

@@ -118,6 +118,21 @@ export function checkbox(id, label, callback) {
     return controlEl;
 }
 
+export function controlsGroup(label, controls, isOpenByDefault=true) {
+    const detailsEl = document.createElement("details");
+    if (isOpenByDefault) detailsEl.setAttribute("open", "");
+    const summaryEl = document.createElement("summary");
+    summaryEl.innerText = label;
+    detailsEl.appendChild(summaryEl);
+    const detailsControlsDiv = document.createElement("div");
+    detailsControlsDiv.classList.add("detailsControlsContainer");
+    detailsEl.appendChild(detailsControlsDiv);
+    for (const control of controls) {
+        detailsControlsDiv.appendChild(control);
+    }
+    return detailsEl;
+}
+
 
 
 export function initControls(controlsDiv, app) {
@@ -131,26 +146,39 @@ export function initControls(controlsDiv, app) {
     //    "calculateMaximumIntensity", "Maximum intensity",
     //    (value) => app.updateParam("calculateMaximumIntensity", value),
     //));
-    controlsDiv.appendChild(select(
-        "transmittedWaveType", "Transmitted wave type",
-        [[0, "Focused"], [1, "Plane"], [2, "Diverging"]],
-        (value) => app.updateParam("transmittedWaveType", value),
-    ));
-    controlsDiv.appendChild(slider(
-        "gridScale", "Zoom",
-        -2, 2, 0.01, "(base-2 exponential)", 1, 2,
-        (value) => app.updateParam("gridScale", value),
-    ));
-    controlsDiv.appendChild(slider(
-        "centerFrequency", "Center frequency",
-        0.1, 6, 0.01, "MHz", 1e6, 2,
-        (value) => app.updateParam("centerFrequency", value),
-    ));
-    controlsDiv.appendChild(slider(
-        "probeNumElements", "Number of transducer elements",
-        1, 256, 1, "", 1, 0,
-        (value) => app.updateParam("probeNumElements", value),
-    ));
+    controlsDiv.appendChild(controlsGroup("Camera parameters", [
+        slider("cameraX", "Camera X",
+            -100, 100, 0.01, "mm", 1e-3, 3,
+            (value) => app.updateParam("cameraX", value)),
+        slider("cameraZ", "Camera Z",
+            -100, 100, 0.01, "mm", 1e-3, 3,
+            (value) => app.updateParam("cameraZ", value)),
+        slider("gridScale", "Zoom",
+            -2, 2, 0.01, "(base-2 exponential)", 1, 2,
+            (value) => app.updateParam("gridScale", value)),
+    ]));
+    controlsDiv.appendChild(controlsGroup("Beamforming parameters", [
+        select(
+            "transmittedWaveType", "Transmitted wave type",
+            [[0, "Focused"], [1, "Plane"], [2, "Diverging"]],
+            (value) => app.updateParam("transmittedWaveType", value),
+        ),
+        slider(
+            "centerFrequency", "Center frequency",
+            0.1, 6, 0.01, "MHz", 1e6, 2,
+            (value) => app.updateParam("centerFrequency", value),
+        ),
+        slider(
+            "pulseLength", "Pulse length",
+            0.1, 100, 0.01, "wavelengths", 1, 2,
+            (value) => app.updateParam("pulseLength", value),
+        ),
+        slider(
+            "probeNumElements", "Number of transducer elements",
+            1, 256, 1, "", 1, 0,
+            (value) => app.updateParam("probeNumElements", value),
+        ),
+    ]));
     //controlsDiv.appendChild(slider(
     //    "probeRadiusOfCurvature", "Radius of curvature",
     //    -0.05, 0.05, 0.001, "m", 1, 3,
@@ -165,11 +193,6 @@ export function initControls(controlsDiv, app) {
         "soundSpeedAssumedTx", "Sound speed assumed on transmit",
         100, 3000, 1, "m/s", 1, 0,
         (value) => app.updateParam("soundSpeedAssumedTx", value),
-    ));
-    controlsDiv.appendChild(slider(
-        "pulseLength", "Pulse length",
-        0.1, 100, 0.01, "wavelengths", 1, 2,
-        (value) => app.updateParam("pulseLength", value),
     ));
     controlsDiv.appendChild(slider(
         "gain", "Gain",

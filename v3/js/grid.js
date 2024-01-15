@@ -9,10 +9,10 @@ export class Grid {
     }
 
     update() {
-        this.xMin = params.xMin * 2**-params.gridScale;
-        this.xMax = params.xMax * 2**-params.gridScale;
-        this.zMin = params.zMin * 2**-params.gridScale;
-        this.zMax = params.zMax * 2**-params.gridScale;
+        this.xMin = params.xMin * 2 ** -params.gridScale + params.cameraX;
+        this.xMax = params.xMax * 2 ** -params.gridScale + params.cameraX;
+        this.zMin = params.zMin * 2 ** -params.gridScale + params.cameraZ;
+        this.zMax = params.zMax * 2 ** -params.gridScale + params.cameraZ;
         this.width = this.xMax - this.xMin;
         this.height = this.zMax - this.zMin;
         if (Math.abs(this.width - this.height) > 1e-10)

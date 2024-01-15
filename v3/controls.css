@@ -50,3 +50,21 @@ select {
     border: 1px solid black;
     border-radius: 5px;
 }
+
+details {
+    padding: 10px;
+    border: 1px solid black;
+    border-radius: 5px;
+    box-shadow: 0 2.5px 5px rgba(0, 0, 0, 0.25);
+}
+
+details summary {
+    cursor: pointer;
+}
+
+.detailsControlsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px 0 10px 10px;
+}
