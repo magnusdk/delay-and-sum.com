@@ -86,7 +86,7 @@ export class App {
                 // TODO: Only update when needed or move shouldRedraw outside of mainCanvas
                 this.timelineCanvas.draw(this.timelineCanvasElement, this.probe);
             }
-            //requestAnimationFrame(draw);
+            requestAnimationFrame(draw);
         }
         draw();
     }
