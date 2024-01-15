@@ -1,5 +1,5 @@
 import { TooltipManager } from "/v3/js/ui/tooltipManager.js";
-import { getCanvasPointFromMouseEvent, getCanvasPointFromTouchEvent } from "/v3/js/util.js";
+import { getCanvasPointFromMouseEvent, getCanvasPointFromTouchEvent, matrixMatrixMultiply, getScaleMatrix } from "/v3/js/util.js";
 import { Grid } from "/v3/js/grid.js";
 import { DraggableManager } from "/v3/js/ui/draggableManager.js";
 import { MainCanvas } from "/v3/js/ui/mainCanvas.js";
@@ -22,10 +22,7 @@ export class App {
         this.foregroundCanvasElement = foregroundCanvasElement;
         this.timelineCanvasElement = timelineCanvasElement;
 
-        this.grid = new Grid(
-            this.primarySimulationCanvasElement.width,
-            this.primarySimulationCanvasElement.height,
-        );
+        this.grid = new Grid(this.primarySimulationCanvasElement);
         this.primarySimulationCanvas = new PrimarySimulationCanvas(
             this.primarySimulationCanvasElement,
             this.primarySimulationCanvasElement.width,
@@ -39,14 +36,14 @@ export class App {
         );
 
         this.probe = new LinearProbe();
-        this.draggableManager = new DraggableManager();
+        this.draggableManager = new DraggableManager(this.grid);
         this.draggableManager.addPoint("virtualSource");
         this.draggableManager.addPoint("samplePoint");
         this.draggableManager.addPoint("probeLeft", { hidden: true, "relative": true });
         this.draggableManager.addPoint("probeRight", { hidden: true, "relative": true });
         this.draggableManager.addMidPoint("probeLeft", "probeRight", { hidden: true });
 
-        this.timelineCanvas = new TimelineCanvas(this.grid);
+        this.timelineCanvas = new TimelineCanvas(this.timelineCanvasElement, this.grid);
         this.mainCanvas = new MainCanvas(
             this.backgroundCanvasElement,
             this.foregroundCanvasElement,
@@ -74,7 +71,6 @@ export class App {
     }
 
     start() {
-        this.grid.update();
         this.probe.loadParams();
         const draw = () => {
             if (this.mainCanvas.shouldRedraw) {
@@ -90,7 +86,7 @@ export class App {
                 // TODO: Only update when needed or move shouldRedraw outside of mainCanvas
                 this.timelineCanvas.draw(this.timelineCanvasElement, this.probe);
             }
-            requestAnimationFrame(draw);
+            //requestAnimationFrame(draw);
         }
         draw();
     }
@@ -213,18 +209,42 @@ export class App {
             this.timelineCanvas.stopDragging();
             this.mainCanvas.shouldRedraw = true;
         });
+
+        // Modified code taken from https://gist.github.com/Martin-Pitt/2756cf86dca90e179b4e75003d7a1a2b
+        this.foregroundCanvasElement.addEventListener('wheel', e => {
+            e.preventDefault();
+
+            if (e.ctrlKey) {
+                const s = Math.exp(e.deltaY / 100);
+                let [x, z] = getCanvasPointFromMouseEvent(this.foregroundCanvasElement, e);
+                const [anchorX, anchorZ] = this.grid.fromCanvasCoords(x, z);
+                const transform = getScaleMatrix(s, anchorX, anchorZ);
+                updateParam("cameraTransform", matrixMatrixMultiply(transform, params.cameraTransform));
+            } else {
+                const newCameraTransform = [
+                    params.cameraTransform[0],
+                    params.cameraTransform[1],
+                    params.cameraTransform[2],
+                    params.cameraTransform[3],
+                    params.cameraTransform[4] + 2 * e.deltaX / this.grid.toCanvasSize(1),
+                    params.cameraTransform[5] + 2 * e.deltaY / this.grid.toCanvasSize(1),
+                ]
+                updateParam("cameraTransform", newCameraTransform);
+            }
+            this.mainCanvas.shouldRedraw = true;
+        }, {
+            passive: false
+        });
     }
 
     updateParam(name, value) {
         updateParam(name, value);
-        this.grid.update();
         this.probe.loadParams();
         this.mainCanvas.shouldRedraw = true;
     }
 
     resetParams() {
         resetParams();
-        this.grid.update();
         this.probe.loadParams();
         this.mainCanvas.shouldRedraw = true;
     }

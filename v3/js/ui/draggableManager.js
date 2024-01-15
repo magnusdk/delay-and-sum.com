@@ -80,7 +80,8 @@ export class MidPointDraggable {
 }
 
 export class DraggableManager {
-    constructor() {
+    constructor(grid) {
+        this.grid = grid;
         this.draggablePoints = {};
         this.dragging = null;
         this.hovering = null;
@@ -100,7 +101,7 @@ export class DraggableManager {
         for (const [_, draggablePoint] of Object.entries(this.draggablePoints)) {
             if (draggablePoint.opts["disabled"]) continue;
 
-            let closestDraggableDistance = 0.002 * 2 ** -params.gridScale;
+            let closestDraggableDistance = 50 / this.grid.toCanvasSize(1);
             if (draggablePoint.opts["closestDistanceMultiplier"]) {
                 closestDraggableDistance *= draggablePoint.opts["closestDistanceMultiplier"];
             }

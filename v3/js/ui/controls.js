@@ -146,17 +146,6 @@ export function initControls(controlsDiv, app) {
     //    "calculateMaximumIntensity", "Maximum intensity",
     //    (value) => app.updateParam("calculateMaximumIntensity", value),
     //));
-    controlsDiv.appendChild(controlsGroup("Camera parameters", [
-        slider("cameraX", "Camera X",
-            -100, 100, 0.01, "mm", 1e-3, 3,
-            (value) => app.updateParam("cameraX", value)),
-        slider("cameraZ", "Camera Z",
-            -100, 100, 0.01, "mm", 1e-3, 3,
-            (value) => app.updateParam("cameraZ", value)),
-        slider("gridScale", "Zoom",
-            -2, 2, 0.01, "(base-2 exponential)", 1, 2,
-            (value) => app.updateParam("gridScale", value)),
-    ]));
     controlsDiv.appendChild(controlsGroup("Beamforming parameters", [
         select(
             "transmittedWaveType", "Transmitted wave type",

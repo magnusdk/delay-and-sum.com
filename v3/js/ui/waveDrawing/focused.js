@@ -19,7 +19,7 @@ export function drawFocusedWave(ctx, grid, probe, virtualSource, time, soundSpee
     ctx.save();
     ctx.beginPath();
     ctx.strokeStyle = Colors.insonifiedVirtualCircle;
-    ctx.lineWidth = grid.toCanvasSize(2e-4);
+    ctx.lineWidth = 8;
     ctx.arc(x, z, radiusCanvasSpace, 0, 2 * Math.PI);
     ctx.stroke();
     ctx.beginPath();
@@ -47,8 +47,8 @@ export function drawFocusedWave(ctx, grid, probe, virtualSource, time, soundSpee
 
     ctx.beginPath();
     ctx.strokeStyle = Colors.insonifiedVirtualCircle;
-    ctx.lineWidth = grid.toCanvasSize(2e-4);
-    ctx.setLineDash([grid.toCanvasSize(3e-4), grid.toCanvasSize(5e-4)]);
+    ctx.lineWidth = 8;
+    ctx.setLineDash([10, 16]);
     const _length = 1;  // This should be enough length to extend past the canvas for very small grids.
     ctx.moveTo(...grid.toCanvasCoords(
         probe.center[0] - Math.cos(angle) * _length,

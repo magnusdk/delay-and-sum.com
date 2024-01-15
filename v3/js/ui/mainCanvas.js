@@ -21,7 +21,7 @@ export class MainCanvas {
     drawProbe() {
         this.backgroundCtx.save();
         // Draw probe
-        const elRadiusPx = this.grid.toCanvasSize(1e-4);
+        const elRadiusPx = 4;
 
         // Draw probe around elements
         if (this.opts["drawProbeLine"]) {
@@ -30,7 +30,7 @@ export class MainCanvas {
 
             this.backgroundCtx.strokeStyle = Colors.probe;
             this.backgroundCtx.lineCap = "round";
-            this.backgroundCtx.lineWidth = this.grid.toCanvasSize(1e-4);
+            this.backgroundCtx.lineWidth = 4;
 
             this.backgroundCtx.beginPath();
             this.backgroundCtx.moveTo(xMin, zMin);
@@ -46,7 +46,7 @@ export class MainCanvas {
         for (let i = 0; i < this.probe.numElements; i++) {
             let [x, z] = this.grid.toCanvasCoords(this.probe.x[i], this.probe.z[i]);
             this.backgroundCtx.strokeStyle = Colors.probeElementsOutline;
-            this.backgroundCtx.lineWidth = this.grid.toCanvasSize(2e-4);
+            this.backgroundCtx.lineWidth = 8;
             this.backgroundCtx.beginPath();
             this.backgroundCtx.arc(x, z, elRadiusPx, 0, 2 * Math.PI);
             this.backgroundCtx.stroke();
@@ -122,7 +122,7 @@ export class MainCanvas {
     drawGrid(xStep, zStep) {
         this.foregroundCtx.save();
         this.foregroundCtx.strokeStyle = Colors.grid;
-        this.foregroundCtx.lineWidth = Math.max(1, this.grid.toCanvasSize(0.25e-4));
+        this.foregroundCtx.lineWidth = 2;
         this.foregroundCtx.beginPath();
         for (let x = params.xMin; x <= params.xMax; x += xStep) {
             const [xCanvas, zCanvas] = this.grid.toCanvasCoords(x, params.zMin);
@@ -165,17 +165,17 @@ export class MainCanvas {
             if (draggablePoint.isDragging) {
                 this.foregroundCtx.fillStyle = color;
                 this.foregroundCtx.beginPath();
-                this.foregroundCtx.arc(x, z, this.grid.toCanvasSize(2e-4), 0, 2 * Math.PI);
+                this.foregroundCtx.arc(x, z, 8, 0, 2 * Math.PI);
                 this.foregroundCtx.fill();
             } else if (draggablePoint == this.draggableManager.hovering) {
                 this.foregroundCtx.fillStyle = color;
                 this.foregroundCtx.beginPath();
-                this.foregroundCtx.arc(x, z, this.grid.toCanvasSize(3e-4), 0, 2 * Math.PI);
+                this.foregroundCtx.arc(x, z, 10, 0, 2 * Math.PI);
                 this.foregroundCtx.fill();
             } else {
                 this.foregroundCtx.fillStyle = color;
                 this.foregroundCtx.beginPath();
-                this.foregroundCtx.arc(x, z, this.grid.toCanvasSize(2e-4), 0, 2 * Math.PI);
+                this.foregroundCtx.arc(x, z, 8, 0, 2 * Math.PI);
                 this.foregroundCtx.fill();
             }
         }

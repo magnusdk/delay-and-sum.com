@@ -3,7 +3,6 @@ export class TooltipManager {
         this.element = document.createElement("div");
         this.element.style.position = "fixed";
         this.element.style.backgroundColor = "rgba(255, 255, 255, 0.5)";
-        this.element.style.backdropFilter = "blur(2px)";
         this.element.style.boxShadow = "2px 2px 5px rgba(0, 0, 0, 0.5)";
         this.element.style.left = "0px";
         this.element.style.top = "0px";

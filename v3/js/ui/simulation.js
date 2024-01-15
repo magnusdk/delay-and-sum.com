@@ -1,5 +1,6 @@
 import { params, updateParam } from "/v3/js/params.js";
 import { Colors } from "/v3/js/ui/colors.js";
+import { invertScaleTranslationTransform, transformVector } from "/v3/js/util.js";
 
 
 function dist(x, z) {
@@ -28,16 +29,17 @@ function divergingWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, wave
     return -focusedWaveDistance(dx, dz, waveOriginX, waveOriginZ, elX, elZ)
 }
 
-function getPosition(gridXMin, gridXMax, gridZMin, gridZMax) {
+function getPosition(cT0, cT1, cT2, cT3, cT4, cT5) {
     let {
         thread: { x, y },
-        constants: { canvasWidth, canvasHeight }
+        constants: { ibT0, ibT1, ibT2, ibT3, ibT4, ibT5 }
     } = this;
-    const gridWidth = gridXMax - gridXMin;
-    const gridHeight = gridZMax - gridZMin;
-    x = x / canvasWidth * gridWidth + gridXMin;
-    let z = (1 - y / canvasHeight) * gridHeight + gridZMin;
-    return [x, z];
+    x = ibT0 * x + ibT2 * y + ibT4;
+    y = ibT1 * x + ibT3 * y + ibT5;
+    y = 1 - y;
+    x = x * cT0 + y * cT2 + cT4;
+    y = x * cT1 + y * cT3 + cT5;
+    return [x, y];
 }
 
 function postProcesspixel(real, imag, gain, displayMode) {
@@ -122,7 +124,7 @@ function pressureFieldAtPoint(
 
 
 function mainSimulationkernel(
-    gridXMin, gridXMax, gridZMin, gridZMax,
+    cT0, cT1, cT2, cT3, cT4, cT5,
     t,
     elementsX, elementsZ, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
@@ -131,7 +133,7 @@ function mainSimulationkernel(
     gain, displayMode,
 ) {
     const { constants: { maxNumElements, maxNumVirtualSources } } = this;
-    const [x, z] = getPosition(gridXMin, gridXMax, gridZMin, gridZMax);
+    const [x, z] = getPosition(cT0, cT1, cT2, cT3, cT4, cT5);
     const [real, imag] = pressureFieldAtPoint(
         x, z, t,
         elementsX, elementsZ, numElements,
@@ -181,7 +183,7 @@ function timelinekernel(
 }
 
 function maximumIntensityKernel(
-    gridXMin, gridXMax, gridZMin, gridZMax,
+    cT0, cT1, cT2, cT3, cT4, cT5,
     elementsX, elementsZ, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
     virtualSourcesX, virtualSourcesZ, numVirtualSources,
@@ -189,7 +191,7 @@ function maximumIntensityKernel(
     gain, displayMode,
 ) {
     const { constants: { maxNumElements, maxNumVirtualSources, numTimeSteps, minTime, maxTime } } = this;
-    const [x, z] = getPosition(gridXMin, gridXMax, gridZMin, gridZMax);
+    const [x, z] = getPosition(cT0, cT1, cT2, cT3, cT4, cT5);
     let maxEnv = 0.0;
     for (let i = 0; i < numTimeSteps; i++) {
         const t = i / numTimeSteps * maxTime + minTime;
@@ -223,10 +225,14 @@ export class PrimarySimulationCanvas {
         this.simulationKernel = this.gpu.createKernel(mainSimulationkernel)
             .setOutput([this.gpu.canvas.width, this.gpu.canvas.height])
             .setGraphical(true)
-            .setFunctions([getPosition, pressureFieldAtPoint, dist, pulse, focusedWaveDistance, planeWaveDistance, divergingWaveDistance, postProcesspixel])
+            .setFunctions([invertScaleTranslationTransform, transformVector, getPosition, pressureFieldAtPoint, dist, pulse, focusedWaveDistance, planeWaveDistance, divergingWaveDistance, postProcesspixel])
             .setConstants({
-                "canvasWidth": this.gpu.canvas.width,
-                "canvasHeight": this.gpu.canvas.height,
+                "ibT0": grid.inverseBaseTransform[0],
+                "ibT1": grid.inverseBaseTransform[1],
+                "ibT2": grid.inverseBaseTransform[2],
+                "ibT3": grid.inverseBaseTransform[3],
+                "ibT4": grid.inverseBaseTransform[4],
+                "ibT5": grid.inverseBaseTransform[5],
                 "maxNumElements": 256,
                 "maxNumVirtualSources": 1,
             });
@@ -249,7 +255,7 @@ export class PrimarySimulationCanvas {
             virtualSourcesZ.push(0);
         }
         this.simulationKernel(
-            this.grid.xMin, this.grid.xMax, this.grid.zMin, this.grid.zMax,
+            ...params.cameraTransform,
             params.time,
             elementsX, elementsZ, params.probeNumElements,
             waveOriginX, waveOriginZ, params.transmittedWaveType,
@@ -279,10 +285,8 @@ export class SecondarySimulationCanvas {
         this.simulationKernel = this.gpu.createKernel(maximumIntensityKernel)
             .setOutput([this.gpu.canvas.width, this.gpu.canvas.height])
             .setGraphical(true)
-            .setFunctions([getPosition, pressureFieldAtPoint, dist, pulse, focusedWaveDistance, planeWaveDistance, divergingWaveDistance, postProcesspixel])
+            .setFunctions([invertScaleTranslationTransform, transformVector, getPosition, pressureFieldAtPoint, dist, pulse, focusedWaveDistance, planeWaveDistance, divergingWaveDistance, postProcesspixel])
             .setConstants({
-                "canvasWidth": this.gpu.canvas.width,
-                "canvasHeight": this.gpu.canvas.height,
                 "maxNumElements": 256,
                 "maxNumVirtualSources": 1,
                 "numTimeSteps": 400,
@@ -325,16 +329,16 @@ export class SecondarySimulationCanvas {
 
 
 export class TimelineCanvas {
-    constructor(grid) {
+    constructor(canvasElement, grid) {
         this.grid = grid;
         this.canvas = document.createElement("canvas");
-        this.canvas.width = grid.canvasWidth;
-        this.canvas.height = grid.canvasHeight;
+        this.canvas.width = canvasElement.width;
+        this.canvas.height = canvasElement.height;
         this.gl = this.canvas.getContext('webgl2', { premultipliedAlpha: false });
         this.gpu = new GPUX({ canvas: this.canvas, webGl: this.gl });
         this.kernel = this.gpu.createKernel(timelinekernel)
             .setOutput([this.gpu.canvas.width])
-            .setFunctions([pressureFieldAtPoint, dist, pulse, focusedWaveDistance, planeWaveDistance, divergingWaveDistance])
+            .setFunctions([invertScaleTranslationTransform, transformVector, pressureFieldAtPoint, dist, pulse, focusedWaveDistance, planeWaveDistance, divergingWaveDistance])
             .setConstants({
                 "canvasWidth": this.gpu.canvas.width,
                 "canvasHeight": this.gpu.canvas.height,
@@ -353,7 +357,7 @@ export class TimelineCanvas {
         // Set the min and max time rendered on the timeline.
         // time=0 is when the center of the pulse passes through the center of the probe.
         this.minTime = -5e-3 / params.soundSpeed;
-        this.maxTime = (params.sectorDepthsMax * 2) * 2 ** -params.gridScale / params.soundSpeed;
+        this.maxTime = (params.sectorDepthsMax * 2) / params.soundSpeed;
 
         // center of probe
         const [waveOriginX, waveOriginZ] = probe.center;
@@ -383,7 +387,7 @@ export class TimelineCanvas {
         ctx.lineTo(canvas.width, canvas.height / 2);
         ctx.beginPath();
         ctx.strokeStyle = Colors.timelineSamples;
-        ctx.lineWidth = Math.min(5, Math.max(2, this.grid.toCanvasSize(1e-4)));
+        ctx.lineWidth = 4;
         ctx.lineJoin = "round";
         ctx.moveTo(0, canvas.height / 2);
         for (let i = 0; i < samples.length; i++) {
@@ -396,7 +400,7 @@ export class TimelineCanvas {
         //Draw a line at the current time
         ctx.save();
         ctx.strokeStyle = Colors.timelineTimeMarker;
-        ctx.lineWidth = Math.min(10, Math.max(4, this.grid.toCanvasSize(1e-4)));
+        ctx.lineWidth = 4;
         ctx.lineCap = "round";
         ctx.beginPath();
         const x = (params.time - this.minTime) / (this.maxTime - this.minTime) * canvas.width;
