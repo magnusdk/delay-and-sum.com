@@ -359,7 +359,7 @@ export class TimelineCanvas {
         // Set the min and max time rendered on the timeline.
         // time=0 is when the center of the pulse passes through the center of the probe.
         this.minTime = -5e-3 / params.soundSpeed;
-        this.maxTime = (params.sectorDepthsMax * 2) / params.soundSpeed;
+        this.maxTime = this.grid.pixelsPerMeter / this.grid.toCanvasSize(1) / params.soundSpeed;
 
         // center of probe
         const [waveOriginX, waveOriginZ] = probe.center;
