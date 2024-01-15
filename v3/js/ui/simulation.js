@@ -32,11 +32,11 @@ function divergingWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, wave
 function getPosition(cT0, cT1, cT2, cT3, cT4, cT5) {
     let {
         thread: { x, y },
-        constants: { ibT0, ibT1, ibT2, ibT3, ibT4, ibT5 }
+        constants: { canvasHeight, ibT0, ibT1, ibT2, ibT3, ibT4, ibT5 }
     } = this;
+    y = canvasHeight - y;  // Invert y-axis
     x = ibT0 * x + ibT2 * y + ibT4;
     y = ibT1 * x + ibT3 * y + ibT5;
-    y = 1 - y;
     x = x * cT0 + y * cT2 + cT4;
     y = x * cT1 + y * cT3 + cT5;
     return [x, y];
@@ -143,6 +143,7 @@ function mainSimulationkernel(
         maxNumElements, maxNumVirtualSources,
     );
     postProcesspixel(real, imag, gain, displayMode);
+    //this.color(z*10, 0, 0, 1);
 }
 
 
@@ -233,6 +234,7 @@ export class PrimarySimulationCanvas {
                 "ibT3": grid.inverseBaseTransform[3],
                 "ibT4": grid.inverseBaseTransform[4],
                 "ibT5": grid.inverseBaseTransform[5],
+                "canvasHeight": this.gpu.canvas.height,
                 "maxNumElements": 256,
                 "maxNumVirtualSources": 1,
             });
