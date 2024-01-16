@@ -1,5 +1,6 @@
 import { params } from "/v3/js/params.js";
-
+import { tukey } from "/v3/js/apodization.js";
+import { Colors } from "/v3/js/ui/colors.js";
 
 function rescaleInputWidth(inputEl, numDecimals) {
     const asFloat = parseFloat(inputEl.value);
@@ -118,7 +119,7 @@ export function checkbox(id, label, callback) {
     return controlEl;
 }
 
-export function controlsGroup(label, controls, isOpenByDefault=true) {
+export function controlsGroup(label, controls, isOpenByDefault = true) {
     const detailsEl = document.createElement("details");
     if (isOpenByDefault) detailsEl.setAttribute("open", "");
     const summaryEl = document.createElement("summary");
@@ -134,6 +135,34 @@ export function controlsGroup(label, controls, isOpenByDefault=true) {
 }
 
 
+function updateApodizationVisualizer(ctx) {
+    const apodizationValues = tukey(
+        params.probeNumElements,
+        params.tukeyApodizationRatio,
+    );
+    ctx.save();
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height * 0.9);
+    ctx.beginPath();
+    ctx.moveTo(-10, ctx.canvas.height);
+    ctx.lineTo(-10, ctx.canvas.height * 0.9);
+    ctx.lineTo(0, ctx.canvas.height * 0.9);
+    for (let i = 0; i < apodizationValues.length; i++) {
+        ctx.lineTo(
+            i / (apodizationValues.length - 1) * ctx.canvas.width,
+            (1.1 - apodizationValues[i]) * ctx.canvas.height * 0.9,
+        );
+    }
+    ctx.lineTo(ctx.canvas.width, ctx.canvas.height * 0.9);
+    ctx.lineTo(ctx.canvas.width + 10, ctx.canvas.height * 0.9);
+    ctx.lineTo(ctx.canvas.width + 10, ctx.canvas.height);
+    ctx.strokeStyle = Colors.apodizationOutline;
+    ctx.fillStyle = Colors.apodizationFill;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.fill();
+    ctx.restore();
+}
+
 
 export function initControls(controlsDiv, app) {
     controlsDiv.appendChild(select(
@@ -146,6 +175,10 @@ export function initControls(controlsDiv, app) {
     //    "calculateMaximumIntensity", "Maximum intensity",
     //    (value) => app.updateParam("calculateMaximumIntensity", value),
     //));
+    const apodizationVisualizerCanvas = document.createElement("canvas");
+    apodizationVisualizerCanvas.width = 200;
+    apodizationVisualizerCanvas.height = 20;
+    const apodizationVisualizerCanvasCtx = apodizationVisualizerCanvas.getContext("2d");
     controlsDiv.appendChild(controlsGroup("Beamforming parameters", [
         select(
             "transmittedWaveType", "Transmitted wave type",
@@ -165,9 +198,22 @@ export function initControls(controlsDiv, app) {
         slider(
             "probeNumElements", "Number of transducer elements",
             1, 256, 1, "", 1, 0,
-            (value) => app.updateParam("probeNumElements", value),
+            (value) => {
+                app.updateParam("probeNumElements", value);
+                updateApodizationVisualizer(apodizationVisualizerCanvasCtx);
+            },
         ),
+        slider(
+            "tukeyApodizationRatio", "Tukey apodization ratio",
+            0, 1, 0.01, "", 1, 2,
+            (value) => {
+                app.updateParam("tukeyApodizationRatio", value);
+                updateApodizationVisualizer(apodizationVisualizerCanvasCtx);
+            },
+        ),
+        apodizationVisualizerCanvas,
     ]));
+    updateApodizationVisualizer(apodizationVisualizerCanvasCtx);
     //controlsDiv.appendChild(slider(
     //    "probeRadiusOfCurvature", "Radius of curvature",
     //    -0.05, 0.05, 0.001, "m", 1, 3,

@@ -19,6 +19,7 @@ export const defaultParams = {
     probeLeft: [-0.003, 0],
     probeRight: [0.003, 0],
     probeRadiusOfCurvature: 0.1,
+    tukeyApodizationRatio: 0,
 
 
     //// Simulation parameters

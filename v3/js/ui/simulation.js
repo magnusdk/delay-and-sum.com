@@ -1,7 +1,7 @@
 import { params, updateParam } from "/v3/js/params.js";
 import { Colors } from "/v3/js/ui/colors.js";
 import { invertScaleTranslationTransform, transformVector } from "/v3/js/util.js";
-
+import { tukey } from "/v3/js/apodization.js";
 
 function dist(x, z) {
     return Math.sqrt(x ** 2 + z ** 2);
@@ -85,7 +85,7 @@ function pulse(phase, pulseLength) {
 
 function pressureFieldAtPoint(
     x, z, t,
-    elementsX, elementsZ, numElements,
+    elementsX, elementsZ, elementWeights, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
     virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
     f, pulseLength, soundSpeed, soundSpeedAssumedTx,
@@ -102,6 +102,7 @@ function pressureFieldAtPoint(
             if (j >= numElements) break;
             const elX = elementsX[j];
             const elZ = elementsZ[j];
+            const elWeight = elementWeights[j];
 
             let t0 = 0;
             if (transmittedWaveType == 0) {
@@ -114,7 +115,8 @@ function pressureFieldAtPoint(
 
             const phase = (dist(x - elX, z - elZ) / soundSpeed - (t + t0)) * f;
             const [real1, imag1] = pulse(phase, pulseLength);
-            real += real1; imag += imag1;
+            real += real1 * elWeight;
+            imag += imag1 * elWeight;
         }
     }
     // Normalize wrt number of elements. Multiplying by 50 is completely arbitrary.
@@ -127,7 +129,7 @@ function pressureFieldAtPoint(
 function mainSimulationkernel(
     cT0, cT1, cT2, cT3, cT4, cT5,
     t,
-    elementsX, elementsZ, numElements,
+    elementsX, elementsZ, elementWeights, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
     virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
     f, pulseLength, soundSpeed, soundSpeedAssumedTx,
@@ -137,7 +139,7 @@ function mainSimulationkernel(
     const [x, z] = getPosition(cT0, cT1, cT2, cT3, cT4, cT5);
     const [real, imag] = pressureFieldAtPoint(
         x, z, t,
-        elementsX, elementsZ, numElements,
+        elementsX, elementsZ, elementWeights, numElements,
         waveOriginX, waveOriginZ, transmittedWaveType,
         virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
         f, pulseLength, soundSpeed, soundSpeedAssumedTx,
@@ -151,7 +153,7 @@ function mainSimulationkernel(
 function timelinekernel(
     minTime, maxTime,
     samplePointX, samplePointZ,
-    elementsX, elementsZ, numElements,
+    elementsX, elementsZ, elementWeights, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
     virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
     f, pulseLength, soundSpeed, soundSpeedAssumedTx,
@@ -164,7 +166,7 @@ function timelinekernel(
     const t = x / canvasWidth * (maxTime - minTime) + minTime;
     const [real, imag] = pressureFieldAtPoint(
         samplePointX, samplePointZ, t,
-        elementsX, elementsZ, numElements,
+        elementsX, elementsZ, elementWeights, numElements,
         waveOriginX, waveOriginZ, transmittedWaveType,
         virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
         f, pulseLength, soundSpeed, soundSpeedAssumedTx,
@@ -186,7 +188,7 @@ function timelinekernel(
 
 function maximumIntensityKernel(
     cT0, cT1, cT2, cT3, cT4, cT5,
-    elementsX, elementsZ, numElements,
+    elementsX, elementsZ, elementWeights, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
     virtualSourcesX, virtualSourcesZ, numVirtualSources,
     f, pulseLength, soundSpeed, soundSpeedAssumedTx,
@@ -199,7 +201,7 @@ function maximumIntensityKernel(
         const t = i / numTimeSteps * maxTime + minTime;
         const [real, imag] = pressureFieldAtPoint(
             x, z, t,
-            elementsX, elementsZ, numElements,
+            elementsX, elementsZ, elementWeights, numElements,
             waveOriginX, waveOriginZ, transmittedWaveType,
             virtualSourcesX, virtualSourcesZ, numVirtualSources,
             f, pulseLength, soundSpeed, soundSpeedAssumedTx,
@@ -242,7 +244,8 @@ export class PrimarySimulationCanvas {
     }
 
     update(probe) {
-        const [elementsX, elementsZ] = [probe.x, probe.z];
+        const [elementsX, elementsZ] = [Array.from(probe.x), Array.from(probe.z)];
+        const elementWeights = tukey(probe.numElements, params.tukeyApodizationRatio);
         const virtualSourcesX = [params.virtualSource[0]];
         const virtualSourcesZ = [params.virtualSource[1]];
         // Math.atan2 is buggy in GPU.js, so we calculate it on the CPU instead.
@@ -256,6 +259,7 @@ export class PrimarySimulationCanvas {
         while (elementsX.length < this.simulationKernel.constants.maxNumElements) {
             elementsX.push(0);
             elementsZ.push(0);
+            elementWeights.push(0);
         }
         while (virtualSourcesX.length < this.simulationKernel.constants.maxNumVirtualSources) {
             virtualSourcesX.push(0);
@@ -265,7 +269,7 @@ export class PrimarySimulationCanvas {
         this.simulationKernel(
             ...params.cameraTransform,
             params.time,
-            elementsX, elementsZ, params.probeNumElements,
+            elementsX, elementsZ, elementWeights, params.probeNumElements,
             waveOriginX, waveOriginZ, params.transmittedWaveType,
             virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
             params.centerFrequency, params.pulseLength,
@@ -304,7 +308,8 @@ export class SecondarySimulationCanvas {
     }
 
     update(probe) {
-        const [elementsX, elementsZ] = [probe.x, probe.z];
+        const [elementsX, elementsZ] = [Array.from(probe.x), Array.from(probe.z)];
+        const elementWeights = tukey(probe.numElements, params.tukeyApodizationRatio);
         const virtualSourcesX = [params.virtualSource[0]];
         const virtualSourcesZ = [params.virtualSource[1]];
         // Math.atan2 is buggy in GPU.js, so we calculate it on the CPU instead.
@@ -317,6 +322,7 @@ export class SecondarySimulationCanvas {
         while (elementsX.length < this.simulationKernel.constants.maxNumElements) {
             elementsX.push(0);
             elementsZ.push(0);
+            elementWeights.push(0);
         }
         while (virtualSourcesX.length < this.simulationKernel.constants.maxNumVirtualSources) {
             virtualSourcesX.push(0);
@@ -325,7 +331,7 @@ export class SecondarySimulationCanvas {
         }
         this.simulationKernel(
             this.grid.xMin, this.grid.xMax, this.grid.zMin, this.grid.zMax,
-            elementsX, elementsZ, params.probeNumElements,
+            elementsX, elementsZ, elementWeights, params.probeNumElements,
             waveOriginX, waveOriginZ, params.transmittedWaveType,
             virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
             params.centerFrequency, params.pulseLength,
@@ -361,7 +367,8 @@ export class TimelineCanvas {
     }
 
     draw(canvas, probe) {
-        const [elementsX, elementsZ] = [probe.x, probe.z];
+        const [elementsX, elementsZ] = [Array.from(probe.x), Array.from(probe.z)];
+        const elementWeights = tukey(probe.numElements, params.tukeyApodizationRatio);
         const virtualSourcesX = [params.virtualSource[0]];
         const virtualSourcesZ = [params.virtualSource[1]];
         // Math.atan2 is buggy in GPU.js, so we calculate it on the CPU instead.
@@ -382,6 +389,7 @@ export class TimelineCanvas {
         while (elementsX.length < this.kernel.constants.maxNumElements) {
             elementsX.push(0);
             elementsZ.push(0);
+            elementWeights.push(0);
         }
         while (virtualSourcesX.length < this.kernel.constants.maxNumVirtualSources) {
             virtualSourcesX.push(0);
@@ -391,7 +399,7 @@ export class TimelineCanvas {
         const samples = this.kernel(
             this.minTime, this.maxTime,
             samplePointX, samplePointZ,
-            elementsX, elementsZ, params.probeNumElements,
+            elementsX, elementsZ, elementWeights, params.probeNumElements,
             waveOriginX, waveOriginZ, params.transmittedWaveType,
             virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
             params.centerFrequency, params.pulseLength,

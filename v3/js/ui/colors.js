@@ -38,3 +38,5 @@ Colors.insonifiedVirtualCircle = Colors.hexToRGB(Colors.lightPink, 0.5);
 Colors.grid = Colors.hexToRGB(Colors.black, 0.1);
 Colors.timelineSamples = Colors.darkBlue;
 Colors.timelineTimeMarker = Colors.pink;
+Colors.apodizationOutline = Colors.pink;
+Colors.apodizationFill = Colors.lightPink;
