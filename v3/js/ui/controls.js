@@ -149,7 +149,7 @@ function updateApodizationVisualizer(ctx) {
     for (let i = 0; i < apodizationValues.length; i++) {
         ctx.lineTo(
             i / (apodizationValues.length - 1) * ctx.canvas.width,
-            (1.1 - apodizationValues[i]) * ctx.canvas.height * 0.9,
+            (2.2 - apodizationValues[i]) * ctx.canvas.height * 0.45,
         );
     }
     ctx.lineTo(ctx.canvas.width, ctx.canvas.height * 0.9);

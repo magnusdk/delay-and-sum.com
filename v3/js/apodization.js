@@ -14,5 +14,7 @@ export function tukey(n, r) {
             )));
         }
     }
+    const mean = window.reduce((a, b) => a + b, 0) / n;
+    window = window.map(v => v / mean);  // Normalize such that the mean is n
     return window;
 }
