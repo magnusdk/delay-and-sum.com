@@ -179,32 +179,33 @@ export function initControls(controlsDiv, app) {
     apodizationVisualizerCanvas.width = 200;
     apodizationVisualizerCanvas.height = 20;
     const apodizationVisualizerCanvasCtx = apodizationVisualizerCanvas.getContext("2d");
-    controlsDiv.appendChild(controlsGroup("Beamforming parameters", [
-        select(
-            "transmittedWaveType", "Transmitted wave type",
-            [[0, "Focused"], [1, "Plane"], [2, "Diverging"]],
-            (value) => app.updateParam("transmittedWaveType", value),
-        ),
+
+    controlsDiv.appendChild(select(
+        "transmittedWaveType", "Transmitted wave type",
+        [[0, "Focused"], [1, "Plane"], [2, "Diverging"]],
+        (value) => app.updateParam("transmittedWaveType", value),
+    ));
+    controlsDiv.appendChild(slider(
+        "centerFrequency", "Center frequency",
+        0.1, 6, 0.01, "MHz", 1e6, 2,
+        (value) => app.updateParam("centerFrequency", value),
+    ));
+    controlsDiv.appendChild(slider(
+        "pulseLength", "Pulse length",
+        0.1, 100, 0.01, "wavelengths", 1, 2,
+        (value) => app.updateParam("pulseLength", value),
+    ));
+    controlsDiv.appendChild(slider(
+        "probeNumElements", "Number of transducer elements",
+        1, 256, 1, "", 1, 0,
+        (value) => {
+            app.updateParam("probeNumElements", value);
+            updateApodizationVisualizer(apodizationVisualizerCanvasCtx);
+        }
+    ));
+    controlsDiv.appendChild(controlsGroup("Apodization", [
         slider(
-            "centerFrequency", "Center frequency",
-            0.1, 6, 0.01, "MHz", 1e6, 2,
-            (value) => app.updateParam("centerFrequency", value),
-        ),
-        slider(
-            "pulseLength", "Pulse length",
-            0.1, 100, 0.01, "wavelengths", 1, 2,
-            (value) => app.updateParam("pulseLength", value),
-        ),
-        slider(
-            "probeNumElements", "Number of transducer elements",
-            1, 256, 1, "", 1, 0,
-            (value) => {
-                app.updateParam("probeNumElements", value);
-                updateApodizationVisualizer(apodizationVisualizerCanvasCtx);
-            },
-        ),
-        slider(
-            "tukeyApodizationRatio", "Tukey apodization ratio",
+            "tukeyApodizationRatio", "Tukey ratio",
             0, 1, 0.01, "", 1, 2,
             (value) => {
                 app.updateParam("tukeyApodizationRatio", value);
