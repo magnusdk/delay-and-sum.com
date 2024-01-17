@@ -14,7 +14,7 @@ function rescaleInputWidth(inputEl, numDecimals) {
 }
 
 
-export function select(id, label, options, callback) {
+export function select(id, value, label, options, callback) {
     const controlEl = document.createElement("div");
     controlEl.classList.add("control");
 
@@ -31,7 +31,7 @@ export function select(id, label, options, callback) {
         option.innerText = text;
         selectEl.appendChild(option);
     }
-    selectEl.value = params[id];
+    selectEl.value = value;
 
     controlEl.appendChild(labelEl);
     controlEl.appendChild(selectEl);
@@ -40,7 +40,7 @@ export function select(id, label, options, callback) {
 
 
 
-export function slider(id, label, min, max, step, unitsLabel, scalingFactor, numDecimals, callback) {
+export function slider(id, value, label, min, max, step, unitsLabel, scalingFactor, numDecimals, callback) {
     const controlEl = document.createElement("div");
     controlEl.classList.add("control");
 
@@ -53,7 +53,7 @@ export function slider(id, label, min, max, step, unitsLabel, scalingFactor, num
     // Type is "text" because "number" inputs are tricky to work with
     valueInputEl.setAttribute("type", "text");
     valueInputEl.setAttribute("id", id);
-    valueInputEl.value = (params[id] / scalingFactor).toFixed(numDecimals);
+    valueInputEl.value = (value / scalingFactor).toFixed(numDecimals);
     valueInputEl.addEventListener("input",
         (e) => callback(parseFloat(e.target.value) * scalingFactor));
     valueInputEl.addEventListener("input",
@@ -81,7 +81,7 @@ export function slider(id, label, min, max, step, unitsLabel, scalingFactor, num
     valueSliderEl.setAttribute("min", min);
     valueSliderEl.setAttribute("max", max);
     valueSliderEl.setAttribute("step", step);
-    valueSliderEl.setAttribute("value", params[id] / scalingFactor);
+    valueSliderEl.setAttribute("value", value / scalingFactor);
     valueSliderEl.addEventListener("input", (e) => {
         callback(parseFloat(e.target.value) * scalingFactor);
     });
@@ -100,7 +100,7 @@ export function slider(id, label, min, max, step, unitsLabel, scalingFactor, num
     return controlEl;
 }
 
-export function checkbox(id, label, callback) {
+export function checkbox(id, value, label, callback) {
     const controlEl = document.createElement("div");
     controlEl.classList.add("control");
 
@@ -111,7 +111,7 @@ export function checkbox(id, label, callback) {
     const checkboxEl = document.createElement("input");
     checkboxEl.setAttribute("type", "checkbox");
     checkboxEl.setAttribute("id", id);
-    checkboxEl.checked = params[id];
+    checkboxEl.checked = value;
     checkboxEl.addEventListener("change", (e) => callback(e.target.checked));
 
     controlEl.appendChild(labelEl);
@@ -166,7 +166,7 @@ function updateApodizationVisualizer(ctx) {
 
 export function initControls(controlsDiv, app) {
     controlsDiv.appendChild(select(
-        "displayMode", "Wave display mode",
+        "displayMode", params["displayMode"], "Wave display mode",
         [[-1, "Hide"], [0, "Phase"], [1, "Envelope"], [2, "Intensity"]],
         (value) => app.updateParam("displayMode", value),
     ));
@@ -181,22 +181,22 @@ export function initControls(controlsDiv, app) {
     const apodizationVisualizerCanvasCtx = apodizationVisualizerCanvas.getContext("2d");
 
     controlsDiv.appendChild(select(
-        "transmittedWaveType", "Transmitted wave type",
+        "transmittedWaveType", params["transmittedWaveType"], "Transmitted wave type",
         [[0, "Focused"], [1, "Plane"], [2, "Diverging"]],
         (value) => app.updateParam("transmittedWaveType", value),
     ));
     controlsDiv.appendChild(slider(
-        "centerFrequency", "Center frequency",
+        "centerFrequency", params["centerFrequency"], "Center frequency",
         0.1, 6, 0.01, "MHz", 1e6, 2,
         (value) => app.updateParam("centerFrequency", value),
     ));
     controlsDiv.appendChild(slider(
-        "pulseLength", "Pulse length",
+        "pulseLength", params["pulseLength"], "Pulse length",
         0.1, 100, 0.01, "wavelengths", 1, 2,
         (value) => app.updateParam("pulseLength", value),
     ));
     controlsDiv.appendChild(slider(
-        "probeNumElements", "Number of transducer elements",
+        "probeNumElements", params["probeNumElements"], "Number of transducer elements",
         1, 256, 1, "", 1, 0,
         (value) => {
             app.updateParam("probeNumElements", value);
@@ -205,7 +205,7 @@ export function initControls(controlsDiv, app) {
     ));
     controlsDiv.appendChild(controlsGroup("Apodization", [
         slider(
-            "tukeyApodizationRatio", "Tukey ratio",
+            "tukeyApodizationRatio", params["tukeyApodizationRatio"], "Tukey ratio",
             0, 1, 0.01, "", 1, 2,
             (value) => {
                 app.updateParam("tukeyApodizationRatio", value);
@@ -215,28 +215,24 @@ export function initControls(controlsDiv, app) {
         apodizationVisualizerCanvas,
     ]));
     updateApodizationVisualizer(apodizationVisualizerCanvasCtx);
-    //controlsDiv.appendChild(slider(
-    //    "probeRadiusOfCurvature", "Radius of curvature",
-    //    -0.05, 0.05, 0.001, "m", 1, 3,
-    //    (value) => app.updateParam("probeRadiusOfCurvature", value),
-    //));
+
     controlsDiv.appendChild(slider(
-        "soundSpeed", "Sound speed",
+        "soundSpeed", params["soundSpeed"], "Sound speed",
         100, 3000, 1, "m/s", 1, 0,
         (value) => app.updateParam("soundSpeed", value),
     ));
     controlsDiv.appendChild(slider(
-        "soundSpeedAssumedTx", "Sound speed assumed on transmit",
+        "soundSpeedAssumedTx", params["soundSpeedAssumedTx"], "Sound speed assumed on transmit",
         100, 3000, 1, "m/s", 1, 0,
         (value) => app.updateParam("soundSpeedAssumedTx", value),
     ));
     controlsDiv.appendChild(slider(
-        "gain", "Gain",
+        "gain", params["gain"], "Gain",
         -60, 60, 0.01, "dB", 1, 2,
         (value) => app.updateParam("gain", value),
     ));
     controlsDiv.appendChild(slider(
-        "timelineGain", "Timeline gain",
+        "timelineGain", params["timelineGain"], "Timeline gain",
         -60, 60, 0.01, "dB", 1, 2,
         (value) => app.updateParam("timelineGain", value),
     ));
