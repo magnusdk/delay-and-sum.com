@@ -35,6 +35,7 @@
             import { initControls } from '/v3/js/ui/controls.js';
             import { loadParamsFromURL } from "/v3/js/params.js";
 
+            loadParamsFromURL();
             document.app = new App(
                 document.getElementById('backgroundCanvas'),
                 document.getElementById('primarySimulationCanvas'),
@@ -42,7 +43,6 @@
                 document.getElementById('foregroundCanvas'),
                 document.getElementById('timelineCanvas'),
             );
-            loadParamsFromURL();
             initControls(document.getElementById("controlsContainer"), document.app);
             document.app.start();
         </script>
