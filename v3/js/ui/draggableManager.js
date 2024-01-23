@@ -37,6 +37,15 @@ export class Draggable {
     getPosition() {
         return params[this.paramsName];
     }
+
+    isDisabled() {
+        const disabled = this.opts["disabled"];
+        if (typeof disabled === "function") {
+            return disabled();
+        } else {
+            return disabled;
+        }
+    }
 }
 
 export class MidPointDraggable {
@@ -77,6 +86,15 @@ export class MidPointDraggable {
         const [xMid, zMid] = [(x1 + x2) / 2, (z1 + z2) / 2];
         return [xMid, zMid];
     }
+
+    isDisabled() {
+        const disabled = this.opts["disabled"];
+        if (typeof disabled === "function") {
+            return disabled();
+        } else {
+            return disabled;
+        }
+    }
 }
 
 export class DraggableManager {
@@ -99,7 +117,7 @@ export class DraggableManager {
         let closestPoint = null;
         let closestDistance = Infinity;
         for (const [_, draggablePoint] of Object.entries(this.draggablePoints)) {
-            if (draggablePoint.opts["disabled"]) continue;
+            if (draggablePoint.isDisabled()) continue;
 
             let closestDraggableDistance = 50 / this.grid.toCanvasSize(1);
             if (draggablePoint.opts["closestDistanceMultiplier"]) {

@@ -149,7 +149,7 @@ export class MainCanvas {
         // Draw draggable points
         this.foregroundCtx.save();
         for (const [name, draggablePoint] of Object.entries(this.draggableManager.draggablePoints)) {
-            if (draggablePoint.opts["hidden"]) {
+            if (draggablePoint.opts["hidden"] || draggablePoint.isDisabled()) {
                 continue;
             }
 
