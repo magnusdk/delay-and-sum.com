@@ -395,6 +395,7 @@ export class TimelineCanvas {
 
     update(canvas) {
         if (isUpdatedParam(
+            "cameraTransform",
             "probeType",
             "probeNumElements",
             "probeLeft",
