@@ -1,15 +1,11 @@
-import { params } from "/v3/js/params.js";
-// import { renderXTicks, renderZTicks } from "/v3/js/ui/ticks.js";
+export class ProbeInfo {
+    constructor(probeType, probeNumElements, probeLeft, probeRight) {
+        // Only linear probes are supported for now
+        if (probeType !== "linear") throw new Error("probeType must be 'linear'");
 
-
-export class LinearProbe {
-    loadParams() {
-        // Assert that the probe type is linear
-        if (params.probeType !== "linear") throw new Error("params.probeType must be 'linear'");
-
-        this.numElements = params.probeNumElements;
-        this.probeLeft = params.probeLeft;
-        this.probeRight = params.probeRight;
+        this.numElements = probeNumElements;
+        this.probeLeft = probeLeft;
+        this.probeRight = probeRight;
         this.xMin = this.probeLeft[0];
         this.xMax = this.probeRight[0];
         this.zMin = this.probeLeft[1];
@@ -33,3 +29,4 @@ export class LinearProbe {
         }
     }
 }
+

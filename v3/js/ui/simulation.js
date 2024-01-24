@@ -1,7 +1,8 @@
-import { params, updateParam } from "/v3/js/params.js";
+import { params, updateParam, isUpdatedParam } from "/v3/js/params.js";
 import { Colors } from "/v3/js/ui/colors.js";
 import { invertScaleTranslationTransform, transformVector } from "/v3/js/util.js";
 import { tukey } from "/v3/js/apodization.js";
+import { ProbeInfo } from "/v3/js/probe.js";
 
 function dist(x, z) {
     return Math.sqrt(x ** 2 + z ** 2);
@@ -216,7 +217,7 @@ function maximumIntensityKernel(
 
 
 export class PrimarySimulationCanvas {
-    constructor(DOMCanvasElement, width, height, grid) {
+    constructor(DOMCanvasElement, width, height, grid, probe) {
         this.DOMCanvasElement = DOMCanvasElement;
         this.DOMCanvasElementCtx = DOMCanvasElement.getContext("2d");
         this.canvas = document.createElement("canvas");
@@ -243,42 +244,68 @@ export class PrimarySimulationCanvas {
             });
     }
 
-    update(probe) {
-        const [elementsX, elementsZ] = [Array.from(probe.x), Array.from(probe.z)];
-        const elementWeights = tukey(probe.numElements, params.tukeyApodizationRatio);
-        const virtualSourcesX = [params.virtualSource[0]];
-        const virtualSourcesZ = [params.virtualSource[1]];
-        // Math.atan2 is buggy in GPU.js, so we calculate it on the CPU instead.
-        const virtualSourcesAzimuths = [
-            Math.atan2(virtualSourcesX[0] - probe.center[0], virtualSourcesZ[0] - probe.center[1]) + Math.PI / 2
-        ];
+    update() {
+        if (isUpdatedParam(
+            "tukeyApodizationRatio",
+            "virtualSource",
+            "cameraTransform",
+            "time",
+            "transmittedWaveType",
+            "centerFrequency",
+            "pulseLength",
+            "soundSpeed",
+            "soundSpeedAssumedTx",
+            "gain",
+            "displayMode",
+            "probeType",
+            "probeNumElements",
+            "probeLeft",
+            "probeRight",
+        )) {
+            const probe = new ProbeInfo(
+                params.probeType,
+                params.probeNumElements,
+                params.probeLeft,
+                params.probeRight
+            );
+            const [elementsX, elementsZ] = [Array.from(probe.x), Array.from(probe.z)];
+            const elementWeights = tukey(probe.numElements, params.tukeyApodizationRatio);
+            const virtualSourcesX = [params.virtualSource[0]];
+            const virtualSourcesZ = [params.virtualSource[1]];
+            // Math.atan2 is buggy in GPU.js, so we calculate it on the CPU instead.
+            const virtualSourcesAzimuths = [
+                Math.atan2(
+                    virtualSourcesX[0] - probe.center[0],
+                    virtualSourcesZ[0] - probe.center[1]
+                ) + Math.PI / 2,
+            ];
 
-        // center of probe
-        const [waveOriginX, waveOriginZ] = probe.center;
-        // Ensure correct size of arrays
-        while (elementsX.length < this.simulationKernel.constants.maxNumElements) {
-            elementsX.push(0);
-            elementsZ.push(0);
-            elementWeights.push(0);
+            const [waveOriginX, waveOriginZ] = probe.center;
+            // Ensure correct size of arrays
+            while (elementsX.length < this.simulationKernel.constants.maxNumElements) {
+                elementsX.push(0);
+                elementsZ.push(0);
+                elementWeights.push(0);
+            }
+            while (virtualSourcesX.length < this.simulationKernel.constants.maxNumVirtualSources) {
+                virtualSourcesX.push(0);
+                virtualSourcesZ.push(0);
+                virtualSourcesAzimuths.push(0);
+            }
+            this.simulationKernel(
+                ...params.cameraTransform,
+                params.time,
+                elementsX, elementsZ, elementWeights, probe.numElements,
+                waveOriginX, waveOriginZ, params.transmittedWaveType,
+                virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
+                params.centerFrequency, params.pulseLength,
+                params.soundSpeed, params.soundSpeedAssumedTx,
+                params.gain, params.displayMode,
+            );
+            // Clear DOMCanvasElementCtx
+            this.DOMCanvasElementCtx.clearRect(0, 0, this.DOMCanvasElement.width, this.DOMCanvasElement.height);
+            this.DOMCanvasElementCtx.drawImage(this.canvas, 0, 0);
         }
-        while (virtualSourcesX.length < this.simulationKernel.constants.maxNumVirtualSources) {
-            virtualSourcesX.push(0);
-            virtualSourcesZ.push(0);
-            virtualSourcesAzimuths.push(0);
-        }
-        this.simulationKernel(
-            ...params.cameraTransform,
-            params.time,
-            elementsX, elementsZ, elementWeights, params.probeNumElements,
-            waveOriginX, waveOriginZ, params.transmittedWaveType,
-            virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
-            params.centerFrequency, params.pulseLength,
-            params.soundSpeed, params.soundSpeedAssumedTx,
-            params.gain, params.displayMode,
-        );
-        // Clear DOMCanvasElementCtx
-        this.DOMCanvasElementCtx.clearRect(0, 0, this.DOMCanvasElement.width, this.DOMCanvasElement.height);
-        this.DOMCanvasElementCtx.drawImage(this.canvas, 0, 0);
     }
 }
 
@@ -366,84 +393,123 @@ export class TimelineCanvas {
             });
     }
 
-    draw(canvas, probe) {
-        const [elementsX, elementsZ] = [Array.from(probe.x), Array.from(probe.z)];
-        const elementWeights = tukey(probe.numElements, params.tukeyApodizationRatio);
-        const virtualSourcesX = [params.virtualSource[0]];
-        const virtualSourcesZ = [params.virtualSource[1]];
-        // Math.atan2 is buggy in GPU.js, so we calculate it on the CPU instead.
-        const virtualSourcesAzimuths = [
-            Math.atan2(virtualSourcesX[0] - probe.center[0], virtualSourcesZ[0] - probe.center[1]) + Math.PI / 2
-        ];
-        const samplePointX = params.samplePoint[0];
-        const samplePointZ = params.samplePoint[1];
+    update(canvas) {
+        if (isUpdatedParam(
+            "probeType",
+            "probeNumElements",
+            "probeLeft",
+            "probeRight",
+            "tukeyApodizationRatio",
+            "virtualSource",
+            "samplePoint",
+            "soundSpeed",
+            "soundSpeed",
+            "probeNumElements",
+            "transmittedWaveType",
+            "centerFrequency",
+            "pulseLength",
+            "soundSpeed",
+            "soundSpeedAssumedTx",
+            "timelineGain",
+            "displayMode",
+            "time",
+        )) {
+            const probe = new ProbeInfo(
+                params.probeType,
+                params.probeNumElements,
+                params.probeLeft,
+                params.probeRight
+            )
+            const [elementsX, elementsZ] = [Array.from(probe.x), Array.from(probe.z)];
+            const elementWeights = tukey(probe.numElements, params.tukeyApodizationRatio);
+            const virtualSourcesX = [params.virtualSource[0]];
+            const virtualSourcesZ = [params.virtualSource[1]];
+            // Math.atan2 is buggy in GPU.js, so we calculate it on the CPU instead.
+            const virtualSourcesAzimuths = [
+                Math.atan2(
+                    virtualSourcesX[0] - probe.center[0],
+                    virtualSourcesZ[0] - probe.center[1]
+                ) + Math.PI / 2
+            ];
+            const samplePointX = params.samplePoint[0];
+            const samplePointZ = params.samplePoint[1];
 
-        // Set the min and max time rendered on the timeline.
-        // time=0 is when the center of the pulse passes through the center of the probe.
-        this.minTime = -5e-3 / params.soundSpeed;
-        this.maxTime = this.grid.pixelsPerMeter / this.grid.toCanvasSize(1) / params.soundSpeed;
+            const minTime = this.minTime(params.soundSpeed);
+            const maxTime = this.maxTime(this.grid, params.soundSpeed);
 
-        // center of probe
-        const [waveOriginX, waveOriginZ] = probe.center;
-        // Ensure correct size of arrays
-        while (elementsX.length < this.kernel.constants.maxNumElements) {
-            elementsX.push(0);
-            elementsZ.push(0);
-            elementWeights.push(0);
+            // center of probe
+            const [waveOriginX, waveOriginZ] = probe.center;
+            // Ensure correct size of arrays
+            while (elementsX.length < this.kernel.constants.maxNumElements) {
+                elementsX.push(0);
+                elementsZ.push(0);
+                elementWeights.push(0);
+            }
+            while (virtualSourcesX.length < this.kernel.constants.maxNumVirtualSources) {
+                virtualSourcesX.push(0);
+                virtualSourcesZ.push(0);
+                virtualSourcesAzimuths.push(0);
+            }
+            const samples = this.kernel(
+                minTime, maxTime,
+                samplePointX, samplePointZ,
+                elementsX, elementsZ, elementWeights, params.probeNumElements,
+                waveOriginX, waveOriginZ, params.transmittedWaveType,
+                virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
+                params.centerFrequency, params.pulseLength,
+                params.soundSpeed, params.soundSpeedAssumedTx,
+                params.timelineGain, params.displayMode,
+            );
+            const ctx = canvas.getContext("2d");
+
+            ctx.save();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.beginPath();
+            ctx.strokeStyle = Colors.timelineSamples;
+            ctx.lineWidth = 4;
+            ctx.lineJoin = "round";
+            ctx.moveTo(0, canvas.height / 2);
+            for (let i = 0; i < samples.length; i++) {
+                ctx.lineTo(i, canvas.height / 2 - samples[i] * 30);
+            }
+            ctx.lineTo(canvas.width, canvas.height / 2);
+            ctx.stroke();
+            ctx.restore();
+
+            //Draw a line at the current time
+            ctx.save();
+            ctx.strokeStyle = Colors.timelineTimeMarker;
+            ctx.lineWidth = 4;
+            ctx.lineCap = "round";
+            ctx.beginPath();
+            const x = (params.time - minTime) / (maxTime - minTime) * canvas.width;
+            ctx.moveTo(x, canvas.height / 8);
+            ctx.lineTo(x, canvas.height / 8 * 7);
+            ctx.stroke();
+            ctx.restore();
         }
-        while (virtualSourcesX.length < this.kernel.constants.maxNumVirtualSources) {
-            virtualSourcesX.push(0);
-            virtualSourcesZ.push(0);
-            virtualSourcesAzimuths.push(0);
-        }
-        const samples = this.kernel(
-            this.minTime, this.maxTime,
-            samplePointX, samplePointZ,
-            elementsX, elementsZ, elementWeights, params.probeNumElements,
-            waveOriginX, waveOriginZ, params.transmittedWaveType,
-            virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
-            params.centerFrequency, params.pulseLength,
-            params.soundSpeed, params.soundSpeedAssumedTx,
-            params.timelineGain, params.displayMode,
-        );
-        const ctx = canvas.getContext("2d");
+    }
 
-        ctx.save();
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.lineTo(canvas.width, canvas.height / 2);
-        ctx.beginPath();
-        ctx.strokeStyle = Colors.timelineSamples;
-        ctx.lineWidth = 4;
-        ctx.lineJoin = "round";
-        ctx.moveTo(0, canvas.height / 2);
-        for (let i = 0; i < samples.length; i++) {
-            ctx.lineTo(i, canvas.height / 2 - samples[i] * 30);
-        }
-        ctx.lineTo(canvas.width, canvas.height / 2);
-        ctx.stroke();
-        ctx.restore();
-
-        //Draw a line at the current time
-        ctx.save();
-        ctx.strokeStyle = Colors.timelineTimeMarker;
-        ctx.lineWidth = 4;
-        ctx.lineCap = "round";
-        ctx.beginPath();
-        const x = (params.time - this.minTime) / (this.maxTime - this.minTime) * canvas.width;
-        ctx.moveTo(x, canvas.height / 8);
-        ctx.lineTo(x, canvas.height / 8 * 7);
-        ctx.stroke();
-        ctx.restore();
+    minTime(soundSpeed) {
+        return -5e-3 / soundSpeed;
+    }
+    maxTime(grid, soundSpeed) {
+        return grid.pixelsPerMeter / grid.toCanvasSize(1) / soundSpeed;
     }
 
     dragTime(x) {
+        const minTime = this.minTime(params.soundSpeed);
+        const maxTime = this.maxTime(this.grid, params.soundSpeed);
         if (this.dragging) {
-            updateParam("time", x * (this.maxTime - this.minTime) + this.minTime);
+            updateParam("time", x * (maxTime - minTime) + minTime);
         }
     }
 
     startDragging(x) {
-        updateParam("time", x * (this.maxTime - this.minTime) + this.minTime);
+        const minTime = this.minTime(params.soundSpeed);
+        const maxTime = this.maxTime(this.grid, params.soundSpeed);
+        updateParam("time", x * (maxTime - minTime) + minTime);
         this.dragging = true;
     }
     stopDragging(x) {

@@ -2,10 +2,10 @@ import { TooltipManager } from "/v3/js/ui/tooltipManager.js";
 import { getCanvasPointFromMouseEvent, getCanvasPointFromTouchEvent, matrixMatrixMultiply, getScaleMatrix } from "/v3/js/util.js";
 import { Grid } from "/v3/js/grid.js";
 import { DraggableManager } from "/v3/js/ui/draggableManager.js";
-import { MainCanvas } from "/v3/js/ui/mainCanvas.js";
-import { LinearProbe } from "/v3/js/probe.js";
-import { params, resetParams, updateParam } from "/v3/js/params.js";
+import { ForegroundCanvas } from "/v3/js/ui/foregroundCanvas.js";
+import { params, resetParams, updateParam, clearUpdatedParams } from "/v3/js/params.js";
 import { PrimarySimulationCanvas, SecondarySimulationCanvas, TimelineCanvas } from "/v3/js/ui/simulation.js";
+import { BackgroundCanvas } from "/v3/js/ui/backgroundCanvas.js";
 
 
 export class App {
@@ -28,14 +28,15 @@ export class App {
             this.primarySimulationCanvasElement.width,
             this.primarySimulationCanvasElement.height,
             this.grid,
+            this.probe,
         );
         this.secondarySimulationCanvas = new SecondarySimulationCanvas(
             this.secondarySimulationCanvasElement.width,
             this.secondarySimulationCanvasElement.height,
             this.grid,
+            this.probe,
         );
 
-        this.probe = new LinearProbe();
         this.draggableManager = new DraggableManager(this.grid);
         this.draggableManager.addPoint("virtualSource");
         this.draggableManager.addPoint("samplePoint");
@@ -44,17 +45,22 @@ export class App {
         this.draggableManager.addMidPoint("probeLeft", "probeRight", { hidden: true });
 
         this.timelineCanvas = new TimelineCanvas(this.timelineCanvasElement, this.grid);
-        this.mainCanvas = new MainCanvas(
+        this.backgroundCanvas = new BackgroundCanvas(
             this.backgroundCanvasElement,
-            this.foregroundCanvasElement,
             this.grid,
-            this.probe,
             this.draggableManager,
             {
                 drawProbeLine: true,
                 drawSonifiedArea: true,
                 drawVirtualSourceGeometry: true,
-                sectorScanBackground: false,
+            },
+        );
+
+        this.foregroundCanvas = new ForegroundCanvas(
+            this.foregroundCanvasElement,
+            this.grid,
+            this.draggableManager,
+            {
                 gridLines: true,
             },
         );
@@ -71,61 +77,47 @@ export class App {
     }
 
     start() {
-        this.probe.loadParams();
-        const draw = () => {
-            if (this.mainCanvas.shouldRedraw) {
-                this.mainCanvas.draw();
-                this.primarySimulationCanvas.update(this.probe);
-                if (params.calculateMaximumIntensity) {
-                    this.secondarySimulationCanvas.update(this.probe);
-                } else {
-                    this.secondarySimulationCanvas.clear();
-                }
-                this.mainCanvas.shouldRedraw = false;
-
-                // TODO: Only update when needed or move shouldRedraw outside of mainCanvas
-                this.timelineCanvas.draw(this.timelineCanvasElement, this.probe);
-            }
-            requestAnimationFrame(draw);
+        const update = () => {
+            // Each canvas only updates if a given parameter has changed since the last call to update()
+            // We reset the updated parameters at the end of the loop by calling clearUpdatedParams()
+            this.backgroundCanvas.update();
+            this.primarySimulationCanvas.update();
+            this.timelineCanvas.update(this.timelineCanvasElement);
+            this.foregroundCanvas.update();
+            clearUpdatedParams();
+            this.draggableManager.isUpdated = false;
+            requestAnimationFrame(update);
         }
-        draw();
+        update();
     }
 
     handleStartDraggingPoint(x, z) {
         [x, z] = this.grid.fromCanvasCoords(x, z);
         this.draggableManager.startDragging(x, z);
-        this.mainCanvas.shouldRedraw = true;
     }
     handleMoveDraggingPoint(x, z, clientX, clientY) {
         [x, z] = this.grid.fromCanvasCoords(x, z);
         this.tooltipManager.update(clientX, clientY, x, z);
         this.tooltipManager.show();
-
         this.draggableManager.update(x, z);
-        this.probe.loadParams();
-        this.mainCanvas.shouldRedraw = true;
     }
     handleEndDraggingPoint(x, z) {
         [x, z] = this.grid.fromCanvasCoords(x, z);
         this.draggableManager.stopDragging(x, z);
-        this.mainCanvas.shouldRedraw = true;
         this.tooltipManager.hide();
     }
 
     handleStartDraggingTimeline(x) {
         const t = x / this.timelineCanvasElement.width;
         this.timelineCanvas.startDragging(t);
-        this.mainCanvas.shouldRedraw = true;
     }
     handleMoveDraggingTimeline(x) {
         const t = x / this.timelineCanvasElement.width;
         this.timelineCanvas.dragTime(t);
-        this.mainCanvas.shouldRedraw = true;
     }
     handleEndDraggingTimeline(x) {
         const t = x / this.timelineCanvasElement.width;
         this.timelineCanvas.stopDragging(t);
-        this.mainCanvas.shouldRedraw = true;
     }
 
 
@@ -207,7 +199,6 @@ export class App {
         window.addEventListener("mouseup", (e) => {
             this.draggableManager.stopDragging();
             this.timelineCanvas.stopDragging();
-            this.mainCanvas.shouldRedraw = true;
         });
 
         // Modified code taken from https://gist.github.com/Martin-Pitt/2756cf86dca90e179b4e75003d7a1a2b
@@ -231,7 +222,6 @@ export class App {
                 ]
                 updateParam("cameraTransform", newCameraTransform);
             }
-            this.mainCanvas.shouldRedraw = true;
         }, {
             passive: false
         });
@@ -240,12 +230,10 @@ export class App {
     updateParam(name, value) {
         updateParam(name, value);
         this.probe.loadParams();
-        this.mainCanvas.shouldRedraw = true;
     }
 
     resetParams() {
         resetParams();
         this.probe.loadParams();
-        this.mainCanvas.shouldRedraw = true;
     }
 }

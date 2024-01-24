@@ -17,6 +17,7 @@ export class Draggable {
     startDragging(x, z) {
         this.startPosition = [x, z];
         this.isDragging = true;
+        this.update(x, z);
     }
 
     update(x, z) {
@@ -103,14 +104,17 @@ export class DraggableManager {
         this.draggablePoints = {};
         this.dragging = null;
         this.hovering = null;
+        this.isUpdated = false;
     }
 
     addPoint(name, opts) {
         this.draggablePoints[name] = new Draggable(name, opts);
+        this.isUpdated = true;
     }
 
     addMidPoint(name1, name2, opts) {
         this.draggablePoints[[name1, name2]] = new MidPointDraggable(name1, name2, opts);
+        this.isUpdated = true;
     }
 
     closestPoint(x, z) {
@@ -136,6 +140,7 @@ export class DraggableManager {
         this.dragging = this.closestPoint(x, z);
         if (this.dragging) {
             this.dragging.startDragging(x, z);
+            this.isUpdated = true;
         }
         this.hovering = null;
     }
@@ -143,17 +148,25 @@ export class DraggableManager {
     stopDragging(x, z) {
         if (this.dragging) {
             this.dragging.stopDragging();
+            this.isUpdated = true;
         }
         this.dragging = null;
+        const previousHovering = this.hovering;
         this.hovering = this.closestPoint(x, z);
+        if (previousHovering != this.hovering) {
+            this.isUpdated = true;
+        }
     }
 
     update(x, z) {
         if (this.dragging) {
             this.dragging.update(x, z);
             this.hovering = null;
+            this.isUpdated = true;
         } else {
+            const previousHovering = this.hovering;
             this.hovering = this.closestPoint(x, z);
+            this.isUpdated = previousHovering != this.hovering;
         }
     }
 }

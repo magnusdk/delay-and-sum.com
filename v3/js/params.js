@@ -50,23 +50,6 @@ export const params = new Proxy(defaultParams, {
 });
 
 
-export function loadParamsFromURL() {
-    // Write each param to overriddenParams
-    let url = new URL(window.location.href);
-    for (let key in params) {
-        let value = url.searchParams.get(key);
-        if (value === null) continue;
-        if (typeof params[key] === "number") {
-            value = parseFloat(value);
-        } else if (typeof params[key] === "boolean") {
-            value = (value == "true");
-        } else if (Array.isArray(params[key]) && params[key].every(v => typeof v === "number")) {
-            value = value.split(",").map(v => parseFloat(v));
-        }
-        overriddenParams[key] = value;
-    }
-}
-
 function _dumpParamsToURL() {
     let url = new URL(window.location.href);
     for (let key in overriddenParams) {
@@ -80,11 +63,39 @@ function _dumpParamsToURL() {
     }
     window.history.replaceState({}, "", url.toString());
 }
-export const dumpParamsToURL = debounce(_dumpParamsToURL, 100)
-
+const dumpParamsToURL = debounce(_dumpParamsToURL, 100);
+const updatedParams = new Set();
 export function updateParam(name, value) {
     params[name] = value;
     dumpParamsToURL();
+    updatedParams.add(name);
+}
+
+export function isUpdatedParam(...paramNames) {
+    // Return true if any of the given params have been updated since the last frame.
+    return paramNames.some(name => updatedParams.has(name));
+}
+
+export function clearUpdatedParams() {
+    updatedParams.clear();
+}
+
+
+export function loadParamsFromURL() {
+    // Write each param to overriddenParams
+    let url = new URL(window.location.href);
+    for (let key in params) {
+        let value = url.searchParams.get(key);
+        if (value === null) continue;
+        if (typeof params[key] === "number") {
+            value = parseFloat(value);
+        } else if (typeof params[key] === "boolean") {
+            value = (value == "true");
+        } else if (Array.isArray(params[key]) && params[key].every(v => typeof v === "number")) {
+            value = value.split(",").map(v => parseFloat(v));
+        }
+        updateParam(key, value);
+    }
 }
 
 export function resetParams() {
