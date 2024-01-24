@@ -28,13 +28,11 @@ export class App {
             this.primarySimulationCanvasElement.width,
             this.primarySimulationCanvasElement.height,
             this.grid,
-            this.probe,
         );
         this.secondarySimulationCanvas = new SecondarySimulationCanvas(
             this.secondarySimulationCanvasElement.width,
             this.secondarySimulationCanvasElement.height,
             this.grid,
-            this.probe,
         );
 
         this.draggableManager = new DraggableManager(this.grid);
@@ -229,11 +227,9 @@ export class App {
 
     updateParam(name, value) {
         updateParam(name, value);
-        this.probe.loadParams();
     }
 
     resetParams() {
         resetParams();
-        this.probe.loadParams();
     }
 }
