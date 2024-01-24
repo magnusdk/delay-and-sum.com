@@ -3,9 +3,9 @@ import { isUpdatedParam } from "/v3/js/params.js";
 
 
 export class ForegroundCanvas {
-    constructor(foregroundCanvas, grid, draggableManager, opts) {
-        this.foregroundCanvas = foregroundCanvas;
-        this.foregroundCtx = this.foregroundCanvas.getContext("2d");
+    constructor(canvas, grid, draggableManager, opts) {
+        this.canvas = canvas;
+        this.ctx = this.canvas.getContext("2d");
         this.grid = grid;
         this.draggableManager = draggableManager;
         this.shouldRedraw = true;
@@ -14,46 +14,44 @@ export class ForegroundCanvas {
 
     drawTopUI() {
         // Clear the canvas (must be transparent)
-        this.foregroundCtx.clearRect(0, 0, this.foregroundCanvas.width, this.foregroundCanvas.height);
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         if (this.opts["gridLines"]) {
             // TODO: Fix grid lines wrt zooming
             //this.drawGrid(0.001, 0.001);
         }
         // Draw draggable points
-        this.foregroundCtx.save();
+        this.ctx.save();
         for (const [name, draggablePoint] of Object.entries(this.draggableManager.draggablePoints)) {
             if (draggablePoint.opts["hidden"] || draggablePoint.isDisabled()) {
                 continue;
             }
 
             const [x, z] = this.grid.toCanvasCoords(...draggablePoint.getPosition());
-            let color = Colors.defaultPoint;
+            let fillColor = Colors.defaultPoint;
 
             if (name == "virtualSource") {
-                color = Colors.virtualSource;
+                fillColor = Colors.virtualSource;
             } else if (name == "samplePoint") {
-                color = Colors.samplePoint;
+                fillColor = Colors.samplePoint;
             }
 
+            this.ctx.fillStyle = fillColor;
+            this.ctx.strokeStyle = "white";
             if (draggablePoint.isDragging) {
-                this.foregroundCtx.fillStyle = color;
-                this.foregroundCtx.beginPath();
-                this.foregroundCtx.arc(x, z, 8, 0, 2 * Math.PI);
-                this.foregroundCtx.fill();
+                this.ctx.beginPath();
+                this.ctx.arc(x, z, 8, 0, 2 * Math.PI);
             } else if (draggablePoint == this.draggableManager.hovering) {
-                this.foregroundCtx.fillStyle = color;
-                this.foregroundCtx.beginPath();
-                this.foregroundCtx.arc(x, z, 10, 0, 2 * Math.PI);
-                this.foregroundCtx.fill();
+                this.ctx.beginPath();
+                this.ctx.arc(x, z, 10, 0, 2 * Math.PI);
             } else {
-                this.foregroundCtx.fillStyle = color;
-                this.foregroundCtx.beginPath();
-                this.foregroundCtx.arc(x, z, 8, 0, 2 * Math.PI);
-                this.foregroundCtx.fill();
+                this.ctx.beginPath();
+                this.ctx.arc(x, z, 8, 0, 2 * Math.PI);
             }
+            this.ctx.fill();
+            this.ctx.stroke();
         }
-        this.foregroundCtx.restore();
+        this.ctx.restore();
     }
 
     update() {
