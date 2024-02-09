@@ -5,12 +5,12 @@ import { tukey } from "/v3/js/simulation/apodization.js";
 import { dist, divergingWaveDistance, focusedWaveDistance, getPosition, planeWaveDistance, postProcesspixel, pressureFieldAtPoint, pulse } from "/v3/js/simulation/common.js";
 import { mainSimulationkernel } from "/v3/js/simulation/pressureField.js";
 
-export class PrimarySimulationCanvas {
+export class MainSimulationCanvas {
     constructor(DOMCanvasElement, width, height, grid) {
         this.DOMCanvasElement = DOMCanvasElement;
         this.DOMCanvasElementCtx = DOMCanvasElement.getContext("2d");
         this.canvas = document.createElement("canvas");
-        this.canvas.id = "primarySimulationCanvas";
+        this.canvas.id = "mainSimulationCanvas";
         this.canvas.width = width;
         this.canvas.height = height;
         this.grid = grid;

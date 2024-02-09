@@ -3,7 +3,8 @@ import { getScaleMatrix, matrixMatrixMultiply } from "/v3/js/linalg.js";
 import { clearUpdatedParams, params, resetParams, updateParam } from "/v3/js/params.js";
 import { BackgroundCanvas } from "/v3/js/ui/canvases/backgroundCanvas.js";
 import { ForegroundCanvas } from "/v3/js/ui/canvases/foregroundCanvas.js";
-import { PrimarySimulationCanvas } from "/v3/js/ui/canvases/primarySimulationCanvas.js";
+import { MainSimulationCanvas } from "/v3/js/ui/canvases/mainSimulationCanvas.js";
+import { OverlaySimulationCanvas } from "/v3/js/ui/canvases/overlaySimulationCanvas.js";
 import { TimelineCanvas } from "/v3/js/ui/canvases/timelineCanvas.js";
 import { DraggableManager } from "/v3/js/ui/draggableManager.js";
 import { TooltipManager } from "/v3/js/ui/tooltipManager.js";
@@ -11,28 +12,28 @@ import { TooltipManager } from "/v3/js/ui/tooltipManager.js";
 export class App {
     constructor(
         backgroundCanvasElement,
-        primarySimulationCanvasElement,
-        secondarySimulationCanvasElement,
+        mainSimulationCanvasElement,
+        overlaySimulationCanvasElement,
         foregroundCanvasElement,
         timelineCanvasElement
     ) {
         this.backgroundCanvasElement = backgroundCanvasElement;
-        this.primarySimulationCanvasElement = primarySimulationCanvasElement;
-        this.secondarySimulationCanvasElement = secondarySimulationCanvasElement;
+        this.mainSimulationCanvasElement = mainSimulationCanvasElement;
+        this.overlaySimulationCanvasElement = overlaySimulationCanvasElement;
         this.foregroundCanvasElement = foregroundCanvasElement;
         this.timelineCanvasElement = timelineCanvasElement;
 
-        this.grid = new Grid(this.primarySimulationCanvasElement);
-        this.primarySimulationCanvas = new PrimarySimulationCanvas(
-            this.primarySimulationCanvasElement,
-            this.primarySimulationCanvasElement.width,
-            this.primarySimulationCanvasElement.height,
+        this.grid = new Grid(this.mainSimulationCanvasElement);
+        this.mainSimulationCanvas = new MainSimulationCanvas(
+            this.mainSimulationCanvasElement,
+            this.mainSimulationCanvasElement.width,
+            this.mainSimulationCanvasElement.height,
             this.grid,
         );
-        this.secondarySimulationCanvas = new SecondarySimulationCanvas(
-            this.secondarySimulationCanvasElement,
-            this.secondarySimulationCanvasElement.width,
-            this.secondarySimulationCanvasElement.height,
+        this.overlaySimulationCanvas = new OverlaySimulationCanvas(
+            this.overlaySimulationCanvasElement,
+            this.overlaySimulationCanvasElement.width,
+            this.overlaySimulationCanvasElement.height,
             this.grid,
         );
 
@@ -73,8 +74,8 @@ export class App {
             // Each canvas only updates if a given parameter has changed since the last call to update()
             // We reset the updated parameters at the end of the loop by calling clearUpdatedParams()
             this.backgroundCanvas.update();
-            this.primarySimulationCanvas.update();
-            //this.secondarySimulationCanvas.update();
+            this.mainSimulationCanvas.update();
+            //this.overlaySimulationCanvas.update();
             this.timelineCanvas.update(this.timelineCanvasElement);
             this.foregroundCanvas.update();
             clearUpdatedParams();
