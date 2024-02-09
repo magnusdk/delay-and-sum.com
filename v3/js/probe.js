@@ -28,5 +28,15 @@ export class ProbeInfo {
             }
         }
     }
+
+    // statismethod for creating it from params
+    static fromParams(params) {
+        return new ProbeInfo(
+            params.probeType,
+            params.probeNumElements,
+            params.probeLeft,
+            params.probeRight,
+        );
+    }
 }
 

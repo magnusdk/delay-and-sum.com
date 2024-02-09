@@ -1,12 +1,12 @@
-import { TooltipManager } from "/v3/js/ui/tooltipManager.js";
-import { getCanvasPointFromMouseEvent, getCanvasPointFromTouchEvent, matrixMatrixMultiply, getScaleMatrix } from "/v3/js/util.js";
-import { Grid } from "/v3/js/grid.js";
+import { Grid, getCanvasPointFromMouseEvent, getCanvasPointFromTouchEvent } from "/v3/js/grid.js";
+import { getScaleMatrix, matrixMatrixMultiply } from "/v3/js/linalg.js";
+import { clearUpdatedParams, params, resetParams, updateParam } from "/v3/js/params.js";
+import { BackgroundCanvas } from "/v3/js/ui/canvases/backgroundCanvas.js";
+import { ForegroundCanvas } from "/v3/js/ui/canvases/foregroundCanvas.js";
+import { PrimarySimulationCanvas } from "/v3/js/ui/canvases/primarySimulationCanvas.js";
+import { TimelineCanvas } from "/v3/js/ui/canvases/timelineCanvas.js";
 import { DraggableManager } from "/v3/js/ui/draggableManager.js";
-import { ForegroundCanvas } from "/v3/js/ui/foregroundCanvas.js";
-import { params, resetParams, updateParam, clearUpdatedParams } from "/v3/js/params.js";
-import { PrimarySimulationCanvas, SecondarySimulationCanvas, TimelineCanvas } from "/v3/js/ui/simulation.js";
-import { BackgroundCanvas } from "/v3/js/ui/backgroundCanvas.js";
-
+import { TooltipManager } from "/v3/js/ui/tooltipManager.js";
 
 export class App {
     constructor(
@@ -30,6 +30,7 @@ export class App {
             this.grid,
         );
         this.secondarySimulationCanvas = new SecondarySimulationCanvas(
+            this.secondarySimulationCanvasElement,
             this.secondarySimulationCanvasElement.width,
             this.secondarySimulationCanvasElement.height,
             this.grid,
@@ -65,13 +66,6 @@ export class App {
         this.tooltipManager = new TooltipManager();
 
         this.connectEventListeners();
-
-        // We need to copy the image from primary canvas because of a alpha composition bug in Safari/iOS (I think)
-        // See this.primarySimulationCanvas.update() instead
-        //primarySimulationCanvasElement.replaceWith(this.primarySimulationCanvas.canvas);
-
-        // For the secondary canvas we can just draw directly to it, so we replace the element with the GPU.js canvas
-        secondarySimulationCanvas.replaceWith(this.secondarySimulationCanvas.canvas);
     }
 
     start() {
@@ -80,6 +74,7 @@ export class App {
             // We reset the updated parameters at the end of the loop by calling clearUpdatedParams()
             this.backgroundCanvas.update();
             this.primarySimulationCanvas.update();
+            //this.secondarySimulationCanvas.update();
             this.timelineCanvas.update(this.timelineCanvasElement);
             this.foregroundCanvas.update();
             clearUpdatedParams();

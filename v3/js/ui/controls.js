@@ -1,5 +1,5 @@
 import { params } from "/v3/js/params.js";
-import { tukey } from "/v3/js/apodization.js";
+import { tukey } from "/v3/js/simulation/apodization.js";
 import { Colors } from "/v3/js/ui/colors.js";
 
 function rescaleInputWidth(inputEl, numDecimals) {

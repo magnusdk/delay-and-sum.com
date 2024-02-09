@@ -17,13 +17,7 @@ export class BackgroundCanvas {
     }
 
     drawProbe() {
-        const probe = new ProbeInfo(
-            params.probeType,
-            params.probeNumElements,
-            params.probeLeft,
-            params.probeRight,
-        );
-
+        const probe = ProbeInfo.fromParams(params);
         this.ctx.save();
         // Draw probe
         const elRadiusPx = 4;
@@ -120,13 +114,7 @@ export class BackgroundCanvas {
             "probeRight",
             "cameraTransform",
         )) {
-            const probe = new ProbeInfo(
-                params.probeType,
-                params.probeNumElements,
-                params.probeLeft,
-                params.probeRight,
-            );
-
+            const probe = ProbeInfo.fromParams(params);
             this.clearCanvas();
             if (this.opts["drawVirtualSourceGeometry"]) {
                 this.drawSonifiedArea(probe);

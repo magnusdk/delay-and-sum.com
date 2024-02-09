@@ -1,5 +1,5 @@
+import { invertScaleTranslationTransform, scalingFactor, transformVector } from "/v3/js/linalg.js";
 import { params } from "/v3/js/params.js";
-import { invertScaleTranslationTransform, transformVector, scalingFactor } from "/v3/js/util.js";
 
 export class Grid {
     constructor(canvas) {
@@ -27,4 +27,25 @@ export class Grid {
     toCanvasSize(h) {
         return h / scalingFactor(params.cameraTransform) * this.pixelsPerMeter;
     }
+}
+
+export function getCanvasPointFromMouseEvent(canvas, e) {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return [
+        (e.clientX - rect.left) * scaleX,
+        (e.clientY - rect.top) * scaleY
+    ];
+}
+
+export function getCanvasPointFromTouchEvent(canvasElement, touchEvent) {
+    const rect = canvasElement.getBoundingClientRect();
+    const touch = touchEvent.touches[0] || touchEvent.changedTouches[0];
+    const scaleX = canvasElement.width / rect.width;
+    const scaleY = canvasElement.height / rect.height;
+    return [
+        (touch.clientX - rect.left) * scaleX,
+        (touch.clientY - rect.top) * scaleY,
+    ]
 }
