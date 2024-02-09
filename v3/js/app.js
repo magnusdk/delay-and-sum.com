@@ -61,7 +61,7 @@ export class App {
             this.grid,
             this.draggableManager,
             {
-                gridLines: true,
+                drawGrid: true,
             },
         );
         this.tooltipManager = new TooltipManager();
