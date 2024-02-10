@@ -60,9 +60,6 @@ export class App {
             this.foregroundCanvasElement,
             this.grid,
             this.draggableManager,
-            {
-                drawGrid: true,
-            },
         );
         this.tooltipManager = new TooltipManager();
 

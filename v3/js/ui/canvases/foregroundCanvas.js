@@ -1,4 +1,4 @@
-import { isUpdatedParam } from "/v3/js/params.js";
+import { isUpdatedParam, params } from "/v3/js/params.js";
 import { Colors } from "/v3/js/ui/colors.js";
 
 
@@ -58,20 +58,22 @@ function drawGrid(canvas, ctx, grid) {
         ctx.moveTo(xCanvas, 0);
         ctx.lineTo(xCanvas, canvas.height);
 
-        ctx.font = "20px Arial";
-        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-        ctx.fillText(presentMeterValue(snappedX + x, snap), xCanvas + 5, canvas.height - 5);
-
+        if (params.showGridTickLabels) {
+            ctx.font = "20px Arial";
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fillText(presentMeterValue(snappedX + x, snap), xCanvas + 5, canvas.height - 5);
+        }
     }
     for (let z = 0; z < height; z += dx) {
         const [_, zCanvas] = grid.toCanvasCoords(0, snappedZ + z);
         ctx.moveTo(0, zCanvas);
         ctx.lineTo(canvas.width, zCanvas);
 
-        ctx.font = "20px Arial";
-        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-        ctx.fillText(presentMeterValue(snappedZ + z, snap), 5, zCanvas - 5);
-
+        if (params.showGridTickLabels) {
+            ctx.font = "20px Arial";
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fillText(presentMeterValue(snappedZ + z, snap), 5, zCanvas - 5);
+        }
     }
     ctx.stroke();
 
@@ -103,7 +105,7 @@ export class ForegroundCanvas {
         // Clear the canvas (must be transparent)
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        if (this.opts["drawGrid"]) {
+        if (params.showGrid) {
             drawGrid(this.canvas, this.ctx, this.grid);
         }
         // Draw draggable points
@@ -141,7 +143,7 @@ export class ForegroundCanvas {
     }
 
     update() {
-        if (this.draggableManager.isUpdated || isUpdatedParam("cameraTransform")) {
+        if (this.draggableManager.isUpdated || isUpdatedParam("cameraTransform", "showGrid", "showGridTickLabels")) {
             this.drawTopUI();
         }
     }

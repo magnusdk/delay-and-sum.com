@@ -1,7 +1,10 @@
 import { debounce } from "/v3/js/util.js";
 
 export const defaultParams = {
+    // Display parameters
     cameraTransform: [0.04, 0, 0, 0.04, 0, -0.001],
+    showGrid: true,
+    showGridTickLabels: true,
 
     //// Sector scan background parameters
     sectorDepthsMin: 0,

@@ -236,4 +236,15 @@ export function initControls(controlsDiv, app) {
         -60, 60, 0.01, "dB", 1, 2,
         (value) => app.updateParam("timelineGain", value),
     ));
+
+    controlsDiv.appendChild(controlsGroup("Display parameters", [
+        checkbox(
+            "showGrid", params["showGrid"], "Show grid",
+            (value) => app.updateParam("showGrid", value),
+        ),
+        checkbox(
+            "showGridTickLabels", params["showGridTickLabels"], "Show grid tick labels",
+            (value) => app.updateParam("showGridTickLabels", value),
+        ),
+    ]));
 }
