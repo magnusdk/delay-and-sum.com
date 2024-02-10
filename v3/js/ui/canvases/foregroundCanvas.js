@@ -25,7 +25,6 @@ function presentMeterValue(x, n) {
         n = -2;
     } else if (0 < n && n < 3) {
         // Use meters up to kilometers
-        console.log(n);
         n = 0;
     } else if (n > 3) {
         // Use kilometers for everything above
@@ -45,9 +44,9 @@ function drawGrid(canvas, ctx, grid) {
     // minNumberOfCellsRendered, the grid will be drawn at a higher level of detail.
     const minNumberOfCellsRendered = 3;
     const snap = Math.floor(Math.log10(width) - Math.log10(minNumberOfCellsRendered));
-    const dx = 10 ** snap;
-    const snappedX = Math.ceil(topLeftX / dx) * dx;
-    const snappedZ = Math.ceil(topLeftZ / dx) * dx;
+    let dx = 10 ** snap;
+    let snappedX = Math.ceil(topLeftX / dx) * dx;
+    let snappedZ = Math.ceil(topLeftZ / dx) * dx;
 
     ctx.save();
     ctx.strokeStyle = "rgba(0, 0, 0, 0.2)";
@@ -57,23 +56,11 @@ function drawGrid(canvas, ctx, grid) {
         const [xCanvas, _] = grid.toCanvasCoords(snappedX + x, 0);
         ctx.moveTo(xCanvas, 0);
         ctx.lineTo(xCanvas, canvas.height);
-
-        if (params.showGridTickLabels) {
-            ctx.font = "20px Arial";
-            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-            ctx.fillText(presentMeterValue(snappedX + x, snap), xCanvas + 5, canvas.height - 5);
-        }
     }
     for (let z = 0; z < height; z += dx) {
         const [_, zCanvas] = grid.toCanvasCoords(0, snappedZ + z);
         ctx.moveTo(0, zCanvas);
         ctx.lineTo(canvas.width, zCanvas);
-
-        if (params.showGridTickLabels) {
-            ctx.font = "20px Arial";
-            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
-            ctx.fillText(presentMeterValue(snappedZ + z, snap), 5, zCanvas - 5);
-        }
     }
     ctx.stroke();
 
@@ -88,6 +75,26 @@ function drawGrid(canvas, ctx, grid) {
     ctx.lineTo(xCanvas, 0 + canvas.height);
     ctx.stroke();
     ctx.restore();
+
+    if (params.showGridTickLabels) {
+        if (width / dx > 12) {
+            dx = 5 * 10 ** (snap);
+            snappedX = Math.ceil(topLeftX / dx) * dx;
+            snappedZ = Math.ceil(topLeftZ / dx) * dx;
+        }
+        for (let x = 0; x < width; x += dx) {
+            const [xCanvas, _] = grid.toCanvasCoords(snappedX + x, 0);
+            ctx.font = "20px Arial";
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fillText(presentMeterValue(snappedX + x, snap), xCanvas + 5, canvas.height - 5);
+        }
+        for (let z = 0; z < height; z += dx) {
+            const [_, zCanvas] = grid.toCanvasCoords(0, snappedZ + z);
+            ctx.font = "20px Arial";
+            ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+            ctx.fillText(presentMeterValue(snappedZ + z, snap), 5, zCanvas - 5);
+        }
+    }
 }
 
 
