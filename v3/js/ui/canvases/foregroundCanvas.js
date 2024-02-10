@@ -2,6 +2,37 @@ import { isUpdatedParam } from "/v3/js/params.js";
 import { Colors } from "/v3/js/ui/colors.js";
 
 
+function getSubmultipleOfMeter(n) {
+    // n is the zoom level 10**n
+    // Return the name´, i.e. mm, cm, m, km
+    if (n == -3) return "mm";
+    if (n == -2) return "cm";
+    if (n == -1) return "dm";
+    if (n == 0) return "m";
+    if (n == 1) return "dam";
+    if (n == 2) return "hm";
+    if (n == 3) return "km";
+    return "10^" + n + "m";
+}
+
+function presentMeterValue(x, n) {
+    const d = Math.max(0, -3 - n);
+    if (n == -1) {
+        // Use cm instead of dm
+        n = -2;
+    }
+    else if (0 < n && n < 3) {
+        // Use meters up to kilometers
+        console.log(n);
+        n = 0;
+    } else if (n > 3) {
+        // Use kilometers for everything above
+        n = 3;
+    }
+    x = x / (10 ** n);
+    return x.toFixed(d) + " " + getSubmultipleOfMeter(n);
+}
+
 function drawGrid(canvas, ctx, grid) {
     const [topLeftX, topLeftZ] = grid.fromCanvasCoords(0, 0);
     const [bottomRightX, bottomRightZ] = grid.fromCanvasCoords(canvas.width, canvas.height);
@@ -20,16 +51,25 @@ function drawGrid(canvas, ctx, grid) {
     ctx.strokeStyle = "rgba(0, 0, 0, 0.2)";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    let i = 0;
     for (let x = 0; x < width; x += dx) {
         const [xCanvas, _] = grid.toCanvasCoords(snappedX + x, 0);
         ctx.moveTo(xCanvas, 0);
         ctx.lineTo(xCanvas, canvas.height);
+
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        ctx.fillText(presentMeterValue(snappedX + x, snap), xCanvas + 5, canvas.height - 5);
+
     }
     for (let z = 0; z < height; z += dx) {
         const [_, zCanvas] = grid.toCanvasCoords(0, snappedZ + z);
         ctx.moveTo(0, zCanvas);
         ctx.lineTo(canvas.width, zCanvas);
+        
+        ctx.font = "20px Arial";
+        ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        ctx.fillText(presentMeterValue(snappedZ + z, snap), 5, zCanvas - 5);
+
     }
     ctx.stroke();
 
