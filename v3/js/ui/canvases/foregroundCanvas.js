@@ -17,11 +17,13 @@ function getSubmultipleOfMeter(n) {
 
 function presentMeterValue(x, n) {
     const d = Math.max(0, -3 - n);
-    if (n == -1) {
+    if (n < -3) {
+        // Use mm for everything below mm
+        n = -3;
+    } else if (n == -1) {
         // Use cm instead of dm
         n = -2;
-    }
-    else if (0 < n && n < 3) {
+    } else if (0 < n && n < 3) {
         // Use meters up to kilometers
         console.log(n);
         n = 0;
@@ -65,7 +67,7 @@ function drawGrid(canvas, ctx, grid) {
         const [_, zCanvas] = grid.toCanvasCoords(0, snappedZ + z);
         ctx.moveTo(0, zCanvas);
         ctx.lineTo(canvas.width, zCanvas);
-        
+
         ctx.font = "20px Arial";
         ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
         ctx.fillText(presentMeterValue(snappedZ + z, snap), 5, zCanvas - 5);
