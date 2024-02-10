@@ -240,7 +240,10 @@ export function initControls(controlsDiv, app) {
     controlsDiv.appendChild(controlsGroup("Display parameters", [
         checkbox(
             "showGrid", params["showGrid"], "Show grid",
-            (value) => app.updateParam("showGrid", value),
+            (value) => {
+                app.updateParam("showGrid", value);
+                document.getElementById("showGridTickLabels").disabled = !value;
+            },
         ),
         checkbox(
             "showGridTickLabels", params["showGridTickLabels"], "Show grid tick labels",
