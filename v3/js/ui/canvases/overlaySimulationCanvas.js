@@ -144,8 +144,8 @@ export class OverlaySimulationCanvas {
                 "probeRight",
             )) {
                 clearCanvas(this.DOMCanvasElementCtx);
-                // Debounced reset because parameters often change in rapid succession, 
-                // such as when sliding a slider across many different values.
+                // Debounced reset because parameters often change in bursts such as 
+                // when sliding a slider across many different values.
                 this.chunkManager.debouncedReset();
             }
 
