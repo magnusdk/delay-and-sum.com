@@ -239,6 +239,10 @@ export function initControls(controlsDiv, app) {
 
     controlsDiv.appendChild(controlsGroup("Display parameters", [
         checkbox(
+            "calculateMaximumIntensity", params["calculateMaximumIntensity"], "Calculate maximum intensity",
+            (value) => app.updateParam("calculateMaximumIntensity", value),
+        ),
+        checkbox(
             "showGrid", params["showGrid"], "Show grid",
             (value) => {
                 app.updateParam("showGrid", value);

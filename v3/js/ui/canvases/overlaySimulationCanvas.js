@@ -158,7 +158,12 @@ export class OverlaySimulationCanvas {
     }
 
     update() {
-        if (params.calculateMaximumIntensity) {
+        if (!params.calculateMaximumIntensity) {
+            this.DOMCanvasElementCtx.clearRect(
+                0, 0, this.DOMCanvasElement.width, this.DOMCanvasElement.height
+            );
+            this.chunkManager.invalidateAll();
+        } else {
             if (isUpdatedParam("cameraTransform")) {
                 // Get the change in camera position and scale
                 const deltaTransform = matrixMatrixMultiply(
@@ -191,7 +196,7 @@ export class OverlaySimulationCanvas {
 
                 // Update oldCameraTransform
                 this.oldCameraTransform = params.cameraTransform;
-                this.chunkManager.invalidateAllExceptRect(dx, dy, dsx, dsy);
+                this.chunkManager.invalidateAll();
             }
             if (isUpdatedParam(
                 "tukeyApodizationRatio",
@@ -225,6 +230,7 @@ class ChunkGrid {
         this.height = height;
         this.chunkWidth = chunkWidth;
         this.chunkHeight = chunkHeight;
+
         this.processed = [];
         this.unprocessed = [];
         for (let y = 0; y < height; y += chunkHeight) {
@@ -245,21 +251,6 @@ class ChunkGrid {
     invalidateAll() {
         this.unprocessed = this.unprocessed.concat(this.processed);
         this.processed = [];
-    }
-
-    invalidateAllOutside(x, y, w, h) {
-        const _processed = [];
-        for (const chunk of this.processed) {
-            if ((chunk.x >= x) &&
-                ((chunk.x + this.chunkWidth) <= (x + w)) &&
-                (chunk.y >= y) &&
-                ((chunk.y + this.chunkHeight) <= (y + h))) {
-                _processed.push(chunk);
-            } else {
-                this.unprocessed.push(chunk);
-            }
-        }
-        this.processed = _processed;
     }
 }
 
@@ -349,8 +340,7 @@ class ChunkManager {
         }
     }
 
-    invalidateAllExceptRect(x, y, w, h) {
-        //this.chunks.invalidateAllOutside(x, y, w, h);
+    invalidateAll() {
         this.chunks.invalidateAll();
     }
 }
