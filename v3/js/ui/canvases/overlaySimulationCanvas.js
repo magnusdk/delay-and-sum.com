@@ -26,97 +26,54 @@ import { isUpdatedParam, params } from "/v3/js/params.js";
 import { ProbeInfo } from "/v3/js/probe.js";
 import { tukey } from "/v3/js/simulation/apodization.js";
 import { dist, divergingWaveDistance, focusedWaveDistance, getPosition, planeWaveDistance, postProcesspixel, pressureFieldAtPoint, pulse } from "/v3/js/simulation/common.js";
+import { maximumIntensityKernel } from "/v3/js/simulation/maximumIntensity.js";
 import { debounce } from "/v3/js/util.js";
-
-function maximumIntensityKernel(
-    cT0, cT1, cT2, cT3, cT4, cT5,
-    startX, startZ,
-    elementsX, elementsZ, elementWeights, numElements,
-    waveOriginX, waveOriginZ, transmittedWaveType,
-    virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
-    f, pulseLength, soundSpeed, soundSpeedAssumedTx,
-    gain, displayMode,
-) {
-    const t = 0;
-    const {
-        constants: { maxNumElements, maxNumVirtualSources, maxNumTimeSteps } } = this;
-    const [x, z] = getPosition(cT0, cT1, cT2, cT3, cT4, cT5,
-        this.thread.x + startX, this.thread.y - startZ);
-    let maxIntensity = 0;
-    let minDistance = Infinity;
-    let maxDistance = -Infinity;
-    for (let i = 0; i < maxNumVirtualSources; i++) {
-        if (i >= numVirtualSources) break;
-        const virtualSourceX = virtualSourcesX[i];
-        const virtualSourceZ = virtualSourcesZ[i];
-        const virtualSourceAzimuth = virtualSourcesAzimuths[i];
-        for (let j = 0; j < maxNumElements; j++) {
-            if (j >= numElements) break;
-            const elX = elementsX[j];
-            const elZ = elementsZ[j];
-
-            let t0 = 0;
-            if (transmittedWaveType == 0) {
-                t0 = focusedWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) / soundSpeedAssumedTx;
-            } else if (transmittedWaveType == 1) {
-                t0 = planeWaveDistance(virtualSourceAzimuth, waveOriginX, waveOriginZ, elX, elZ) / soundSpeedAssumedTx;
-            } else if (transmittedWaveType == 2) {
-                t0 = divergingWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) / soundSpeedAssumedTx;
-            }
-
-            const delay = dist(x - elX, z - elZ) / soundSpeed - t0;
-            minDistance = Math.min(minDistance, delay);
-            maxDistance = Math.max(maxDistance, delay);
-        }
-    }
-
-
-    const startTime = minDistance - (pulseLength * 0.75) / f;
-    const endTime = maxDistance + (pulseLength * 0.75) / f;
-
-    for (let i = 0; i < maxNumTimeSteps; i++) {
-        const t = startTime + (endTime - startTime) * i / maxNumTimeSteps;
-        let real = 0;
-        let imag = 0;
-        for (let i = 0; i < maxNumVirtualSources; i++) {
-            if (i >= numVirtualSources) break;
-            const virtualSourceX = virtualSourcesX[i];
-            const virtualSourceZ = virtualSourcesZ[i];
-            const virtualSourceAzimuth = virtualSourcesAzimuths[i];
-            for (let j = 0; j < maxNumElements; j++) {
-                if (j >= numElements) break;
-                const elX = elementsX[j];
-                const elZ = elementsZ[j];
-                const elWeight = elementWeights[j];
-
-                let t0 = 0;
-                if (transmittedWaveType == 0) {
-                    t0 = focusedWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) / soundSpeedAssumedTx;
-                } else if (transmittedWaveType == 1) {
-                    t0 = planeWaveDistance(virtualSourceAzimuth, waveOriginX, waveOriginZ, elX, elZ) / soundSpeedAssumedTx;
-                } else if (transmittedWaveType == 2) {
-                    t0 = divergingWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) / soundSpeedAssumedTx;
-                }
-
-                const phase = (dist(x - elX, z - elZ) / soundSpeed - (t + t0)) * f;
-                const [real1, imag1] = pulse(phase, pulseLength);
-                real += real1 * elWeight;
-                imag += imag1 * elWeight;
-            }
-        }
-        // Normalize wrt number of elements. Multiplying by 50 is completely arbitrary.
-        real = real / numElements * 50;
-        imag = imag / numElements * 50;
-        const intensity = real ** 2 + imag ** 2;
-        maxIntensity = Math.max(maxIntensity, intensity);
-        //maxIntensity += intensity;
-    }
-    this.color(1, 0.8, 0, maxIntensity / 10 * 10 ** (gain / 20));
-}
 
 function clearCanvas(ctx) {
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 }
+
+
+function updateCanvasToNewCameraView(
+    currentCameraTransform,
+    previousCameraTransform,
+    grid,
+    canvasCtx,
+    offscreenCanvasCtx,
+) {
+    /* 
+    When a user simply pans or zooms the canvas, we can re-use parts of the previous 
+    frame in the next frame. This makes the app feel more snappy :) First, we draw the 
+    current frame to the offscreen canvas, then we draw the offscreen back to the main 
+    canvas, translated and scaled according to the change in camera position and scale.
+    */
+
+    // Get the change in camera position and scale
+    const deltaTransform = matrixMatrixMultiply(
+        invertScaleTranslationTransform(
+            matrixMatrixMultiply(
+                currentCameraTransform,
+                grid.inverseBaseTransform,
+            )),
+        matrixMatrixMultiply(
+            previousCameraTransform,
+            grid.inverseBaseTransform,
+        ));
+
+    // Temporarily draw the current frame to the offscreen canvas
+    clearCanvas(offscreenCanvasCtx);
+    offscreenCanvasCtx.drawImage(canvasCtx.canvas, 0, 0);
+
+    // Draw the offscreen canvas back to the main canvas, translated and 
+    // scaled according to the deltaTransform.
+    clearCanvas(canvasCtx);
+    const dx = deltaTransform[4]
+    const dy = deltaTransform[5]
+    const dsx = deltaTransform[0] * offscreenCanvasCtx.canvas.width
+    const dsy = deltaTransform[3] * offscreenCanvasCtx.canvas.height
+    canvasCtx.drawImage(offscreenCanvasCtx.canvas, dx, dy, dsx, dsy);
+}
+
 
 export class OverlaySimulationCanvas {
     constructor(DOMCanvasElement, width, height, grid) {
@@ -158,46 +115,20 @@ export class OverlaySimulationCanvas {
             this.simulationCanvas,
             this.simulationKernel,
         );
-        this.oldCameraTransform = params.cameraTransform;
+        this.previousCameraTransform = params.cameraTransform;
     }
 
     update() {
         if (!params.calculateMaximumIntensity) {
+            // Check if the user disabled the maximum intensity plot on this update cycle.
             if (isUpdatedParam("calculateMaximumIntensity")) {
                 clearCanvas(this.DOMCanvasElementCtx);
+                // Re-render everything when the user re-enables the plot
                 this.chunkManager.invalidateAll();
             }
         } else {
-            if (isUpdatedParam("cameraTransform")) {
-                // Get the change in camera position and scale
-                const deltaTransform = matrixMatrixMultiply(
-                    invertScaleTranslationTransform(
-                        matrixMatrixMultiply(
-                            params.cameraTransform,
-                            this.grid.inverseBaseTransform,
-                        )),
-                    matrixMatrixMultiply(
-                        this.oldCameraTransform,
-                        this.grid.inverseBaseTransform,
-                    ));
-
-                // Temporarily draw the current frame to the offscreen canvas
-                clearCanvas(this.offscreenCanvasCtx);
-                this.offscreenCanvasCtx.drawImage(this.DOMCanvasElement, 0, 0);
-
-                // Draw the offscreen canvas back to the main canvas, translated and 
-                // scaled according to the deltaTransform.
-                clearCanvas(this.DOMCanvasElementCtx);
-                const dx = deltaTransform[4]
-                const dy = deltaTransform[5]
-                const dsx = deltaTransform[0] * this.offscreenCanvas.width
-                const dsy = deltaTransform[3] * this.offscreenCanvas.height
-                this.DOMCanvasElementCtx.drawImage(this.offscreenCanvas, dx, dy, dsx, dsy);
-
-                // Update oldCameraTransform
-                this.oldCameraTransform = params.cameraTransform;
-                this.chunkManager.invalidateAll();
-            }
+            // If any relevant simulation parameter was changed, we clear the canvas 
+            // and re-render everything.
             if (isUpdatedParam(
                 "tukeyApodizationRatio",
                 "virtualSource",
@@ -213,55 +144,41 @@ export class OverlaySimulationCanvas {
                 "probeRight",
             )) {
                 clearCanvas(this.DOMCanvasElementCtx);
+                // Debounced reset because parameters often change in rapid succession, 
+                // such as when sliding a slider across many different values.
                 this.chunkManager.debouncedReset();
             }
+
+            // If only the camera changed, we can re-use parts of the previous frame 
+            // before re-rendering everything (we don't have to clear the canvas).
+            else if (isUpdatedParam("cameraTransform")) {
+                updateCanvasToNewCameraView(
+                    params.cameraTransform,
+                    this.previousCameraTransform,
+                    this.grid,
+                    this.DOMCanvasElementCtx,
+                    this.offscreenCanvasCtx,
+                );
+                this.previousCameraTransform = params.cameraTransform;
+                this.chunkManager.invalidateAll();  // Re-render everything
+            }
+
+            // Let the chunk manager update the canvas if there are more chunks to 
+            // render.
             this.chunkManager.update();
         }
     }
-
-    clear() {
-        this.gl.clear(this.gl.COLOR_BUFFER_BIT);
-    }
 }
 
-class ChunkGrid {
-    constructor(grid, width, height, chunkWidth, chunkHeight) {
-        this.grid = grid;
-        this.width = width;
-        this.height = height;
-        this.chunkWidth = chunkWidth;
-        this.chunkHeight = chunkHeight;
-
-        this.processed = [];
-        this.unprocessed = [];
-        for (let y = 0; y < height; y += chunkHeight) {
-            for (let x = 0; x < width; x += chunkWidth) {
-                this.unprocessed.push({ x, y });
-            }
-        }
-    }
-
-    nextChunk() {
-        if (this.unprocessed.length !== 0) {
-            const chunk = this.unprocessed.shift();
-            this.processed.push(chunk);
-            return [chunk.x, chunk.y];
-        }
-    }
-
-    invalidateAll() {
-        this.unprocessed = this.unprocessed.concat(this.processed);
-        this.processed = [];
-    }
-
-    stopProcessing() {
-        this.processed = this.processed.concat(this.unprocessed);
-        this.unprocessed = [];
-    }
-}
 
 const debug = false;
 class ChunkManager {
+    /*
+    ChunkManager splits the canvas into smaller chunks and processes them one by one. 
+    It is important to use chunks so that we can do a little bit of work at a time, and
+    not block the main thread for too long. JavaScript is single-threaded.
+    */
+
     constructor(
         grid,
         DOMCanvasElement,
@@ -277,17 +194,21 @@ class ChunkManager {
         this.simulationKernel = simulationKernel;
         this.numChunkUpdatesPerFrame = numChunkUpdatesPerFrame;
 
-        this.chunks = new ChunkGrid(
-            this.grid,
-            this.DOMCanvasElement.width,
-            this.DOMCanvasElement.height,
-            this.simulationCanvas.width,
-            this.simulationCanvas.height,
-        );
-        this.reset();
+        // Track what chunks have been processed and what chunks are yet to be processed.
+        this.processed = [];
+        this.unprocessed = [];
+        for (let y = 0; y < this.DOMCanvasElement.height; y += this.simulationCanvas.height) {
+            for (let x = 0; x < this.DOMCanvasElement.width; x += this.simulationCanvas.width) {
+                this.unprocessed.push({ x, y });
+            }
+        }
     }
 
     reset() {
+        /* 
+        Reload all parameters and reset the chunk manager. All chunks need to be 
+        processed again.
+        */
         this.probe = ProbeInfo.fromParams(params);
         [this.elementsX, this.elementsZ] = [Array.from(this.probe.x), Array.from(this.probe.z)];
         this.elementWeights = tukey(this.probe.numElements, params.tukeyApodizationRatio);
@@ -314,44 +235,73 @@ class ChunkManager {
             this.virtualSourcesAzimuths.push(0);
         }
 
-        this.chunks.invalidateAll();
+        this.invalidateAll();
     }
 
     _debouncedReset = debounce(this.reset, 200);
     debouncedReset() {
-        this.chunks.stopProcessing();
+        /*
+        Same as reset, but debounced. This will only actually reset the chunk manager 
+        when the user stops updating parameters for 200 milliseconds.
+        */
+        this.stopProcessing();
         this._debouncedReset();
     }
 
     update() {
         for (let i = 0; i < this.numChunkUpdatesPerFrame; i++) {
-            const chunk = this.chunks.nextChunk();
+            const chunk = this.nextChunk()
+            // Return early if there are no more chunks to process
             if (!chunk) return
-            if (chunk) {
-                if (!debug) {
-                    this.simulationKernel(
-                        ...params.cameraTransform, ...chunk,
-                        this.elementsX, this.elementsZ, this.elementWeights, params.probeNumElements,
-                        this.waveOriginX, this.waveOriginZ, params.transmittedWaveType,
-                        this.virtualSourcesX, this.virtualSourcesZ, this.virtualSourcesAzimuths, this.virtualSourcesX.length,
-                        params.centerFrequency, params.pulseLength,
-                        params.soundSpeed, params.soundSpeedAssumedTx,
-                        params.gain, params.displayMode,
-                    );
-                    this.DOMCanvasElementCtx.clearRect(...chunk, this.simulationCanvas.width, this.simulationCanvas.height);
-                    this.DOMCanvasElementCtx.drawImage(this.simulationCanvas, ...chunk);
-                } else {
-                    this.DOMCanvasElementCtx.beginPath();
-                    this.DOMCanvasElementCtx.fillStyle = getRandomColor();
-                    this.DOMCanvasElementCtx.rect(...chunk, this.simulationCanvas.width, this.simulationCanvas.height);
-                    this.DOMCanvasElementCtx.fill();
-                }
+
+            if (!debug) {
+                // Simulate the values for each pixel in the chunk.
+                this.simulationKernel(
+                    ...params.cameraTransform, chunk.x, chunk.y,
+                    this.elementsX, this.elementsZ, this.elementWeights, params.probeNumElements,
+                    this.waveOriginX, this.waveOriginZ, params.transmittedWaveType,
+                    this.virtualSourcesX, this.virtualSourcesZ, this.virtualSourcesAzimuths, this.virtualSourcesX.length,
+                    params.centerFrequency, params.pulseLength,
+                    params.soundSpeed, params.soundSpeedAssumedTx,
+                    params.gain
+                );
+                // Render the chunk
+                this.DOMCanvasElementCtx.clearRect(chunk.x, chunk.y, this.simulationCanvas.width, this.simulationCanvas.height);
+                this.DOMCanvasElementCtx.drawImage(this.simulationCanvas, chunk.x, chunk.y);
+            } else {
+                this.DOMCanvasElementCtx.beginPath();
+                this.DOMCanvasElementCtx.fillStyle = getRandomColor();
+                this.DOMCanvasElementCtx.rect(chunk.x, chunk.y, this.simulationCanvas.width, this.simulationCanvas.height);
+                this.DOMCanvasElementCtx.fill();
             }
         }
     }
 
+    nextChunk() {
+        /*
+        Get the next unprocessed chunk, or null if all chunks have been processed.
+        */
+        if (this.unprocessed.length === 0) return null;
+        const chunk = this.unprocessed.shift();
+        this.processed.push(chunk);
+        return chunk
+    }
+
     invalidateAll() {
-        this.chunks.invalidateAll();
+        /* 
+        Make all chunks unprocessed
+        */
+        this.unprocessed = this.unprocessed.concat(this.processed);
+        this.processed = [];
+    }
+
+    stopProcessing() {
+        /* 
+        Make all chunks "processed", meaning that they won't be processed in the future.
+        Can be used to disable the chunk manager temporarily.
+        */
+        this.processed = this.processed.concat(this.unprocessed);
+        this.unprocessed = [];
     }
 }
 
