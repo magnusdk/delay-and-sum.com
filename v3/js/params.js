@@ -5,6 +5,11 @@ export const defaultParams = {
     cameraTransform: [0.04, 0, 0, 0.04, 0, -0.001],
     showGrid: true,
     showGridTickLabels: true,
+    displayMode: 0,  // -1: hide, 0: phase, 1: envelope, 2: intensity
+    calculateMaximumIntensity: false,
+    gain: 0,  // dB
+    timelineGain: 0,  // dB
+
 
     //// Sector scan background parameters
     sectorDepthsMin: 0,
@@ -31,10 +36,6 @@ export const defaultParams = {
     soundSpeedAssumedTx: 1540,
     pulseLength: 1.5,
     centerFrequency: 3e6,
-    displayMode: 0,  // -1: hide, 0: phase, 1: envelope, 2: intensity
-    gain: 0,  // dB
-    timelineGain: 0,  // dB
-    calculateMaximumIntensity: false,
 }
 
 // Calculate params.sectorAzimuth such that the sector scan touches the sides of the grid.

@@ -31,10 +31,7 @@ export class App {
             this.grid,
         );
         this.overlaySimulationCanvas = new OverlaySimulationCanvas(
-            this.overlaySimulationCanvasElement,
-            this.overlaySimulationCanvasElement.width,
-            this.overlaySimulationCanvasElement.height,
-            this.grid,
+            this.overlaySimulationCanvasElement, 100, 100, this.grid
         );
 
         this.draggableManager = new DraggableManager(this.grid);
@@ -72,7 +69,7 @@ export class App {
             // We reset the updated parameters at the end of the loop by calling clearUpdatedParams()
             this.backgroundCanvas.update();
             this.mainSimulationCanvas.update();
-            //this.overlaySimulationCanvas.update();
+            this.overlaySimulationCanvas.update();
             this.timelineCanvas.update(this.timelineCanvasElement);
             this.foregroundCanvas.update();
             clearUpdatedParams();

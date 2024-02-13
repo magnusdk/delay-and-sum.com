@@ -24,8 +24,12 @@ export class Grid {
         return transformVector(x, z, this.inverseBaseTransform, params.cameraTransform);
     }
 
-    toCanvasSize(h) {
-        return h / scalingFactor(params.cameraTransform) * this.pixelsPerMeter;
+    toCanvasSize(s) {
+        return s / scalingFactor(params.cameraTransform) * this.pixelsPerMeter;
+    }
+
+    fromCanvasSize(s) {
+        return s * scalingFactor(params.cameraTransform) / this.pixelsPerMeter;
     }
 }
 
