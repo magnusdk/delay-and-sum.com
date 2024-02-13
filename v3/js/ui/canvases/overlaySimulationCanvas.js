@@ -163,8 +163,10 @@ export class OverlaySimulationCanvas {
 
     update() {
         if (!params.calculateMaximumIntensity) {
-            clearCanvas(this.DOMCanvasElementCtx);
-            this.chunkManager.invalidateAll();
+            if (isUpdatedParam("calculateMaximumIntensity")) {
+                clearCanvas(this.DOMCanvasElementCtx);
+                this.chunkManager.invalidateAll();
+            }
         } else {
             if (isUpdatedParam("cameraTransform")) {
                 // Get the change in camera position and scale
