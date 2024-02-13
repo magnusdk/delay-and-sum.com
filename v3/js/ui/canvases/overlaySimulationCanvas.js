@@ -7,7 +7,7 @@ Optimizations:
 [ ] Render at lower resolution first
 [x] Render smaller chunks at a time to avoid freezing the UI for too long
 [ ] Only take max over time steps where there is actual energy present
-[ ] Debounce updating so that the user can freely change parameters without the browser 
+[x] Debounce updating so that the user can freely change parameters without the browser 
     starting to lag straight away.
 [x] Copy canvas content when panning and zooming
 [ ] Render using heuristics first: the maximum is likely near the delay-hyperbola vertex
@@ -21,12 +21,12 @@ Future work:
 
 */
 
-import { debounce } from "/v3/js/util.js"
-import { invertScaleTranslationTransform, transformVector, matrixMatrixMultiply } from "/v3/js/linalg.js";
+import { invertScaleTranslationTransform, matrixMatrixMultiply, transformVector } from "/v3/js/linalg.js";
 import { isUpdatedParam, params } from "/v3/js/params.js";
 import { ProbeInfo } from "/v3/js/probe.js";
 import { tukey } from "/v3/js/simulation/apodization.js";
 import { dist, divergingWaveDistance, focusedWaveDistance, getPosition, planeWaveDistance, postProcesspixel, pressureFieldAtPoint, pulse } from "/v3/js/simulation/common.js";
+import { debounce } from "/v3/js/util.js";
 
 function maximumIntensityKernel(
     cT0, cT1, cT2, cT3, cT4, cT5,
@@ -39,7 +39,7 @@ function maximumIntensityKernel(
 ) {
     const t = 0;
     const {
-        constants: { maxNumElements, maxNumVirtualSources, numTimeSteps } } = this;
+        constants: { maxNumElements, maxNumVirtualSources, maxNumTimeSteps } } = this;
     const [x, z] = getPosition(cT0, cT1, cT2, cT3, cT4, cT5,
         this.thread.x + startX, this.thread.y - startZ);
     let maxIntensity = 0;
@@ -74,8 +74,8 @@ function maximumIntensityKernel(
     const startTime = minDistance - (pulseLength * 0.75) / f;
     const endTime = maxDistance + (pulseLength * 0.75) / f;
 
-    for (let i = 0; i < numTimeSteps; i++) {
-        const t = startTime + (endTime - startTime) * i / numTimeSteps;
+    for (let i = 0; i < maxNumTimeSteps; i++) {
+        const t = startTime + (endTime - startTime) * i / maxNumTimeSteps;
         let real = 0;
         let imag = 0;
         for (let i = 0; i < maxNumVirtualSources; i++) {
@@ -114,6 +114,10 @@ function maximumIntensityKernel(
     this.color(1, 0.8, 0, maxIntensity / 10 * 10 ** (gain / 20));
 }
 
+function clearCanvas(ctx) {
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+}
+
 export class OverlaySimulationCanvas {
     constructor(DOMCanvasElement, width, height, grid) {
         this.DOMCanvasElement = DOMCanvasElement;
@@ -142,7 +146,7 @@ export class OverlaySimulationCanvas {
                 "ibT5": grid.inverseBaseTransform[5],
                 "maxNumElements": 256,
                 "maxNumVirtualSources": 1,
-                "numTimeSteps": 100,
+                "maxNumTimeSteps": 100,
                 "canvasWidth": this.simulationCanvas.width,
                 "canvasHeight": this.simulationCanvas.height,
             });
@@ -159,9 +163,7 @@ export class OverlaySimulationCanvas {
 
     update() {
         if (!params.calculateMaximumIntensity) {
-            this.DOMCanvasElementCtx.clearRect(
-                0, 0, this.DOMCanvasElement.width, this.DOMCanvasElement.height
-            );
+            clearCanvas(this.DOMCanvasElementCtx);
             this.chunkManager.invalidateAll();
         } else {
             if (isUpdatedParam("cameraTransform")) {
@@ -178,16 +180,12 @@ export class OverlaySimulationCanvas {
                     ));
 
                 // Temporarily draw the current frame to the offscreen canvas
-                this.offscreenCanvasCtx.clearRect(
-                    0, 0, this.offscreenCanvas.width, this.offscreenCanvas.height
-                );
+                clearCanvas(this.offscreenCanvasCtx);
                 this.offscreenCanvasCtx.drawImage(this.DOMCanvasElement, 0, 0);
 
                 // Draw the offscreen canvas back to the main canvas, translated and 
                 // scaled according to the deltaTransform.
-                this.DOMCanvasElementCtx.clearRect(
-                    0, 0, this.DOMCanvasElement.width, this.DOMCanvasElement.height
-                );
+                clearCanvas(this.DOMCanvasElementCtx);
                 const dx = deltaTransform[4]
                 const dy = deltaTransform[5]
                 const dsx = deltaTransform[0] * this.offscreenCanvas.width
@@ -212,7 +210,8 @@ export class OverlaySimulationCanvas {
                 "probeLeft",
                 "probeRight",
             )) {
-                this.chunkManager.reset();
+                clearCanvas(this.DOMCanvasElementCtx);
+                this.chunkManager.debouncedReset();
             }
             this.chunkManager.update();
         }
@@ -251,6 +250,11 @@ class ChunkGrid {
     invalidateAll() {
         this.unprocessed = this.unprocessed.concat(this.processed);
         this.processed = [];
+    }
+
+    stopProcessing() {
+        this.processed = this.processed.concat(this.unprocessed);
+        this.unprocessed = [];
     }
 }
 
@@ -309,11 +313,15 @@ class ChunkManager {
         }
 
         this.chunks.invalidateAll();
-        this.DOMCanvasElementCtx.clearRect(0, 0, this.DOMCanvasElement.width, this.DOMCanvasElement.height);
+    }
+
+    _debouncedReset = debounce(this.reset, 200);
+    debouncedReset() {
+        this.chunks.stopProcessing();
+        this._debouncedReset();
     }
 
     update() {
-        //console.log(this.chunks.unprocessed.length);
         for (let i = 0; i < this.numChunkUpdatesPerFrame; i++) {
             const chunk = this.chunks.nextChunk();
             if (!chunk) return
