@@ -67,7 +67,7 @@ function _dumpParamsToURL() {
     window.history.replaceState({}, "", url.toString());
 }
 const dumpParamsToURL = debounce(_dumpParamsToURL, 100);
-const updatedParams = new Set();
+const updatedParams = new Set(Object.keys(params));
 export function updateParam(name, value) {
     params[name] = value;
     dumpParamsToURL();
