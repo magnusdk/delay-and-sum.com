@@ -164,21 +164,17 @@ function updateApodizationVisualizer(ctx) {
 }
 
 
+
 export function initControls(controlsDiv, app) {
+    const apodizationVisualizerCanvas = document.createElement("canvas");
+    apodizationVisualizerCanvas.width = 200;
+    apodizationVisualizerCanvas.height = 20;
+    const apodizationVisualizerCanvasCtx = apodizationVisualizerCanvas.getContext("2d");
     controlsDiv.appendChild(select(
         "displayMode", params["displayMode"], "Wave display mode",
         [[-1, "Hide"], [0, "Phase"], [1, "Envelope"], [2, "Intensity"]],
         (value) => app.updateParam("displayMode", value),
     ));
-    // TODO: Fix maximumIntensity calculation and uncomment this
-    //controlsDiv.appendChild(checkbox(
-    //    "calculateMaximumIntensity", "Maximum intensity",
-    //    (value) => app.updateParam("calculateMaximumIntensity", value),
-    //));
-    const apodizationVisualizerCanvas = document.createElement("canvas");
-    apodizationVisualizerCanvas.width = 200;
-    apodizationVisualizerCanvas.height = 20;
-    const apodizationVisualizerCanvasCtx = apodizationVisualizerCanvas.getContext("2d");
 
     controlsDiv.appendChild(select(
         "transmittedWaveType", params["transmittedWaveType"], "Transmitted wave type",
