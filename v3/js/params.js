@@ -104,12 +104,16 @@ export function loadParamsFromURL() {
     }
 }
 
-export function resetParams() {
-    for (let key in overriddenParams) {
-        delete overriddenParams[key];
+export function resetParams(...paramNames) {
+    if (paramNames.length === 0) {
+        paramNames = Object.keys(overriddenParams);
     }
+    const url = new URL(window.location.href);
+    paramNames.forEach((paramName) => {
+        delete overriddenParams[paramName];
+        url.searchParams.delete(paramName);
+        updatedParams.add(paramName);
+    });
     // Clean up URL such that it doesn't contain any search params
-    let url = new URL(window.location.href);
-    url.search = "";
     window.history.replaceState({}, "", url.toString());
 }

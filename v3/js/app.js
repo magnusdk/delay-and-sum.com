@@ -233,7 +233,7 @@ export class App {
         updateParam(name, value);
     }
 
-    resetParams() {
-        resetParams();
+    resetParams(...paramNames) {
+        resetParams(...paramNames);
     }
 }

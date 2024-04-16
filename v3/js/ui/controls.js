@@ -119,6 +119,19 @@ export function checkbox(id, value, label, callback) {
     return controlEl;
 }
 
+export function button(id, label, callback) {
+    const controlEl = document.createElement("div");
+    controlEl.classList.add("control");
+
+    const buttonEl = document.createElement("button");
+    buttonEl.innerText = label;
+    buttonEl.setAttribute("id", id);
+    buttonEl.addEventListener("click", (e) => callback());
+
+    controlEl.appendChild(buttonEl);
+    return controlEl;
+}
+
 export function controlsGroup(label, controls, isOpenByDefault = true) {
     const detailsEl = document.createElement("details");
     if (isOpenByDefault) detailsEl.setAttribute("open", "");
@@ -268,4 +281,11 @@ export function initControls(controlsDiv, app) {
             (value) => app.updateParam("showGridTickLabels", value),
         ),
     ]));
+
+    controlsDiv.appendChild(
+        button("resetCameraTransform", "Reset camera", () => app.resetParams("cameraTransform"))
+    );
+    controlsDiv.appendChild(
+        button("resetAllParams", "Reset all parameters", () => app.resetParams())
+    );
 }
