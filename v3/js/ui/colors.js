@@ -40,3 +40,4 @@ Colors.timelineSamples = Colors.darkBlue;
 Colors.timelineTimeMarker = Colors.pink;
 Colors.apodizationOutline = Colors.pink;
 Colors.apodizationFill = Colors.lightPink;
+Colors.beamProfileLine = Colors.pink;

@@ -105,8 +105,8 @@ function drawBeamProfileLine(grid, numBeamProfileSamplePoints, ctx) {
     for (let i = 0; i < numBeamProfileSamplePoints; i++) {
         const [x, z] = grid.toCanvasCoords(xs[i], zs[i]);
         ctx.beginPath();
-        ctx.arc(x, z, 5, 0, 2 * Math.PI);
-        ctx.fillStyle = "red";
+        ctx.arc(x, z, 4, 0, 2 * Math.PI);
+        ctx.fillStyle = Colors.beamProfileLine;
         ctx.fill();
     }
 }
