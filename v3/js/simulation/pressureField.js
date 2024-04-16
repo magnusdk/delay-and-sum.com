@@ -21,3 +21,35 @@ export function mainSimulationkernel(
     );
     postProcesspixel(real, imag, gain, displayMode);
 }
+
+export function pressureFieldAtPoints(
+    xs, zs, t,
+    elementsX, elementsZ, elementWeights, numElements,
+    waveOriginX, waveOriginZ, transmittedWaveType,
+    virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
+    f, pulseLength, soundSpeed, soundSpeedAssumedTx, depthDispersionStrength,
+    gain, displayMode,
+) {
+    const { constants: { maxNumElements, maxNumVirtualSources } } = this;
+    const [x, z] = [xs[this.thread.x], zs[this.thread.x]];
+    const [real, imag] = pressureFieldAtPoint(
+        x, z, t,
+        elementsX, elementsZ, elementWeights, numElements,
+        waveOriginX, waveOriginZ, transmittedWaveType,
+        virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
+        f, pulseLength, soundSpeed, soundSpeedAssumedTx, depthDispersionStrength,
+        maxNumElements, maxNumVirtualSources,
+    );
+    const env = dist(real, imag);
+    if (displayMode >= 1) {
+        // Amplitude or intensity post-processing mode
+        if (displayMode == 2) {
+            // Intensity post-processing mode
+            return env ** 2 * 10 ** (gain / 20);
+        } else {
+            return env * 10 ** (gain / 20)
+        }
+    } else {
+        return real * 10 ** (gain / 20)
+    }
+}

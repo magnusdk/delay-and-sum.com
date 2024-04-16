@@ -9,6 +9,7 @@ export const defaultParams = {
     calculateMaximumIntensity: false,
     gain: 0,  // dB
     timelineGain: 0,  // dB
+    lateralBeamProfileSampleWidth: 0.01,
 
 
     //// Sector scan background parameters

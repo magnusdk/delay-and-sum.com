@@ -1,3 +1,8 @@
+import { params } from "/v3/js/params.js";
+import { ProbeInfo } from "/v3/js/probe.js";
+import { dist } from "/v3/js/simulation/common.js";
+
+
 // https://github.com/sindresorhus/debounce
 // MIT License
 // Thanks!
@@ -89,3 +94,29 @@ export function debounce(function_, wait = 100, options = {}) {
 
 	return debounced;
 }
+
+
+
+export function getLateralBeamProfilePoints(numPoints) {
+	const probeInfo = ProbeInfo.fromParams(params);
+	let [dx, dz] = [
+		params.virtualSource[0] - probeInfo.center[0],
+		params.virtualSource[1] - probeInfo.center[1],
+	];
+	// divide by length
+	const d = dist(dx, dz);
+	const [dirX, dirZ] = [dx / d, dz / d];
+	[dx, dz] = [
+		dirX * params.time * params.soundSpeed,
+		dirZ * params.time * params.soundSpeed,
+	]
+	const [dxT, dzT] = [-dirZ, dirX];
+	//const [dxT, dzT] = [-dirX, -dirZ];
+	const w = params.lateralBeamProfileSampleWidth;
+	const [x0, z0] = [probeInfo.center[0] + dx + dxT * w / 2, probeInfo.center[1] + dz + dzT * w / 2];
+	const [x1, z1] = [probeInfo.center[0] + dx - dxT * w / 2, probeInfo.center[1] + dz - dzT * w / 2];
+	const xs = new Array(numPoints).fill(0).map((_, i) => x0 + i / (numPoints - 1) * (x1 - x0));
+	const zs = new Array(numPoints).fill(0).map((_, i) => z0 + i / (numPoints - 1) * (z1 - z0));
+	return [xs, zs];
+}
+

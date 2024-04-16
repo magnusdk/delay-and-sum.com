@@ -170,6 +170,19 @@ export function initControls(controlsDiv, app) {
     apodizationVisualizerCanvas.width = 200;
     apodizationVisualizerCanvas.height = 20;
     const apodizationVisualizerCanvasCtx = apodizationVisualizerCanvas.getContext("2d");
+
+    controlsDiv.appendChild(controlsGroup("Lateral beam profile", [
+        slider(
+            "lateralBeamProfileSampleWidth", params["lateralBeamProfileSampleWidth"], "Sample line width",
+            0.001, 0.1, 0.0001, "", 1, 2,
+            (value) => {
+                app.updateParam("lateralBeamProfileSampleWidth", value);
+                updateApodizationVisualizer(apodizationVisualizerCanvasCtx);
+            },
+        ),
+        app.samplePointsCanvas.canvas,
+    ]));
+
     controlsDiv.appendChild(select(
         "displayMode", params["displayMode"], "Wave display mode",
         [[-1, "Hide"], [0, "Phase"], [1, "Envelope"], [2, "Intensity"]],

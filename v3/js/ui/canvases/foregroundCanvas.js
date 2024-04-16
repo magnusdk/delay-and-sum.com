@@ -1,6 +1,6 @@
 import { isUpdatedParam, params } from "/v3/js/params.js";
 import { Colors } from "/v3/js/ui/colors.js";
-
+import { getLateralBeamProfilePoints } from "/v3/js/util.js";
 
 function getSubmultipleOfMeter(n) {
     // n is the zoom level 10**n
@@ -98,11 +98,26 @@ function drawGrid(canvas, ctx, grid) {
 }
 
 
+function drawBeamProfileLine(grid, numBeamProfileSamplePoints, ctx) {
+    const [xs, zs] = getLateralBeamProfilePoints(numBeamProfileSamplePoints);
+
+    // Render them as a line on main canvas
+    for (let i = 0; i < numBeamProfileSamplePoints; i++) {
+        const [x, z] = grid.toCanvasCoords(xs[i], zs[i]);
+        ctx.beginPath();
+        ctx.arc(x, z, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = "red";
+        ctx.fill();
+    }
+}
+
+
 export class ForegroundCanvas {
-    constructor(canvas, grid, draggableManager, opts) {
+    constructor(canvas, grid, numBeamProfileSamplePoints, draggableManager, opts) {
         this.canvas = canvas;
         this.ctx = this.canvas.getContext("2d");
         this.grid = grid;
+        this.numBeamProfileSamplePoints = numBeamProfileSamplePoints;
         this.draggableManager = draggableManager;
         this.shouldRedraw = true;
         this.opts = opts ? opts : {};
@@ -115,6 +130,7 @@ export class ForegroundCanvas {
         if (params.showGrid) {
             drawGrid(this.canvas, this.ctx, this.grid);
         }
+        drawBeamProfileLine(this.grid, this.numBeamProfileSamplePoints, this.ctx);
         // Draw draggable points
         this.ctx.save();
         for (const [name, draggablePoint] of Object.entries(this.draggableManager.draggablePoints)) {
@@ -150,8 +166,12 @@ export class ForegroundCanvas {
     }
 
     update() {
-        if (this.draggableManager.isUpdated || isUpdatedParam("cameraTransform", "showGrid", "showGridTickLabels")) {
-            this.drawTopUI();
-        }
+        if (this.draggableManager.isUpdated || isUpdatedParam(
+            "cameraTransform",
+            "showGrid",
+            "showGridTickLabels",
+            "time",
+            "lateralBeamProfileSampleWidth"
+        )) { this.drawTopUI(); }
     }
 }

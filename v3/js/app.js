@@ -2,6 +2,7 @@ import { Grid, getCanvasPointFromMouseEvent, getCanvasPointFromTouchEvent } from
 import { getScaleMatrix, matrixMatrixMultiply } from "/v3/js/linalg.js";
 import { clearUpdatedParams, params, resetParams, updateParam } from "/v3/js/params.js";
 import { BackgroundCanvas } from "/v3/js/ui/canvases/backgroundCanvas.js";
+import { SamplePointsCanvas } from "/v3/js/ui/canvases/controlCanvases/samplePointsCanvas.js";
 import { ForegroundCanvas } from "/v3/js/ui/canvases/foregroundCanvas.js";
 import { MainSimulationCanvas } from "/v3/js/ui/canvases/mainSimulationCanvas.js";
 import { OverlaySimulationCanvas } from "/v3/js/ui/canvases/overlaySimulationCanvas.js";
@@ -53,30 +54,43 @@ export class App {
             },
         );
 
+        this.samplePointsCanvas = new SamplePointsCanvas(512, 50);
         this.foregroundCanvas = new ForegroundCanvas(
             this.foregroundCanvasElement,
             this.grid,
+            this.samplePointsCanvas.width,
             this.draggableManager,
         );
         this.tooltipManager = new TooltipManager();
+        this.params = params;
 
         this.connectEventListeners();
     }
 
+    update() {
+        // Each canvas only updates if a given parameter has changed since the last call to update()
+        // We reset the updated parameters at the end of the loop by calling clearUpdatedParams()
+        this.backgroundCanvas.update();
+        this.mainSimulationCanvas.update();
+        this.overlaySimulationCanvas.update();
+        this.timelineCanvas.update(this.timelineCanvasElement);
+        this.foregroundCanvas.update();
+        this.samplePointsCanvas.update();
+        clearUpdatedParams();
+        this.draggableManager.isUpdated = false;
+    }
+
     start() {
-        const update = () => {
-            // Each canvas only updates if a given parameter has changed since the last call to update()
-            // We reset the updated parameters at the end of the loop by calling clearUpdatedParams()
-            this.backgroundCanvas.update();
-            this.mainSimulationCanvas.update();
-            this.overlaySimulationCanvas.update();
-            this.timelineCanvas.update(this.timelineCanvasElement);
-            this.foregroundCanvas.update();
-            clearUpdatedParams();
-            this.draggableManager.isUpdated = false;
-            requestAnimationFrame(update);
+        const _update = () => {
+            //const startTime = performance.now();
+            this.update();
+            //const endTime = performance.now();
+            //const elapsedTime = endTime - startTime;
+            //console.log("Average elapsed time:", elapsedTime, "milliseconds");
+            requestAnimationFrame(_update);
         }
-        update();
+        _update();
+        //console.log(foo(params, this.samplePointsCanvas));
     }
 
     handleStartDraggingPoint(x, z) {
