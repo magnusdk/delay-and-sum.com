@@ -84,9 +84,12 @@ export function pressureFieldAtPoint(
     elementsX, elementsZ, elementWeights, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
     virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
-    f, pulseLength, soundSpeed, soundSpeedAssumedTx,
+    f, pulseLength, soundSpeed, soundSpeedAssumedTx, depthDispersionStrength,
     maxNumElements, maxNumVirtualSources,
 ) {
+    const lambda = soundSpeed / f;
+    const depthDispersionStart = lambda * pulseLength;
+
     let real = 0;
     let imag = 0;
     for (let i = 0; i < maxNumVirtualSources; i++) {
@@ -109,15 +112,18 @@ export function pressureFieldAtPoint(
                 t0 = divergingWaveDistance(virtualSourceX, virtualSourceZ, waveOriginX, waveOriginZ, elX, elZ) / soundSpeedAssumedTx;
             }
 
-            const phase = (dist(x - elX, z - elZ) / soundSpeed - (t + t0)) * f;
+            const distElPoint = dist(x - elX, z - elZ)
+            const phase = (distElPoint / soundSpeed - (t + t0)) * f;
             const [real1, imag1] = pulse(phase, pulseLength);
-            real += real1 * elWeight;
-            imag += imag1 * elWeight;
+            let depthDispersion = Math.max(depthDispersionStart, distElPoint);
+            depthDispersion = 350 * depthDispersion * depthDispersionStrength + (1 - depthDispersionStrength);
+            depthDispersion = 1 / depthDispersion;
+            real += real1 * elWeight * depthDispersion;
+            imag += imag1 * elWeight * depthDispersion;
         }
     }
-    // Normalize wrt number of elements. Multiplying by 50 is completely arbitrary.
-    real = real / numElements * 50;
-    imag = imag / numElements * 50;
+    real = real / numElements;
+    imag = imag / numElements;
     return [real, imag];
 }
 

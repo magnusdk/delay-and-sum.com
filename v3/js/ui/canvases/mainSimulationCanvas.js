@@ -44,6 +44,7 @@ export class MainSimulationCanvas {
             "pulseLength",
             "soundSpeed",
             "soundSpeedAssumedTx",
+            "depthDispersionStrength",
             "gain",
             "displayMode",
             "probeType",
@@ -51,6 +52,7 @@ export class MainSimulationCanvas {
             "probeLeft",
             "probeRight",
         )) {
+            const depthDispersionStrength = params.depthDispersionStrength;
             const probe = ProbeInfo.fromParams(params);
             const [elementsX, elementsZ] = [Array.from(probe.x), Array.from(probe.z)];
             const elementWeights = tukey(probe.numElements, params.tukeyApodizationRatio);
@@ -83,7 +85,7 @@ export class MainSimulationCanvas {
                 waveOriginX, waveOriginZ, params.transmittedWaveType,
                 virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
                 params.centerFrequency, params.pulseLength,
-                params.soundSpeed, params.soundSpeedAssumedTx,
+                params.soundSpeed, params.soundSpeedAssumedTx, depthDispersionStrength,
                 params.gain, params.displayMode,
             );
             // Clear DOMCanvasElementCtx

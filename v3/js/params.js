@@ -36,6 +36,7 @@ export const defaultParams = {
     soundSpeedAssumedTx: 1540,
     pulseLength: 1.5,
     centerFrequency: 3e6,
+    depthDispersionStrength: 1.0,
 }
 
 // Calculate params.sectorAzimuth such that the sector scan touches the sides of the grid.

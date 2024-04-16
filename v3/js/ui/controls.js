@@ -182,6 +182,11 @@ export function initControls(controlsDiv, app) {
         (value) => app.updateParam("transmittedWaveType", value),
     ));
     controlsDiv.appendChild(slider(
+        "depthDispersionStrength", params["depthDispersionStrength"], "Depth dispersion strength",
+        0.0, 1.0, 0.01, "", 1.0, 1,
+        (value) => app.updateParam("depthDispersionStrength", value),
+    ));
+    controlsDiv.appendChild(slider(
         "centerFrequency", params["centerFrequency"], "Center frequency",
         0.1, 6, 0.01, "MHz", 1e6, 2,
         (value) => app.updateParam("centerFrequency", value),

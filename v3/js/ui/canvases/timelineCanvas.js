@@ -42,10 +42,12 @@ export class TimelineCanvas {
             "pulseLength",
             "soundSpeed",
             "soundSpeedAssumedTx",
+            "depthDispersionStrength",
             "timelineGain",
             "displayMode",
             "time",
         )) {
+            const depthDispersionStrength = params.depthDispersionStrength;
             const probe = ProbeInfo.fromParams(params);
             const [elementsX, elementsZ] = [Array.from(probe.x), Array.from(probe.z)];
             const elementWeights = tukey(probe.numElements, params.tukeyApodizationRatio);
@@ -84,7 +86,7 @@ export class TimelineCanvas {
                 waveOriginX, waveOriginZ, params.transmittedWaveType,
                 virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
                 params.centerFrequency, params.pulseLength,
-                params.soundSpeed, params.soundSpeedAssumedTx,
+                params.soundSpeed, params.soundSpeedAssumedTx, depthDispersionStrength,
                 params.timelineGain, params.displayMode,
             );
             const ctx = canvas.getContext("2d");

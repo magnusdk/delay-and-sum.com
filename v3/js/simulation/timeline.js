@@ -7,7 +7,7 @@ export function timelinekernel(
     elementsX, elementsZ, elementWeights, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
     virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
-    f, pulseLength, soundSpeed, soundSpeedAssumedTx,
+    f, pulseLength, soundSpeed, soundSpeedAssumedTx, depthDispersionStrength,
     gain, displayMode,
 ) {
     const {
@@ -20,7 +20,7 @@ export function timelinekernel(
         elementsX, elementsZ, elementWeights, numElements,
         waveOriginX, waveOriginZ, transmittedWaveType,
         virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
-        f, pulseLength, soundSpeed, soundSpeedAssumedTx,
+        f, pulseLength, soundSpeed, soundSpeedAssumedTx, depthDispersionStrength,
         maxNumElements, maxNumVirtualSources,
     );
     const env = dist(real, imag);
