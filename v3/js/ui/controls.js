@@ -184,6 +184,10 @@ export function initControls(controlsDiv, app) {
     apodizationVisualizerCanvas.height = 20;
     const apodizationVisualizerCanvasCtx = apodizationVisualizerCanvas.getContext("2d");
 
+    // Clear all existing children first
+    while (controlsDiv.firstChild) {
+        controlsDiv.removeChild(controlsDiv.lastChild);
+    }
     controlsDiv.appendChild(controlsGroup("Lateral beam profile", [
         slider(
             "lateralBeamProfileSampleWidth", params["lateralBeamProfileSampleWidth"], "Sample line width",
@@ -304,6 +308,10 @@ export function initControls(controlsDiv, app) {
         button("resetCameraTransform", "Reset camera", () => app.resetParams("cameraTransform"))
     );
     controlsDiv.appendChild(
-        button("resetAllParams", "Reset all parameters", () => app.resetParams())
+        button("resetAllParams", "Reset all parameters", () => {
+            app.resetParams();
+            // Hack for synchronizing the controls with the params — just recreate everything!
+            initControls(controlsDiv, app);
+        })
     );
 }
