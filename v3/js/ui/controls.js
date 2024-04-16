@@ -193,6 +193,9 @@ export function initControls(controlsDiv, app) {
                 updateApodizationVisualizer(apodizationVisualizerCanvasCtx);
             },
         ),
+        checkbox("showLateralBeamProfileLine", params["showLateralBeamProfileLine"], "Display sample points",
+            (value) => app.updateParam("showLateralBeamProfileLine", value)
+        ),
         app.samplePointsCanvas.canvas,
     ]));
 
@@ -270,14 +273,14 @@ export function initControls(controlsDiv, app) {
             (value) => app.updateParam("calculateMaximumIntensity", value),
         ),
         checkbox(
-            "showGrid", params["showGrid"], "Show grid",
+            "showGrid", params["showGrid"], "Display grid",
             (value) => {
                 app.updateParam("showGrid", value);
                 document.getElementById("showGridTickLabels").disabled = !value;
             },
         ),
         checkbox(
-            "showGridTickLabels", params["showGridTickLabels"], "Show grid tick labels",
+            "showGridTickLabels", params["showGridTickLabels"], "Display grid tick labels",
             (value) => app.updateParam("showGridTickLabels", value),
         ),
     ]));

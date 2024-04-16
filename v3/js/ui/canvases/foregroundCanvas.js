@@ -130,7 +130,9 @@ export class ForegroundCanvas {
         if (params.showGrid) {
             drawGrid(this.canvas, this.ctx, this.grid);
         }
-        drawBeamProfileLine(this.grid, this.numBeamProfileSamplePoints, this.ctx);
+        if (params.showLateralBeamProfileLine) {
+            drawBeamProfileLine(this.grid, this.numBeamProfileSamplePoints, this.ctx);
+        }
         // Draw draggable points
         this.ctx.save();
         for (const [name, draggablePoint] of Object.entries(this.draggableManager.draggablePoints)) {

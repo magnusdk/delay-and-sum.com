@@ -10,6 +10,7 @@ export const defaultParams = {
     gain: 0,  // dB
     timelineGain: 0,  // dB
     lateralBeamProfileSampleWidth: 0.01,
+    showLateralBeamProfileLine: false,
     animateTimeline: false,
     animateTimelineSpeed: 1e-7,
 
