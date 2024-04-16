@@ -96,7 +96,6 @@ export function debounce(function_, wait = 100, options = {}) {
 }
 
 
-
 export function getLateralBeamProfilePoints(numPoints) {
 	const probeInfo = ProbeInfo.fromParams(params);
 	let [dx, dz] = [
@@ -120,3 +119,10 @@ export function getLateralBeamProfilePoints(numPoints) {
 	return [xs, zs];
 }
 
+export function getMinTime() {
+	return -5e-3 / params.soundSpeed;
+}
+
+export function getMaxTime(grid) {
+	return grid.pixelsPerMeter / grid.toCanvasSize(1) / params.soundSpeed;
+}

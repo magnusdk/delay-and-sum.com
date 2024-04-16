@@ -8,6 +8,7 @@ import { MainSimulationCanvas } from "/v3/js/ui/canvases/mainSimulationCanvas.js
 import { OverlaySimulationCanvas } from "/v3/js/ui/canvases/overlaySimulationCanvas.js";
 import { TimelineCanvas } from "/v3/js/ui/canvases/timelineCanvas.js";
 import { DraggableManager } from "/v3/js/ui/draggableManager.js";
+import { TimelineAnimator } from "/v3/js/ui/timelineAnimator.js";
 import { TooltipManager } from "/v3/js/ui/tooltipManager.js";
 
 export class App {
@@ -62,6 +63,7 @@ export class App {
             this.draggableManager,
         );
         this.tooltipManager = new TooltipManager();
+        this.timelineAnimator = new TimelineAnimator(this.grid);
         this.params = params;
 
         this.connectEventListeners();
@@ -78,6 +80,10 @@ export class App {
         this.samplePointsCanvas.update();
         clearUpdatedParams();
         this.draggableManager.isUpdated = false;
+
+        if (params.animateTimeline) {
+            this.timelineAnimator.update();
+        }
     }
 
     start() {

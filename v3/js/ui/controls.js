@@ -282,6 +282,17 @@ export function initControls(controlsDiv, app) {
         ),
     ]));
 
+    controlsDiv.appendChild(controlsGroup("Animate timeline", [
+        checkbox("animateTimeline", params["animateTimeline"], "Animate timeline",
+            (value) => app.updateParam("animateTimeline", value)
+        ),
+        slider(
+            "animateTimelineSpeed", params["animateTimelineSpeed"], "Timeline animation speed",
+            0, 1, 0.01, "microseconds per frame", 1e-6, 2,
+            (value) => app.updateParam("animateTimelineSpeed", value),
+        )
+    ]));
+
     controlsDiv.appendChild(
         button("resetCameraTransform", "Reset camera", () => app.resetParams("cameraTransform"))
     );

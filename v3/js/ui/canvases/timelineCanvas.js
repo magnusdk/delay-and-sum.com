@@ -4,6 +4,7 @@ import { tukey } from "/v3/js/simulation/apodization.js";
 import { allFunctions } from "/v3/js/simulation/common.js";
 import { timelinekernel } from "/v3/js/simulation/timeline.js";
 import { Colors } from "/v3/js/ui/colors.js";
+import { getMaxTime, getMinTime } from "/v3/js/util.js";
 
 export class TimelineCanvas {
     constructor(canvasElement, grid) {
@@ -63,8 +64,8 @@ export class TimelineCanvas {
             const samplePointX = params.samplePoint[0];
             const samplePointZ = params.samplePoint[1];
 
-            const minTime = this.minTime(params.soundSpeed);
-            const maxTime = this.maxTime(this.grid, params.soundSpeed);
+            const minTime = getMinTime(params.soundSpeed);
+            const maxTime = getMaxTime(this.grid, params.soundSpeed);
 
             // center of probe
             const [waveOriginX, waveOriginZ] = probe.center;
@@ -120,24 +121,17 @@ export class TimelineCanvas {
         }
     }
 
-    minTime(soundSpeed) {
-        return -5e-3 / soundSpeed;
-    }
-    maxTime(grid, soundSpeed) {
-        return grid.pixelsPerMeter / grid.toCanvasSize(1) / soundSpeed;
-    }
-
     dragTime(x) {
-        const minTime = this.minTime(params.soundSpeed);
-        const maxTime = this.maxTime(this.grid, params.soundSpeed);
+        const minTime = getMinTime(params.soundSpeed);
+        const maxTime = getMaxTime(this.grid, params.soundSpeed);
         if (this.dragging) {
             updateParam("time", x * (maxTime - minTime) + minTime);
         }
     }
 
     startDragging(x) {
-        const minTime = this.minTime(params.soundSpeed);
-        const maxTime = this.maxTime(this.grid, params.soundSpeed);
+        const minTime = getMinTime(params.soundSpeed);
+        const maxTime = getMaxTime(this.grid, params.soundSpeed);
         updateParam("time", x * (maxTime - minTime) + minTime);
         this.dragging = true;
     }
