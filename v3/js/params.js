@@ -10,6 +10,7 @@ export const defaultParams = {
     gain: 0,  // dB
     timelineGain: 0,  // dB
     lateralBeamProfileSampleWidth: 0.01,
+    showSimplifiedWaveGeometry: true,
     showLateralBeamProfileLine: false,
     animateTimeline: false,
     animateTimelineSpeed: 1e-7,
@@ -35,7 +36,7 @@ export const defaultParams = {
 
 
     //// Simulation parameters
-    time: 0,
+    time: 20e-6,
     soundSpeed: 1540,
     soundSpeedAssumedTx: 1540,
     pulseLength: 4,
@@ -69,7 +70,7 @@ function _dumpParamsToURL() {
             value = value.map(v => v.toExponential(3)).join(",");
         }
 
-        if (value === undefined || value === null || value === false || value == defaultParams[key]) {
+        if (value == defaultParams[key]) {
             url.searchParams.delete(key);
         } else {
             url.searchParams.set(key, value);

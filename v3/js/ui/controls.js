@@ -273,6 +273,10 @@ export function initControls(controlsDiv, app) {
             (value) => app.updateParam("calculateMaximumIntensity", value),
         ),
         checkbox(
+            "showSimplifiedWaveGeometry", params["showSimplifiedWaveGeometry"], "Display simplified wave geometry",
+            (value) => app.updateParam("showSimplifiedWaveGeometry", value),
+        ),
+        checkbox(
             "showGrid", params["showGrid"], "Display grid",
             (value) => {
                 app.updateParam("showGrid", value);

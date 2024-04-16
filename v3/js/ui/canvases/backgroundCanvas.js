@@ -113,14 +113,16 @@ export class BackgroundCanvas {
             "probeLeft",
             "probeRight",
             "cameraTransform",
+            "showSimplifiedWaveGeometry",
         )) {
             const probe = ProbeInfo.fromParams(params);
             this.clearCanvas();
-            if (this.opts["drawVirtualSourceGeometry"]) {
+            console.log(params.showSimplifiedWaveGeometry)
+            if (params.showSimplifiedWaveGeometry) {
                 this.drawSonifiedArea(probe);
             }
             this.drawProbe(probe);
-            if (this.opts["drawVirtualSourceGeometry"]) {
+            if (params.showSimplifiedWaveGeometry) {
                 this.drawVirtualSourceGeometry(probe);
             }
         }
