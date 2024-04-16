@@ -122,8 +122,8 @@ export function pressureFieldAtPoint(
             imag += imag1 * elWeight * depthDispersion;
         }
     }
-    real = real / numElements;
-    imag = imag / numElements;
+    real = real / numElements * 3;
+    imag = imag / numElements * 3;
     return [real, imag];
 }
 
