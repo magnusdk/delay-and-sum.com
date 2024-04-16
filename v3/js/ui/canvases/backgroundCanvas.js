@@ -117,7 +117,6 @@ export class BackgroundCanvas {
         )) {
             const probe = ProbeInfo.fromParams(params);
             this.clearCanvas();
-            console.log(params.showSimplifiedWaveGeometry)
             if (params.showSimplifiedWaveGeometry) {
                 this.drawSonifiedArea(probe);
             }
