@@ -173,7 +173,8 @@ export class ForegroundCanvas {
             "showGrid",
             "showGridTickLabels",
             "time",
-            "lateralBeamProfileSampleWidth"
+            "lateralBeamProfileSampleWidth",
+            "showLateralBeamProfileLine",
         )) { this.drawTopUI(); }
     }
 }
