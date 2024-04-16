@@ -73,8 +73,8 @@ export function postProcesspixel(real, imag, gain, displayMode) {
 
 export function pulse(phase, pulseLength) {
     const gauss = Math.exp(-Math.pow(phase / pulseLength * 2, 2));
-    const real = Math.sin(phase * Math.PI * 2) * gauss;
-    const imag = Math.cos(phase * Math.PI * 2) * gauss;
+    const real = Math.cos(phase * Math.PI * 2) * gauss;
+    const imag = Math.sin(phase * Math.PI * 2) * gauss;
     return [real, imag];
 }
 
