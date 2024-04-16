@@ -288,7 +288,7 @@ export function initControls(controlsDiv, app) {
         ),
         slider(
             "animateTimelineSpeed", params["animateTimelineSpeed"], "Timeline animation speed",
-            0, 1, 0.01, "microseconds per frame", 1e-6, 2,
+            0, 4, 0.01, "microseconds per frame", 1e-6, 2,
             (value) => app.updateParam("animateTimelineSpeed", value),
         )
     ]));

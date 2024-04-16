@@ -78,9 +78,11 @@ function _dumpParamsToURL() {
 }
 const dumpParamsToURL = debounce(_dumpParamsToURL, 100);
 const updatedParams = new Set(Object.keys(params));
-export function updateParam(name, value) {
+export function updateParam(name, value, disableDumpParamsToURL = false) {
     params[name] = value;
-    dumpParamsToURL();
+    if (!disableDumpParamsToURL) {
+        dumpParamsToURL();
+    }
     updatedParams.add(name);
 }
 

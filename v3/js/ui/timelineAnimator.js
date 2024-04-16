@@ -15,6 +15,10 @@ export class TimelineAnimator {
             params.time = Math.min(Math.max(params.time, minTime), maxTime);
             this.animateTimelineSign *= -1;
         }
-        updateParam("time", params.time + this.animateTimelineSign * params.animateTimelineSpeed, true);
+        updateParam(
+            "time",
+            params.time + this.animateTimelineSign * params.animateTimelineSpeed,
+            true,
+        );
     }
 }
