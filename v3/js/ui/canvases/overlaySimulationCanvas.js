@@ -142,6 +142,7 @@ export class OverlaySimulationCanvas {
                 "probeNumElements",
                 "probeLeft",
                 "probeRight",
+                "calculateMaximumIntensity",
             )) {
                 clearCanvas(this.DOMCanvasElementCtx);
                 // Debounced reset because parameters often change in bursts such as 
