@@ -2,7 +2,7 @@ import { debounce } from "/v3/js/util.js";
 
 export const defaultParams = {
     // Display parameters
-    cameraTransform: [0.04, 0, 0, 0.04, 0, -0.001],
+    cameraTransform: [0.1, 0, 0, 0.1, 0, -0.005],
     showGrid: true,
     showGridTickLabels: true,
     displayMode: 0,  // -1: hide, 0: phase, 1: envelope, 2: intensity
@@ -22,13 +22,13 @@ export const defaultParams = {
 
     //// Beamforming and sampling parameters
     transmittedWaveType: 0,  // 0: focused, 1: plane, 2: diverging
-    virtualSource: [0.002, 0.01],
+    virtualSource: [0.02, 0.05],
     samplePoint: [-0.004, 0.012],
 
     probeType: "linear",
     probeNumElements: 64,
-    probeLeft: [-0.003, 0],
-    probeRight: [0.003, 0],
+    probeLeft: [-0.01, 0],
+    probeRight: [0.01, 0],
     probeRadiusOfCurvature: 0.1,
     tukeyApodizationRatio: 0,
 
@@ -37,9 +37,9 @@ export const defaultParams = {
     time: 0,
     soundSpeed: 1540,
     soundSpeedAssumedTx: 1540,
-    pulseLength: 1.5,
+    pulseLength: 4,
     centerFrequency: 3e6,
-    depthDispersionStrength: 1.0,
+    depthDispersionStrength: 0.0,
 }
 
 // Calculate params.sectorAzimuth such that the sector scan touches the sides of the grid.
