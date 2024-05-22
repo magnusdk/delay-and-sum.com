@@ -31,6 +31,7 @@ export const defaultParams = {
     probeNumElements: 64,
     probeLeft: [-0.01, 0],
     probeRight: [0.01, 0],
+    elementDirectivityModel: 0,  // 0: no directivity, 1: sinc (rigid baffle), 2: cos-weighted sinc (soft baffle)
     probeRadiusOfCurvature: 0.1,
     tukeyApodizationRatio: 0,
 

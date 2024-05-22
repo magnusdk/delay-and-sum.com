@@ -27,6 +27,20 @@ export class ProbeInfo {
                 this.z.push(this.zMin + i * dz);
             }
         }
+
+        // Assuming linear probe
+        const probeNormalAzimuth = Math.atan2(probeLeft[0] - probeRight[0], probeLeft[1] - probeRight[1]);
+        this.elementNormalAzimuths = [];
+        for (let i = 0; i < this.numElements; i++) {
+            this.elementNormalAzimuths.push(probeNormalAzimuth);
+        }
+
+        const elementWidth = this.length / (this.numElements - (this.numElements > 1));
+        this.elementWidths = [];
+        for (let i = 0; i < this.numElements; i++) {
+            this.elementWidths.push(elementWidth);
+        }
+    }
     }
 
     // statismethod for creating it from params

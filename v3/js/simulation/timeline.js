@@ -4,7 +4,7 @@ import { dist, pressureFieldAtPoint } from "/v3/js/simulation/common.js";
 export function timelinekernel(
     minTime, maxTime,
     samplePointX, samplePointZ,
-    elementsX, elementsZ, elementWeights, numElements,
+    elementsX, elementsZ, elementWeights, elementNormalAzimuths, elementWidths, elementDirectivityModel, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
     virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
     f, pulseLength, soundSpeed, soundSpeedAssumedTx, depthDispersionStrength,
@@ -17,7 +17,7 @@ export function timelinekernel(
     const t = x / canvasWidth * (maxTime - minTime) + minTime;
     const [real, imag] = pressureFieldAtPoint(
         samplePointX, samplePointZ, t,
-        elementsX, elementsZ, elementWeights, numElements,
+        elementsX, elementsZ, elementWeights, elementNormalAzimuths, elementWidths, elementDirectivityModel, numElements,
         waveOriginX, waveOriginZ, transmittedWaveType,
         virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
         f, pulseLength, soundSpeed, soundSpeedAssumedTx, depthDispersionStrength,

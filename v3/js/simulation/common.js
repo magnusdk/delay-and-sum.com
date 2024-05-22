@@ -1,4 +1,4 @@
-import { matrixMatrixMultiply, invertScaleTranslationTransform, transformVector, determinant, scalingFactor, getScaleMatrix } from "/v3/js/linalg.js";
+import { determinant, getScaleMatrix, invertScaleTranslationTransform, matrixMatrixMultiply, scalingFactor, transformVector } from "/v3/js/linalg.js";
 
 export function dist(x, z) {
     return Math.sqrt(x ** 2 + z ** 2);
@@ -81,27 +81,39 @@ export function pulse(phase, pulseLength) {
 
 export function pressureFieldAtPoint(
     x, z, t,
-    elementsX, elementsZ, elementWeights, numElements,
+    elementsX, elementsZ, elementWeights, elementNormalAzimuths, elementWidths, elementDirectivityModel, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
     virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
     f, pulseLength, soundSpeed, soundSpeedAssumedTx, depthDispersionStrength,
     maxNumElements, maxNumVirtualSources,
 ) {
     const lambda = soundSpeed / f;
-    const depthDispersionStart = lambda * pulseLength;
+    const depthDispersionStart = 1e-3; //lambda * pulseLength;
 
     let real = 0;
     let imag = 0;
-    for (let i = 0; i < maxNumVirtualSources; i++) {
-        if (i >= numVirtualSources) break;
-        const virtualSourceX = virtualSourcesX[i];
-        const virtualSourceZ = virtualSourcesZ[i];
-        const virtualSourceAzimuth = virtualSourcesAzimuths[i];
-        for (let j = 0; j < maxNumElements; j++) {
-            if (j >= numElements) break;
-            const elX = elementsX[j];
-            const elZ = elementsZ[j];
-            const elWeight = elementWeights[j];
+    for (let i = 0; i < maxNumElements; i++) {
+        if (i >= numElements) break;
+        const elX = elementsX[i];
+        const elZ = elementsZ[i];
+        const elWeight = elementWeights[i];
+        const elNormalAzimuth = elementNormalAzimuths[i];
+        const elWidth = elementWidths[i];
+
+        const angleToPoint = _atan2(elZ - z, elX - x) + elNormalAzimuth;
+        const sincArg = Math.PI * elWidth / lambda * Math.sin(angleToPoint);
+        let elDirectivity = 1;
+        if (elementDirectivityModel == 1) {
+            elDirectivity = Math.sin(sincArg) / sincArg;
+        } else if (elementDirectivityModel == 2) {
+            elDirectivity = Math.cos(angleToPoint) * Math.sin(sincArg) / sincArg;
+        }
+
+        for (let j = 0; j < maxNumVirtualSources; j++) {
+            if (j >= numVirtualSources) break;
+            const virtualSourceX = virtualSourcesX[j];
+            const virtualSourceZ = virtualSourcesZ[j];
+            const virtualSourceAzimuth = virtualSourcesAzimuths[j];
 
             let t0 = 0;
             if (transmittedWaveType == 0) {
@@ -118,13 +130,30 @@ export function pressureFieldAtPoint(
             let depthDispersion = Math.max(depthDispersionStart, distElPoint);
             depthDispersion = 350 * depthDispersion * depthDispersionStrength + (1 - depthDispersionStrength);
             depthDispersion = 1 / depthDispersion;
-            real += real1 * elWeight * depthDispersion;
-            imag += imag1 * elWeight * depthDispersion;
+            real += real1 * elWeight * depthDispersion * elDirectivity;
+            imag += imag1 * elWeight * depthDispersion * elDirectivity;
         }
     }
     real = real / numElements * 3;
     imag = imag / numElements * 3;
     return [real, imag];
+}
+
+export function _atan2(y, x) {
+    // atan2 is broken in GPU.js, unfortunately
+    if (x > 0) {
+        return Math.atan(y / x);
+    } else if (x < 0) {
+        return Math.atan(y / x) + (y >= 0 ? Math.PI : -Math.PI);
+    } else if (x === 0) {
+        if (y > 0) {
+            return Math.PI / 2;
+        } else if (y < 0) {
+            return -Math.PI / 2;
+        } else {
+            return 0; // x == 0 and y == 0, undefined result, just return 0
+        }
+    }
 }
 
 
@@ -138,6 +167,7 @@ export const allFunctions = [
     postProcesspixel,
     pulse,
     pressureFieldAtPoint,
+    _atan2,
     matrixMatrixMultiply,
     invertScaleTranslationTransform,
     transformVector,

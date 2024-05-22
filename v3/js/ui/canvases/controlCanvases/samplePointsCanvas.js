@@ -27,15 +27,17 @@ export class SamplePointsCanvas {
     }
 
     update() {
+        const probe = ProbeInfo.fromParams(params);
         const [xs, zs] = getLateralBeamProfilePoints(this.width);
         if (xs.length !== this.width || zs.length !== this.width) {
             throw new Error(`xs and zs must have length equal to ${this.width}`);
         }
 
         const depthDispersionStrength = params.depthDispersionStrength;
-        const probe = ProbeInfo.fromParams(params);
         const [elementsX, elementsZ] = [Array.from(probe.x), Array.from(probe.z)];
         const elementWeights = tukey(probe.numElements, params.tukeyApodizationRatio);
+        const elementNormalAzimuths = probe.elementNormalAzimuths;
+        const elementWidths = probe.elementWidths;
         const virtualSourcesX = [params.virtualSource[0]];
         const virtualSourcesZ = [params.virtualSource[1]];
         // Math.atan2 is buggy in GPU.js, so we calculate it on the CPU instead.
@@ -52,6 +54,8 @@ export class SamplePointsCanvas {
             elementsX.push(0);
             elementsZ.push(0);
             elementWeights.push(0);
+            elementNormalAzimuths.push(0);
+            elementWidths.push(0);
         }
         while (virtualSourcesX.length < this.kernel.constants.maxNumVirtualSources) {
             virtualSourcesX.push(0);
@@ -61,7 +65,7 @@ export class SamplePointsCanvas {
 
         this.samples = this.kernel(
             xs, zs, params.time,
-            elementsX, elementsZ, elementWeights, probe.numElements,
+            elementsX, elementsZ, elementWeights, elementNormalAzimuths, elementWidths, params.elementDirectivityModel, probe.numElements,
             waveOriginX, waveOriginZ, params.transmittedWaveType,
             virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
             params.centerFrequency, params.pulseLength,

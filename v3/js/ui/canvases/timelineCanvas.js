@@ -38,6 +38,7 @@ export class TimelineCanvas {
             "soundSpeed",
             "soundSpeed",
             "probeNumElements",
+            "elementDirectivityModel",
             "transmittedWaveType",
             "centerFrequency",
             "pulseLength",
@@ -52,6 +53,8 @@ export class TimelineCanvas {
             const probe = ProbeInfo.fromParams(params);
             const [elementsX, elementsZ] = [Array.from(probe.x), Array.from(probe.z)];
             const elementWeights = tukey(probe.numElements, params.tukeyApodizationRatio);
+            const elementNormalAzimuths = probe.elementNormalAzimuths;
+            const elementWidths = probe.elementWidths;
             const virtualSourcesX = [params.virtualSource[0]];
             const virtualSourcesZ = [params.virtualSource[1]];
             // Math.atan2 is buggy in GPU.js, so we calculate it on the CPU instead.
@@ -74,6 +77,8 @@ export class TimelineCanvas {
                 elementsX.push(0);
                 elementsZ.push(0);
                 elementWeights.push(0);
+                elementNormalAzimuths.push(0);
+                elementWidths.push(0);
             }
             while (virtualSourcesX.length < this.kernel.constants.maxNumVirtualSources) {
                 virtualSourcesX.push(0);
@@ -83,7 +88,7 @@ export class TimelineCanvas {
             const samples = this.kernel(
                 minTime, maxTime,
                 samplePointX, samplePointZ,
-                elementsX, elementsZ, elementWeights, params.probeNumElements,
+                elementsX, elementsZ, elementWeights, elementNormalAzimuths, elementWidths, params.elementDirectivityModel, params.probeNumElements,
                 waveOriginX, waveOriginZ, params.transmittedWaveType,
                 virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
                 params.centerFrequency, params.pulseLength,

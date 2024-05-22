@@ -237,6 +237,11 @@ export function initControls(controlsDiv, app) {
             updateApodizationVisualizer(apodizationVisualizerCanvasCtx);
         }
     ));
+    controlsDiv.appendChild(select(
+        "elementDirectivityModel", params["elementDirectivityModel"], "Element directivity",
+        [[0, "Omnidirectional"], [1, "Rigid baffle"], [2, "Soft baffle"]],
+        (value) => app.updateParam("elementDirectivityModel", value),
+    ));
     controlsDiv.appendChild(controlsGroup("Apodization", [
         slider(
             "tukeyApodizationRatio", params["tukeyApodizationRatio"], "Tukey ratio",

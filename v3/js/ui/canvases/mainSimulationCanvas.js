@@ -2,7 +2,7 @@ import { invertScaleTranslationTransform, transformVector } from "/v3/js/linalg.
 import { isUpdatedParam, params } from "/v3/js/params.js";
 import { ProbeInfo } from "/v3/js/probe.js";
 import { tukey } from "/v3/js/simulation/apodization.js";
-import { dist, divergingWaveDistance, focusedWaveDistance, getPosition, planeWaveDistance, postProcesspixel, pressureFieldAtPoint, pulse } from "/v3/js/simulation/common.js";
+import { dist, divergingWaveDistance, focusedWaveDistance, getPosition, planeWaveDistance, postProcesspixel, pressureFieldAtPoint, pulse, _atan2 } from "/v3/js/simulation/common.js";
 import { mainSimulationkernel } from "/v3/js/simulation/pressureField.js";
 
 export class MainSimulationCanvas {
@@ -19,7 +19,7 @@ export class MainSimulationCanvas {
         this.simulationKernel = this.gpu.createKernel(mainSimulationkernel)
             .setOutput([this.gpu.canvas.width, this.gpu.canvas.height])
             .setGraphical(true)
-            .setFunctions([invertScaleTranslationTransform, transformVector, getPosition, pressureFieldAtPoint, dist, pulse, focusedWaveDistance, planeWaveDistance, divergingWaveDistance, postProcesspixel])
+            .setFunctions([invertScaleTranslationTransform, transformVector, getPosition, pressureFieldAtPoint, dist, pulse, focusedWaveDistance, planeWaveDistance, divergingWaveDistance, postProcesspixel, _atan2])
             .setConstants({
                 "ibT0": grid.inverseBaseTransform[0],
                 "ibT1": grid.inverseBaseTransform[1],
@@ -51,11 +51,14 @@ export class MainSimulationCanvas {
             "probeNumElements",
             "probeLeft",
             "probeRight",
+            "elementDirectivityModel",
         )) {
             const depthDispersionStrength = params.depthDispersionStrength;
             const probe = ProbeInfo.fromParams(params);
             const [elementsX, elementsZ] = [Array.from(probe.x), Array.from(probe.z)];
             const elementWeights = tukey(probe.numElements, params.tukeyApodizationRatio);
+            const elementNormalAzimuths = probe.elementNormalAzimuths;
+            const elementWidths = probe.elementWidths;
             const virtualSourcesX = [params.virtualSource[0]];
             const virtualSourcesZ = [params.virtualSource[1]];
             // Math.atan2 is buggy in GPU.js, so we calculate it on the CPU instead.
@@ -72,6 +75,8 @@ export class MainSimulationCanvas {
                 elementsX.push(0);
                 elementsZ.push(0);
                 elementWeights.push(0);
+                elementNormalAzimuths.push(0);
+                elementWidths.push(0);
             }
             while (virtualSourcesX.length < this.simulationKernel.constants.maxNumVirtualSources) {
                 virtualSourcesX.push(0);
@@ -81,7 +86,7 @@ export class MainSimulationCanvas {
             this.simulationKernel(
                 ...params.cameraTransform,
                 params.time,
-                elementsX, elementsZ, elementWeights, probe.numElements,
+                elementsX, elementsZ, elementWeights, elementNormalAzimuths, elementWidths, params.elementDirectivityModel, probe.numElements,
                 waveOriginX, waveOriginZ, params.transmittedWaveType,
                 virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, virtualSourcesX.length,
                 params.centerFrequency, params.pulseLength,

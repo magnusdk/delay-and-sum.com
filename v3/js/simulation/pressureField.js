@@ -3,7 +3,7 @@ import { getPosition, postProcesspixel, pressureFieldAtPoint } from "/v3/js/simu
 export function mainSimulationkernel(
     cT0, cT1, cT2, cT3, cT4, cT5,
     t,
-    elementsX, elementsZ, elementWeights, numElements,
+    elementsX, elementsZ, elementWeights, elementNormalAzimuths, elementWidths, elementDirectivityModel, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
     virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
     f, pulseLength, soundSpeed, soundSpeedAssumedTx, depthDispersionStrength,
@@ -13,7 +13,7 @@ export function mainSimulationkernel(
     const [x, z] = getPosition(cT0, cT1, cT2, cT3, cT4, cT5, this.thread.x, this.thread.y);
     const [real, imag] = pressureFieldAtPoint(
         x, z, t,
-        elementsX, elementsZ, elementWeights, numElements,
+        elementsX, elementsZ, elementWeights, elementNormalAzimuths, elementWidths, elementDirectivityModel, numElements,
         waveOriginX, waveOriginZ, transmittedWaveType,
         virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
         f, pulseLength, soundSpeed, soundSpeedAssumedTx, depthDispersionStrength,
@@ -24,7 +24,7 @@ export function mainSimulationkernel(
 
 export function pressureFieldAtPoints(
     xs, zs, t,
-    elementsX, elementsZ, elementWeights, numElements,
+    elementsX, elementsZ, elementWeights, elementNormalAzimuths, elementWidths, elementDirectivityModel, numElements,
     waveOriginX, waveOriginZ, transmittedWaveType,
     virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
     f, pulseLength, soundSpeed, soundSpeedAssumedTx, depthDispersionStrength,
@@ -34,7 +34,7 @@ export function pressureFieldAtPoints(
     const [x, z] = [xs[this.thread.x], zs[this.thread.x]];
     const [real, imag] = pressureFieldAtPoint(
         x, z, t,
-        elementsX, elementsZ, elementWeights, numElements,
+        elementsX, elementsZ, elementWeights, elementNormalAzimuths, elementWidths, elementDirectivityModel, numElements,
         waveOriginX, waveOriginZ, transmittedWaveType,
         virtualSourcesX, virtualSourcesZ, virtualSourcesAzimuths, numVirtualSources,
         f, pulseLength, soundSpeed, soundSpeedAssumedTx, depthDispersionStrength,
