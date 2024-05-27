@@ -8,8 +8,10 @@ import { MainSimulationCanvas } from "/v3/js/ui/canvases/mainSimulationCanvas.js
 import { OverlaySimulationCanvas } from "/v3/js/ui/canvases/overlaySimulationCanvas.js";
 import { TimelineCanvas } from "/v3/js/ui/canvases/timelineCanvas.js";
 import { DraggableManager } from "/v3/js/ui/draggableManager.js";
+import { SnapshotsManager } from "/v3/js/ui/snapshotsManager.js";
 import { TimelineAnimator } from "/v3/js/ui/timelineAnimator.js";
 import { TooltipManager } from "/v3/js/ui/tooltipManager.js";
+
 
 export class App {
     constructor(
@@ -17,13 +19,15 @@ export class App {
         mainSimulationCanvasElement,
         overlaySimulationCanvasElement,
         foregroundCanvasElement,
-        timelineCanvasElement
+        timelineCanvasElement,
+        snapshotsContainerElement,
     ) {
         this.backgroundCanvasElement = backgroundCanvasElement;
         this.mainSimulationCanvasElement = mainSimulationCanvasElement;
         this.overlaySimulationCanvasElement = overlaySimulationCanvasElement;
         this.foregroundCanvasElement = foregroundCanvasElement;
         this.timelineCanvasElement = timelineCanvasElement;
+        this.snapshotsContainerElement = snapshotsContainerElement;
 
         this.grid = new Grid(this.mainSimulationCanvasElement);
         this.mainSimulationCanvas = new MainSimulationCanvas(
@@ -64,8 +68,9 @@ export class App {
         );
         this.tooltipManager = new TooltipManager();
         this.timelineAnimator = new TimelineAnimator(this.grid);
+        this.snapshotsManager = new SnapshotsManager(this);
         this.params = params;
-
+        
         this.connectEventListeners();
     }
 

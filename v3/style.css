@@ -54,3 +54,83 @@ body {
 #foregroundCanvas {
     z-index: 4;
 }
+
+#snapshotsContainer {
+    padding: 10px;
+    margin: -10px;
+    width: 500px;
+    height: 100px;
+    box-shadow: 0px 3px 5px 0 rgba(0, 0, 0, 0.2) inset;
+    display: flex;
+    gap: 5px;
+    overflow: scroll;
+}
+
+#takeSnapshotButton {
+    height: 100px;
+    width: 100px;
+    min-height: 100px;
+    min-width: 100px;
+    background-color: rgb(250, 250, 250);
+    border: solid 2px rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    padding: 10px;
+    cursor: pointer;
+    box-shadow: 0px 3px 5px 0 rgba(0, 0, 0, 0.2);
+    margin-right: 10px;
+}
+
+#takeSnapshotButton:hover {
+    background-color: white;
+    border: solid 2px rgba(0, 0, 0, 0.5);
+    box-shadow: 0px 3px 5px 0 rgba(0, 0, 0, 0.5);
+}
+
+#takeSnapshotButton span {
+    font-size: 3em;
+    display: block;
+}
+
+.snapshotImageContainer {
+    position: relative;
+}
+
+.snapshotImage {
+    height: 96px;
+    width: 96px;
+    border: solid 2px rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0px 3px 5px 0 rgba(0, 0, 0, 0.2);
+}
+
+.snapshotImage:hover {
+    background-color: white;
+    border: solid 2px rgba(0, 0, 0, 0.5);
+    box-shadow: 0px 3px 5px 0 rgba(0, 0, 0, 0.5);
+}
+
+.snapshotImageDeleteButton {
+    width: 20px;
+    height: 20px;
+    border: solid 2px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    background-color: white;
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.snapshotImageDeleteButton:after {
+    content: '❌';
+    display: block;
+    font-size: 0.5em;
+}
+
+.snapshotImageDeleteButton:hover {
+    border: solid 2px rgba(0, 0, 0, 0.5);
+}

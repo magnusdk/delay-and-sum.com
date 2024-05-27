@@ -51,7 +51,7 @@ const radiusNorm = depthLength / (defaultParams.zMax - defaultParams.zMin);
 defaultParams.sectorAzimuth = Math.asin(1 / (2 * radiusNorm)) * 2;
 
 
-const overriddenParams = {};
+export const overriddenParams = {};
 export const params = new Proxy(defaultParams, {
     get: (target, name) => (name in overriddenParams) ? overriddenParams[name] : target[name],
     set: (target, name, value) => {
@@ -128,4 +128,15 @@ export function resetParams(...paramNames) {
     });
     // Clean up URL such that it doesn't contain any search params
     window.history.replaceState({}, "", url.toString());
+}
+
+export function setParams(newParams) {
+    const url = new URL(window.location.href);
+    Object.keys(overriddenParams).forEach((paramName) => {
+        delete overriddenParams[paramName];
+        url.searchParams.delete(paramName);
+        updatedParams.add(paramName);
+    });
+    Object.keys(newParams).forEach((paramName) => updateParam(paramName, newParams[paramName], true));
+    dumpParamsToURL();
 }

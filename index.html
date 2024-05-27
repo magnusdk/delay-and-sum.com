@@ -25,6 +25,9 @@
                 <canvas id="foregroundCanvas" width="1000" height="1000"></canvas>
             </div>
             <canvas id="timelineCanvas" width="1000" height="200"></canvas>
+            <div id="snapshotsContainer">
+                <button id="takeSnapshotButton"><span>📸</span>Take snapshot</button>
+            </div>
         </div>
         <div id="controlsContainer" class="controlsContainer"></div>
 
@@ -42,6 +45,7 @@
                 document.getElementById('overlaySimulationCanvas'),
                 document.getElementById('foregroundCanvas'),
                 document.getElementById('timelineCanvas'),
+                document.getElementById('snapshotsContainer'),
             );
             initControls(document.getElementById("controlsContainer"), document.app);
             document.app.start();
@@ -75,7 +79,7 @@
         <p>
             The app is powered by <a href="https://github.com/gpujs/gpu.js">GPU.js</a> <i>(and thus WebGL)</i> and runs locally in your browser. <a href="https://github.com/magnusdk/delay-and-sum.com">The source code is available on GitHub</a>. Please add feature-requests or bug-reports <a href="https://github.com/magnusdk/delay-and-sum.com/issues/new">on GitHub</a> or contact me at <a href="mailto:magnus.kvalevag@ntnu.no">magnus.kvalevag@ntnu.no</a>. <em><strong>delay-and-sum.com</strong> is partially funded by the Norwegian University of Science and Technology (NTNU)</em>.
         </p>
-        
+
         <p>Have fun! :)</p>
     </div>
 </body>
