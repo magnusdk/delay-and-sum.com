@@ -21,7 +21,7 @@
 
 (defn get-draggable [*state]
   (let [{:keys [virtual-source sample-point]} @*db
-        {:keys [center corner-1 corner-2]} (probe/element-geometry)
+        {:keys [corner-1 corner-2]} (probe/element-geometry)
         {[viewport-width viewport-height] :simulation/viewport-size} @*state
         [virtual-source-screen
          sample-point-screen
@@ -29,16 +29,18 @@
          corner-2-screen] (camera/transform-vec
                            [virtual-source sample-point corner-1 corner-2]
                            (camera/world-to-screen-matrix viewport-width viewport-height))]
-    [{:name :virtual-source :type :point :pos virtual-source-screen :update! (fn [_ pos] (swap! *db assoc :virtual-source pos))}
-     {:name :sample-point   :type :point :pos sample-point-screen   :update! (fn [_ pos] (swap! *db assoc :sample-point pos))}
-     {:name :corner-1       :type :point :pos corner-1-screen       :update! (fn [_ pos] (probe/update-from-corners! corner-2 pos))}
-     {:name :corner-2       :type :point :pos corner-2-screen       :update! (fn [_ pos] (probe/update-from-corners! pos corner-1))}
+    [{:name :virtual-source :type :point :pos virtual-source-screen :update! (fn [_ pos _] (swap! *db assoc :virtual-source pos))}
+     {:name :sample-point   :type :point :pos sample-point-screen   :update! (fn [_ pos _] (swap! *db assoc :sample-point pos))}
+     {:name :corner-1       :type :point :pos corner-1-screen       :update! (fn [_ pos _] (probe/update-from-corners! corner-2 pos))}
+     {:name :corner-2       :type :point :pos corner-2-screen       :update! (fn [_ pos _] (probe/update-from-corners! pos corner-1))}
      {:name        :probe-body
       :type        :line
       :corners     [corner-1-screen corner-2-screen]
       :update-type :relative
-      :update!     (fn [previous-pos current-pos]
-                     (swap! *db update-in [:probe :center] #(mat/add % (mat/sub current-pos previous-pos))))
+      :update!     (fn [previous-pos current-pos snap-to-grid]
+                     (if snap-to-grid
+                       (swap! *db assoc-in [:probe :center] current-pos)
+                       (swap! *db update-in [:probe :center] #(mat/add % (mat/sub current-pos previous-pos)))))
       :priority    1}]))
 
 (defn closest-draggable [point draggables]
@@ -80,7 +82,10 @@
     (swap! *state assoc
            ::previous-pos (::current-pos @*state)
            ::current-pos  pointer-pos)
-    ((:update! dragging) (get (::previous-pos @*state) space) (get (::current-pos @*state) space))))
+    ((:update! dragging)
+     (get (::previous-pos @*state) space)
+     (get (::current-pos @*state) space)
+     snap-to-grid)))
 
 (defn end-dragging!
   [*state event]
