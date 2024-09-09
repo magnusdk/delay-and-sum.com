@@ -1,15 +1,35 @@
 (ns codes.magnus.main-view.simplified-wave-geometry
-  (:require [codes.magnus.main-view.simplified-wave-geometry.focused :as focused]
-            [codes.magnus.rendering.canvas :as canvas]))
+  (:require [codes.magnus.main-view.common :as common]
+            [codes.magnus.main-view.simplified-wave-geometry.focused :as focused]
+            [codes.magnus.reactive.core :as re]))
 
-(defn render-canvas!
-  [*local-state *viewport-state]
-  (let [{:keys [canvas-size ctx]} @*local-state
-        [canvas-width canvas-height] canvas-size]
+(defn resize!
+  [{:keys [canvas]}]
+  (let [width  (.-width canvas)
+        height (.-height canvas)
+        [expected-width expected-height] (common/get-expected-size)]
+    (when (not= [width height]
+                [expected-width expected-height])
+      (set! (.-width canvas) expected-width)
+      (set! (.-height canvas) expected-height))
+    ; Must have some with and height, else return false
+    (> (* expected-width expected-height) 0)))
+
+(defn draw! [{:keys [canvas ctx]}]
+  (let [width  (.-width canvas)
+        height (.-height canvas)]
     (doto ctx
-      (.clearRect 0 0 canvas-width canvas-height)
-      (focused/draw-simplified-geometry!  *viewport-state))))
+      (.clearRect 0 0 width height)
+      (focused/draw-simplified-geometry!))))
 
 
-(def component
-  (partial canvas/component canvas/init-context2d-component! render-canvas!))
+(defn render!
+  [render-data]
+  (re/with-reactive ::resize
+    (when (resize! render-data)
+      (re/with-reactive ::draw
+        (draw! render-data)))))
+
+(defn init! [canvas]
+  (render! {:canvas canvas
+                   :ctx    (.getContext canvas "2d")}))

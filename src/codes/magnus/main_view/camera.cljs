@@ -1,8 +1,8 @@
 (ns codes.magnus.main-view.camera
   (:require ["three" :as three]
             [clojure.core.matrix :as mat]
-            [codes.magnus.db :refer [*db]]
-            [reagent.core :as r]))
+            [codes.magnus.state :refer [*state]]
+            [codes.magnus.reactive.core :as re]))
 
 
 (def base-pixels-per-meter
@@ -101,7 +101,7 @@
 
 (defn clip-to-world-matrix
   [viewport-width viewport-height]
-  (let [camera-matrix (from-scale-and-pos @(r/cursor *db [:camera]))
+  (let [camera-matrix (from-scale-and-pos (re/rget *state :camera))
         sx            (/ viewport-width base-pixels-per-meter)
         sy            (/ viewport-height base-pixels-per-meter)]
     (mat/mmul
@@ -147,10 +147,10 @@
 
 ;; Camera matrix stuff
 (defn camera-scale []
-  @(r/cursor *db [:camera :scale]))
+  (re/rget *state :camera :scale))
 
 (defn camera-pos []
-  (r/cursor *db [:camera :pos]))
+  (re/rget *state :camera :pos))
 
 (defn canvas-viewport-scaling
   [viewport-width viewport-height canvas-width canvas-height]
@@ -166,7 +166,7 @@
     (mat/mget screen-to-simulation-matrix 0 0)))
 
 (defn transform-camera! [m]
-  (swap! *db update :camera #(to-scale-and-pos (mat/mmul (from-scale-and-pos %) m))))
+  (swap! *state update :camera #(to-scale-and-pos (mat/mmul (from-scale-and-pos %) m))))
 
 (defn translate-camera! [dx dy]
   (transform-camera! (translate-matrix dx dy)))

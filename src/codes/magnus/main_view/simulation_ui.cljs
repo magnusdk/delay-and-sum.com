@@ -1,12 +1,12 @@
 (ns codes.magnus.main-view.simulation-ui
   (:require [cljs.math :as math]
             [codes.magnus.colors :as colors]
-            [codes.magnus.db :refer [*db]]
             [codes.magnus.main-view.camera :as camera]
             [codes.magnus.main-view.interaction.draggable :as draggable]
+            [codes.magnus.main-view.common :as common]
             [codes.magnus.probe :as probe]
-            [codes.magnus.rendering.canvas :as canvas]
-            [reagent.core :as r]
+            [codes.magnus.reactive.core :as re]
+            [codes.magnus.state :refer [*state]]
             [thi.ng.color.core :as col]))
 
 (defn get-dot-size
@@ -18,11 +18,10 @@
      :else     (get-dot-size))))
 
 (defn draw-dot!
-  [ctx name color [x y] *viewport-state]
-  (let [[viewport-width viewport-height] @(r/cursor *viewport-state [:simulation/viewport-size])
-        dragging?     (= name @(r/cursor *viewport-state [::draggable/dragging :name]))
-        hovering?     (= name @(r/cursor *viewport-state [::draggable/hovering :name]))
-        canvas        (.-canvas ctx)
+  [{:keys [canvas ctx]} name color [x y]]
+  (let [[viewport-width viewport-height] (re/rget *state :simulation-container/size)
+        dragging?     (= name (re/rget *state :simulation-container-draggable :dragging :name))
+        hovering?     (= name (re/rget *state :simulation-container-draggable :hovering :name))
         canvas-width  (.-width canvas)
         canvas-height (.-height canvas)
         size          (get-dot-size dragging? hovering?)
@@ -47,9 +46,8 @@
     (.restore ctx)))
 
 (defn draw-probe!
-  [ctx *viewport-state]
-  (let [[viewport-width viewport-height] @(r/cursor *viewport-state [:simulation/viewport-size])
-        canvas                (.-canvas ctx)
+  [{:keys [canvas ctx] :as render-data}]
+  (let [[viewport-width viewport-height] (re/rget *state :simulation-container/size)
         canvas-width          (.-width canvas)
         canvas-height         (.-height canvas)
         view-to-canvas-matrix (camera/world-to-canvas-matrix
@@ -67,8 +65,8 @@
     (doseq [[x y] (rest positions)]
       (.lineTo ctx x y))
     (.stroke ctx)
-    (draw-dot! ctx :corner-1 colors/dark-blue [first-x first-y] *viewport-state)
-    (draw-dot! ctx :corner-2 colors/dark-blue [last-x last-y] *viewport-state)
+    (draw-dot! render-data :corner-1 colors/dark-blue [first-x first-y])
+    (draw-dot! render-data :corner-2 colors/dark-blue [last-x last-y])
     (doseq [[x y] positions]
       (set! (.-fillStyle ctx) (:col (col/as-css colors/dark-blue)))
       (doto ctx
@@ -80,20 +78,40 @@
         (.fill)
         (.restore ctx)))))
 
-(defn render-canvas!
-  [*local-state *viewport-state]
-  (let [{:keys [canvas-size ctx]} @*local-state
-        [canvas-width canvas-height] canvas-size
-        [viewport-width viewport-height] @(r/cursor *viewport-state [:simulation/viewport-size])
+(defn draw!
+  [{:keys [canvas ctx] :as render-data}]
+  (let [width  (.-width canvas)
+        height (.-height canvas)
+        [viewport-width viewport-height] (re/rget *state :simulation-container/size)
         [virtual-source
          sample-point] (camera/transform-vec
-                        [@(r/cursor *db [:virtual-source]) @(r/cursor *db [:sample-point])]
-                        (camera/world-to-canvas-matrix viewport-width viewport-height canvas-width canvas-height))]
-    (doto ctx
-      (.clearRect 0 0 canvas-width canvas-height)
-      (draw-probe! *viewport-state)
-      (draw-dot! :virtual-source colors/pink virtual-source *viewport-state)
-      (draw-dot! :sample-point colors/blue sample-point *viewport-state))))
+                        [(re/rget *state :virtual-source) (re/rget *state :sample-point)]
+                        (camera/world-to-canvas-matrix viewport-width viewport-height width height))]
+    (.clearRect ctx 0 0 width height)
+    (draw-probe! render-data)
+    (draw-dot! render-data :virtual-source colors/pink virtual-source)
+    (draw-dot! render-data :sample-point colors/blue sample-point)))
 
-(def component
-  (partial canvas/component canvas/init-context2d-component! render-canvas!))
+(defn resize!
+  [{:keys [canvas]}]
+  (let [width  (.-width canvas)
+        height (.-height canvas)
+        [expected-width expected-height] (common/get-expected-size)]
+    (when (not= [width height]
+                [expected-width expected-height])
+      (set! (.-width canvas) expected-width)
+      (set! (.-height canvas) expected-height))
+    ; Must have some with and height, else return false
+    (> (* expected-width expected-height) 0)))
+
+
+(defn render!
+  [render-data]
+  (re/with-reactive ::resize
+    (when (resize! render-data)
+      (re/with-reactive ::draw
+        (draw! render-data)))))
+
+(defn init! [canvas]
+  (render! {:canvas canvas
+            :ctx    (.getContext canvas "2d")}))

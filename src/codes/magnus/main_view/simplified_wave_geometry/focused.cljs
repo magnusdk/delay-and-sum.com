@@ -2,11 +2,11 @@
   (:require [cljs.math :as math]
             [clojure.core.matrix :as mat]
             [codes.magnus.colors :as colors]
-            [codes.magnus.db :refer [*db]]
             [codes.magnus.main-view.camera :as camera]
-            [codes.magnus.main-view.simplified-wave-geometry.common :as common]
+            [codes.magnus.main-view.common :as common]
             [codes.magnus.probe :as probe]
-            [reagent.core :as r]
+            [codes.magnus.reactive.core :as re]
+            [codes.magnus.state :refer [*state]]
             [thi.ng.color.core :as col]))
 
 
@@ -15,8 +15,8 @@
   (set! (.-strokeStyle ctx) stroke-style))
 
 (defn draw-simplified-geometry!
-  [ctx *viewport-state]
-  (let [[viewport-width viewport-height] @(r/cursor *viewport-state [:simulation/viewport-size])
+  [ctx]
+  (let [[viewport-width viewport-height] (re/rget *state :simulation-container/size)
         canvas                (.-canvas ctx)
         canvas-width          (.-width canvas)
         canvas-height         (.-height canvas)
@@ -25,9 +25,9 @@
         view-to-canvas-matrix (camera/world-to-canvas-matrix
                                viewport-width viewport-height
                                canvas-width canvas-height)
-        time                  @(r/cursor *db [:time])
-        sound-speed           @(r/cursor *db [:sound-speed])
-        virtual-source        @(r/cursor *db [:virtual-source])
+        time                  (re/rget *state :time)
+        sound-speed           (re/rget *state :sound-speed)
+        virtual-source        (re/rget *state :virtual-source)
 
         {:keys [corner-1
                 corner-2

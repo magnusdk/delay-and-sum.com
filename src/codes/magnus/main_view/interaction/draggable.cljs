@@ -1,12 +1,9 @@
 (ns codes.magnus.main-view.interaction.draggable
   (:require [clojure.core.matrix :as mat]
-            [codes.magnus.db :refer [*db]]
             [codes.magnus.fsm :as fsm]
-            [codes.magnus.main-view.camera :as camera]
             [codes.magnus.main-view.interaction.pointers :as pointers]
-            [codes.magnus.probe :as probe]))
-
-(def ^:private hover-distance 10)
+            [codes.magnus.state :refer [*state]]
+            [codes.magnus.util :as util]))
 
 (defmulti distance (fn [draggable point] (:type draggable)))
 
@@ -19,88 +16,58 @@
         h (mat/clamp (mat/div (mat/dot pa ba) (mat/dot ba ba)) 0 1)]
     (mat/magnitude (mat/sub pa (mat/mul h ba)))))
 
-(defn get-draggable [*state]
-  (let [{:keys [virtual-source sample-point]} @*db
-        {:keys [corner-1 corner-2]} (probe/element-geometry)
-        {[viewport-width viewport-height] :simulation/viewport-size} @*state
-        [virtual-source-screen
-         sample-point-screen
-         corner-1-screen
-         corner-2-screen] (camera/transform-vec
-                           [virtual-source sample-point corner-1 corner-2]
-                           (camera/world-to-screen-matrix viewport-width viewport-height))]
-    [{:name :virtual-source :type :point :pos virtual-source-screen :update! (fn [_ pos _] (swap! *db assoc :virtual-source pos))}
-     {:name :sample-point   :type :point :pos sample-point-screen   :update! (fn [_ pos _] (swap! *db assoc :sample-point pos))}
-     {:name :corner-1       :type :point :pos corner-1-screen       :update! (fn [_ pos _] (probe/update-from-corners! corner-2 pos))}
-     {:name :corner-2       :type :point :pos corner-2-screen       :update! (fn [_ pos _] (probe/update-from-corners! pos corner-1))}
-     {:name        :probe-body
-      :type        :line
-      :corners     [corner-1-screen corner-2-screen]
-      :update-type :relative
-      :update!     (fn [previous-pos current-pos snap-to-grid]
-                     (if snap-to-grid
-                       (swap! *db assoc-in [:probe :center] current-pos)
-                       (swap! *db update-in [:probe :center] #(mat/add % (mat/sub current-pos previous-pos)))))
-      :priority    1}]))
-
-(defn closest-draggable [point draggables]
+(defn closest-draggable [point hover-distance draggables]
   (->> draggables
        (map #(assoc % :distance (distance % point)))
        (apply min-key (fn [{:keys [distance priority]}]
                         (+ distance (* (or priority 0) hover-distance))))))
 
-(defn maybe-start-dragging!
-  [*state event]
+(defn maybe-start-dragging! [{:keys [namespace event hover-distance get-draggable]}]
   (let [pointer-pos (:pointer-pos (.-detail event))
         {:keys [distance update!]
-         :as draggable} (->> (get-draggable *state)
-                             (closest-draggable (:screen pointer-pos)))]
+         :as draggable} (->> (get-draggable)
+                             (closest-draggable (:screen pointer-pos) hover-distance))]
     (when (< distance hover-distance)
-      (swap! *state assoc
-             ::dragging     draggable
-             ::previous-pos pointer-pos
-             ::current-pos  pointer-pos)
+      (swap! *state update namespace assoc
+             :dragging     draggable
+             :previous-pos pointer-pos
+             :current-pos  pointer-pos)
       (update! (:simulation pointer-pos) (:simulation pointer-pos))
       {:target :dragging})))
 
-(defn maybe-hover!
-  [*state event]
+(defn maybe-hover! [{:keys [namespace event hover-distance get-draggable]}]
   (let [pointer-pos (get-in (.-detail event) [:pointer-pos :screen])
-        {:keys [distance] :as draggable} (->> (get-draggable *state)
-                                              (closest-draggable pointer-pos))]
+        {:keys [distance] :as draggable} (->> (get-draggable)
+                                              (closest-draggable pointer-pos hover-distance))]
     (if (< distance hover-distance)
-      (do (swap! *state assoc ::hovering draggable)
+      (do (swap! *state update namespace assoc :hovering draggable)
           {:target :hovering})
-      (do (swap! *state assoc ::hovering nil)
+      (do (swap! *state update namespace assoc :hovering nil)
           {:target :idle}))))
 
-(defn handle-drag!
-  [*state event]
+(defn handle-drag! [{:keys [namespace event]}]
   (let [pointer-pos (:pointer-pos (.-detail event))
-        {::keys [dragging snap-to-grid]} @*state
+        {:keys [dragging snap-to-grid]} (get @*state namespace)
         space (if snap-to-grid :simulation-snap-to-grid :simulation)]
-    (swap! *state assoc
-           ::previous-pos (::current-pos @*state)
-           ::current-pos  pointer-pos)
+    (swap! *state update namespace assoc
+           :previous-pos (get-in @*state [namespace :current-pos])
+           :current-pos  pointer-pos)
     ((:update! dragging)
-     (get (::previous-pos @*state) space)
-     (get (::current-pos @*state) space)
+     (get-in @*state [namespace :previous-pos space])
+     (get-in @*state [namespace :current-pos space])
      snap-to-grid)))
 
-(defn end-dragging!
-  [*state event]
-  (swap! *state assoc ::dragging nil)
-  (maybe-hover! *state event))
+(defn end-dragging! [{:keys [namespace] :as data}]
+  (swap! *state update namespace assoc :dragging nil)
+  (maybe-hover! data))
 
-(defn init-keyboard-event-handlers!
-  [*state]
-  (.addEventListener js/document "keydown" #(swap! *state assoc ::snap-to-grid (.-shiftKey %)))
-  (.addEventListener js/document "keyup"   #(swap! *state assoc ::snap-to-grid (.-shiftKey %))))
+(defn init-keyboard-event-handlers! [namespace]
+  (.addEventListener js/document "keydown" #(swap! *state update namespace assoc :snap-to-grid (.-shiftKey %)))
+  (.addEventListener js/document "keyup"   #(swap! *state update namespace assoc :snap-to-grid (.-shiftKey %))))
 
 
-(defn init!
-  [*state]
-  (swap! *state assoc ::fsm
+(defn init! [element namespace get-draggable]
+  (swap! *state assoc-in [namespace :fsm]
          (fsm/FiniteStateMachine.
           {:idle     {::pointers/start-drag maybe-start-dragging!
                       ::pointers/hover      maybe-hover!}
@@ -109,17 +76,16 @@
            :dragging {::pointers/drag     handle-drag!
                       ::pointers/end-drag end-dragging!}}
           :idle))
-  (let [{:keys [element]} @*state
-        *registered-event-handlers (atom [])
-
-        add-event-listener!
-        (fn [element type]
-          (let [handler #(fsm/handle! *state ::fsm {:type type :event %})]
-            (swap! *registered-event-handlers conj [element type handler])
-            (.addEventListener element type handler)))]
-
+  (letfn [(add-event-listener! [element type]
+            (let [handler #(fsm/handle! namespace
+                                        {:type           type
+                                         :element        element
+                                         :hover-distance (* 10 util/device-pixel-ratio)
+                                         :get-draggable  get-draggable
+                                         :event          %})]
+              (.addEventListener element type handler)))]
     (add-event-listener! element ::pointers/hover)
     (add-event-listener! element ::pointers/start-drag)
     (add-event-listener! element ::pointers/drag)
     (add-event-listener! element ::pointers/end-drag)
-    (init-keyboard-event-handlers! *state)))
+    (init-keyboard-event-handlers! namespace)))

@@ -1,9 +1,16 @@
 :root {
-    --light-pink: #FFC2D5;
-    --pink: #FF195E;
-    --cyan: #00F0FF;
-    --blue: #0085FF;
-    --dark-blue: #1D5199;
+    --light-pink: rgba(255, 194, 213, 1);
+    --pink: rgba(255, 25, 94, 1);
+    --cyan: rgba(0, 240, 255, 1);
+    --blue: rgba(0, 133, 255, 1);
+    --dark-blue: rgba(29, 81, 153, 1);
+
+    /* 50% opactity */
+    --light-pink-50: rgba(255, 194, 213, 0.5);
+    --pink-50: rgba(255, 25, 94, 0.5);
+    --cyan-50: rgba(0, 240, 255, 0.5);
+    --blue-50: rgba(0, 133, 255, 0.5);
+    --dark-blue-50: rgba(29, 81, 153, 0.5);
 }
 
 html,
@@ -52,6 +59,10 @@ body {
 #side-panel {
     height: 100%;
     width: 100px;
+    /* Make it be in front of timeline */
+    z-index: 1;
+    background-color: white;
+    box-shadow: 0 0px 5px 0px var(--dark-blue-50);
 }
 
 .grid-tick {
@@ -59,6 +70,8 @@ body {
     white-space: "nowrap";
     opacity: 0.66;
     font-size: 0.8em;
+    pointer-events: none;
+    user-select: none;
 }
 
 .grid-tick.x-tick {
@@ -71,8 +84,34 @@ body {
     margin-left: 2px;
 }
 
-.timelineContainer {
-    border-top: solid var(--dark-blue) 2px;
+#timelineContainer {
+    box-shadow: 0 0px 5px 1px var(--dark-blue-50);
     width: 100%;
-    height: 102px;
+    min-height: 100px;
+    height: 100px;
+    /* Make it be behind side panel */
+    z-index: 0;
+}
+
+.timeline-time-cursor {
+    transform: translate(-1.5px, 3px);
+    height: 94px;
+    width: 3px;
+    background-color: var(--pink);
+    position: absolute;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.timeline-time-cursor-hovering {
+    transform: translate(-2px, 2.5px);
+    height: 95px;
+    width: 4px;
+}
+
+.timeline-time-cursor-dragging {
+    transform: translate(-2.5px, 2px);
+    height: 96px;
+    width: 5px;
+    background-color: var(--pink-50);
 }

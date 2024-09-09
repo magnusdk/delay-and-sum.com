@@ -1,15 +1,15 @@
 (ns codes.magnus.probe
   (:require [cljs.math :as math]
-            [codes.magnus.db :refer [*db]]
-            [reagent.core :as r]
-            [clojure.core.matrix :as mat]))
+            [clojure.core.matrix :as mat]
+            [codes.magnus.reactive.core :as re]
+            [codes.magnus.state :refer [*state]]))
 
 
 (defn focused-delay-model
   [element-position]
-  (let [origin         @(r/cursor *db [:probe :center])
-        virtual-source @(r/cursor *db [:virtual-source])
-        sound-speed    @(r/cursor *db [:sound-speed])
+  (let [origin         (re/rget *state :probe :center)
+        virtual-source (re/rget *state :virtual-source)
+        sound-speed    (re/rget *state :sound-speed)
         dist-source-element (mat/distance virtual-source element-position)
         dist-source-origin  (mat/distance virtual-source origin)]
     (/ (- dist-source-element dist-source-origin) sound-speed)))
@@ -46,9 +46,9 @@
                 n-elements
                 array-width
                 normal-azimuth
-                element-width]} @(r/cursor *db [:probe])
-        virtual-source       @(r/cursor *db [:virtual-source])
-        delay-model          @(r/cursor *db [:delay-model])
+                element-width]} (re/rget *state :probe)
+        virtual-source       (re/rget *state :virtual-source)
+        delay-model          (re/rget *state :delay-model)
         [center-x center-y]  center
         normal-azimuth-rad   (deg2rad normal-azimuth)
         cos-normal-az        (math/cos normal-azimuth-rad)
@@ -88,6 +88,6 @@
   [corner-1 corner-2]
   (let [diff     (mat/sub corner-1 corner-2)
         mean     (mat/mul 0.5 (mat/add corner-1 corner-2))]
-    (swap! *db assoc-in [:probe :center] mean)
-    (swap! *db assoc-in [:probe :array-width] (mat/magnitude diff))
-    (swap! *db assoc-in [:probe :normal-azimuth] (rad2deg (angle diff)))))
+    (swap! *state assoc-in [:probe :center] mean)
+    (swap! *state assoc-in [:probe :array-width] (mat/magnitude diff))
+    (swap! *state assoc-in [:probe :normal-azimuth] (rad2deg (angle diff)))))

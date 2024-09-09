@@ -4,9 +4,9 @@
   "test/"]
 
  :dependencies 
-  [[net.mikera/core.matrix "0.63.0"] 
-   [reagent "1.2.0"]
-   [thi.ng/color "1.5.1"]]
+  [[net.mikera/core.matrix "0.63.0"]
+   [thi.ng/color "1.5.1"]
+   [no.cjohansen/replicant "0.2024.08.06"]]
 
  :dev-http {8080 "public"}
  :builds
@@ -14,6 +14,6 @@
   {:target :browser
    :output-dir "public/js"
    :asset-path "/js"
-   :modules {:main {:init-fn codes.magnus.app/init}}
+   :modules {:main {:init-fn codes.magnus.app/init!}}
    :devtools {:http-root "public"
               :http-port 8080}}}}
