@@ -7,6 +7,7 @@ uniform float u_centerFrequency;
 uniform float u_pulseLength;
 uniform float u_time;
 uniform float u_soundSpeed;
+uniform float u_attenuationFactor;
 
 #include <simulation>
 

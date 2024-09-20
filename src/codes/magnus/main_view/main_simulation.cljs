@@ -72,12 +72,13 @@
         (three-common/create-pass
          (resource/inline "shaders/main_simulation.frag")
          [:u_cameraMatrix :u_elementsTexture :u_samplePoint :u_nElements
-          :u_centerFrequency :u_pulseLength :u_time :u_soundSpeed])
+          :u_centerFrequency :u_pulseLength :u_time :u_soundSpeed
+          :u_attenuationFactor])
 
         postprocess-field-pass
         (three-common/create-pass
          (resource/inline "shaders/postprocess_field.frag")
-         [:u_minimumDb :u_maximumDb])
+         [:u_minimumDb :u_maximumDb :u_useDb :u_displayMode])
         render-data {:canvas                 canvas
                      :ctx-2d                 (.getContext canvas "2d")
                      :renderer               renderer

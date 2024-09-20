@@ -5,9 +5,9 @@
             [codes.magnus.reactive.core :as re]
             [codes.magnus.state :refer [*state]]))
 
-(defn get-db-update!
+(defn get-state-update!
   ([uniform-name db-path]
-   (get-db-update! uniform-name db-path identity))
+   (get-state-update! uniform-name db-path identity))
   ([uniform-name db-path convert]
    (fn [material]
      (aset material "uniforms" (name uniform-name) "value"
@@ -22,43 +22,60 @@
 
 (defmethod get-uniform :u_nElements [_]
   {:initial {:u_nElements {:value nil}}
-   :update! (get-db-update! :u_nElements [:probe :n-elements])})
+   :update! (get-state-update! :u_nElements [:probe :n-elements])})
 
 (defmethod get-uniform :u_centerFrequency [_]
   {:initial {:u_centerFrequency {:value nil}}
-   :update! (get-db-update! :u_centerFrequency [:center-frequency])})
+   :update! (get-state-update! :u_centerFrequency [:center-frequency])})
 
 (defmethod get-uniform :u_pulseLength [_]
   {:initial {:u_pulseLength {:value nil}}
-   :update! (get-db-update! :u_pulseLength [:pulse-length])})
+   :update! (get-state-update! :u_pulseLength [:pulse-length])})
 
 (defmethod get-uniform :u_time [_]
   {:initial {:u_time {:value nil}}
-   :update! (get-db-update! :u_time [:time])})
+   :update! (get-state-update! :u_time [:time])})
 
 (defmethod get-uniform :u_soundSpeed [_]
   {:initial {:u_soundSpeed {:value nil}}
-   :update! (get-db-update! :u_soundSpeed [:sound-speed])})
+   :update! (get-state-update! :u_soundSpeed [:sound-speed])})
 
 (defmethod get-uniform :u_samplePoint [_]
   {:initial {:u_samplePoint (three/Vector2.)}
-   :update! (get-db-update! :u_samplePoint [:sample-point] (fn [[x y]] (three/Vector2. x y)))})
+   :update! (get-state-update! :u_samplePoint [:sample-point] (fn [[x y]] (three/Vector2. x y)))})
+
+(defmethod get-uniform :u_attenuationFactor [_]
+  {:initial {:u_attenuationFactor {:value nil}}
+   :update! (get-state-update! :u_attenuationFactor [:attenuation-factor])})
 
 (defmethod get-uniform :u_minimumTime [_]
   {:initial {:u_minimumTime {:value nil}}
-   :update! (get-db-update! :u_minimumTime [:minimum-time])})
+   :update! (get-state-update! :u_minimumTime [:minimum-time])})
 
 (defmethod get-uniform :u_maximumTime [_]
   {:initial {:u_maximumTime {:value nil}}
-   :update! (get-db-update! :u_maximumTime [:maximum-time])})
+   :update! (get-state-update! :u_maximumTime [:maximum-time])})
 
 (defmethod get-uniform :u_minimumDb [_]
   {:initial {:u_minimumDb {:value nil}}
-   :update! (get-db-update! :u_minimumDb [:minimum-db])})
+   :update! (get-state-update! :u_minimumDb [:minimum-db])})
 
 (defmethod get-uniform :u_maximumDb [_]
   {:initial {:u_maximumDb {:value nil}}
-   :update! (get-db-update! :u_maximumDb [:maximum-db])})
+   :update! (get-state-update! :u_maximumDb [:maximum-db])})
+
+(defmethod get-uniform :u_useDb [_]
+  {:initial {:u_useDb {:value true}}
+   :update! (get-state-update! :u_useDb [:display-db?])})
+
+(defmethod get-uniform :u_displayMode [_]
+  {:initial {:u_displayMode {:value nil}}
+   :update! (fn [material]
+              (aset material "uniforms" "u_displayMode" "value"
+                    (case (re/rget *state :display-mode)
+                      "phase"     0
+                      "envelope"  1
+                      "intensity" 2)))})
 
 (defmethod get-uniform :u_cameraMatrix [_]
   {:initial {:u_cameraMatrix (three/Matrix3.)}

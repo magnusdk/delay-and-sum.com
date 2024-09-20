@@ -4,17 +4,16 @@ uniform vec2 u_samplePoint;
 uniform int u_nElements;
 uniform float u_centerFrequency;
 uniform float u_pulseLength;
+uniform float u_time;
 uniform float u_soundSpeed;
-uniform float u_minimumTime;
-uniform float u_maximumTime;
 uniform float u_attenuationFactor;
+uniform vec4 u_beamProfileEndPoints;
 
 #include <simulation>
 
 void main() {
-    int i = int((v_uv.y + 1.0) / 2.0 * float(u_nElements));
-    Element element = getElement(i);
-    float time = (v_uv.x + 1.0) / 2.0 * (u_maximumTime - u_minimumTime) + u_minimumTime;
-    vec2 v = signalForPoint(element.pos, time);
+    vec2 pointPos = v_uv;
+    // vec2 v = signalForPoint(pointPos, u_time);
+    vec2 v = v_uv;
     gl_FragColor = packVec2ToVec4(v);
 }

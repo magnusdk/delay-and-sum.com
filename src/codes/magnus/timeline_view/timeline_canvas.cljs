@@ -76,12 +76,13 @@
         (three-common/create-pass
          (resource/inline "shaders/timeline.frag")
          [:u_elementsTexture :u_nElements :u_samplePoint :u_centerFrequency
-          :u_pulseLength :u_soundSpeed :u_minimumTime :u_maximumTime])
+          :u_pulseLength :u_soundSpeed :u_minimumTime :u_maximumTime
+          :u_attenuationFactor])
 
         postprocess-field-pass
         (three-common/create-pass
          (resource/inline "shaders/postprocess_field.frag")
-         [:u_minimumDb :u_maximumDb])
+         [:u_minimumDb :u_maximumDb :u_useDb :u_displayMode])
         render-data {:canvas                 canvas
                      :ctx-2d                 (.getContext canvas "2d")
                      :renderer               renderer
@@ -101,13 +102,15 @@
 (defn x-ticks []
   [:div
    (let [[width height] (re/rget *state :timeline-container/size)
-         tick-height 25
-         min-time    0
-         max-time    width
-         step-size   (/ width 10)]
+         min-time    (re/rget *state :minimum-time)
+         max-time    (re/rget *state :maximum-time)
+         interval    (- max-time min-time)
+         step-size   (/ width 5)]
      (when (> step-size 10)
-       (for [x (range min-time max-time step-size)]
-         (tick [x (- height 13)] (str (.toFixed x 0) "ms") :x))))])
+       (for [x (range 0 width step-size)]
+         (let [label (-> (/ x width)
+                         (* interval 1e6))]
+           (tick [x (- height 13)] (str (.toFixed label 0) "μs") :x)))))])
 
 (defn time-cursor []
   (let [interval  (- (re/rget *state :maximum-time)

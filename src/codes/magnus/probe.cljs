@@ -5,14 +5,24 @@
             [codes.magnus.state :refer [*state]]))
 
 
-(defn focused-delay-model
-  [element-position]
-  (let [origin         (re/rget *state :probe :center)
-        virtual-source (re/rget *state :virtual-source)
-        sound-speed    (re/rget *state :sound-speed)
-        dist-source-element (mat/distance virtual-source element-position)
-        dist-source-origin  (mat/distance virtual-source origin)]
-    (/ (- dist-source-element dist-source-origin) sound-speed)))
+(defn tukey [n r]
+  (let [window (for [i (range 1 (inc n))]
+                 (let [x (/ i (inc n))]
+                   (cond
+                     (< x (/ r 2))
+                     (* 0.5 (+ 1 (math/cos
+                                  (* (/ (* 2 Math/PI) r)
+                                     (- x (/ r 2))))))
+
+                     (< x (- 1 (/ r 2)))
+                     1
+
+                     :else
+                     (* 0.5 (+ 1 (math/cos
+                                  (* (/ (* 2 Math/PI) r)
+                                     (- x (- 1 (/ r 2))))))))))
+        mean (/ (reduce + window) n)]
+    (mapv #(/ % mean) window)))
 
 (defn deg2rad [rad]
   (* (/ rad 180) math/PI))
@@ -22,6 +32,9 @@
 
 (defn angle [[x y]]
   (math/atan2 y x))
+
+(defn sum [x]
+  (apply + x))
 
 (defn intersect
   [[x1 z1] [x2 z2] angle [vs-x, vs-z]]
@@ -40,6 +53,41 @@
         mean-angle (/ (+ angle-1 angle-2) 2)]
     (intersect corner-1 corner-2 mean-angle virtual-source)))
 
+(defn focused-delay-model
+  [element-position]
+  (let [origin              (re/rget *state :probe :center)
+        virtual-source      (re/rget *state :virtual-source)
+        sound-speed         (re/rget *state :sound-speed-tx)
+        dist-source-element (mat/distance virtual-source element-position)
+        dist-source-origin  (mat/distance virtual-source origin)]
+    (/ (- dist-source-element dist-source-origin) sound-speed)))
+
+(defn plane-delay-model
+  [element-position]
+  (let [origin         (re/rget *state :probe :center)
+        virtual-source (re/rget *state :virtual-source)
+        sound-speed    (re/rget *state :sound-speed-tx)
+        focusing-angle (-> (mat/sub virtual-source origin)
+                           (angle)
+                           (- (/ math/PI 2)))]
+    (-> element-position
+        (mat/sub origin)
+        (mat/mul [(math/sin focusing-angle) (math/cos focusing-angle)])
+        (sum)
+        (/ sound-speed))))
+
+(defn diverging-delay-model
+  [element-position]
+  (let [origin              (re/rget *state :probe :center)
+        ; Virtual source is "mirrored", i.e.: placed behind the probe.
+        virtual-source      (mat/sub (mat/mul 2 origin)
+                                     (re/rget *state :virtual-source))
+        sound-speed         (re/rget *state :sound-speed-tx)
+        dist-source-element (mat/distance virtual-source element-position)
+        dist-source-origin  (mat/distance virtual-source origin)]
+    (/ (- dist-source-origin dist-source-element) sound-speed)))
+
+
 (defn element-geometry
   []
   (let [{:keys [center
@@ -48,7 +96,6 @@
                 normal-azimuth
                 element-width]} (re/rget *state :probe)
         virtual-source       (re/rget *state :virtual-source)
-        delay-model          (re/rget *state :delay-model)
         [center-x center-y]  center
         normal-azimuth-rad   (deg2rad normal-azimuth)
         cos-normal-az        (math/cos normal-azimuth-rad)
@@ -69,14 +116,20 @@
         corner-2             (nth positions (dec n-elements))
         corner-1-virtual-source-azimuth-rad (angle (mat/sub corner-1 virtual-source))
         corner-2-virtual-source-azimuth-rad (angle (mat/sub corner-2 virtual-source))
-        wave-origin          (get-wave-origin corner-1 corner-2 virtual-source)]
+        wave-origin          (if (= "plane" (re/rget *state :delay-model))
+                               center
+                               (get-wave-origin corner-1 corner-2 virtual-source))
+        delay-model          (case (re/rget *state :delay-model)
+                               "focused"   focused-delay-model
+                               "plane"     plane-delay-model
+                               "diverging" diverging-delay-model)]
     {:corner-1             corner-1
      :corner-2             corner-2
      :center               center
      :n-elements           n-elements
      :positions            positions
-     :delays               (map focused-delay-model positions)
-     :weights              (repeat n-elements 1)
+     :delays               (map delay-model positions)
+     :weights              (tukey n-elements (re/rget *state :tukey-roll))
      :normal-azimuth-rad   normal-azimuth-rad
      :width                element-width
      ; The angle from each corner to the virtual source

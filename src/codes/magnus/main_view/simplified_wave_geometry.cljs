@@ -1,7 +1,10 @@
 (ns codes.magnus.main-view.simplified-wave-geometry
   (:require [codes.magnus.main-view.common :as common]
+            [codes.magnus.main-view.simplified-wave-geometry.diverging :as diverging]
             [codes.magnus.main-view.simplified-wave-geometry.focused :as focused]
-            [codes.magnus.reactive.core :as re]))
+            [codes.magnus.main-view.simplified-wave-geometry.plane :as plane]
+            [codes.magnus.reactive.core :as re]
+            [codes.magnus.state :refer [*state]]))
 
 (defn resize!
   [{:keys [canvas]}]
@@ -18,9 +21,11 @@
 (defn draw! [{:keys [canvas ctx]}]
   (let [width  (.-width canvas)
         height (.-height canvas)]
-    (doto ctx
-      (.clearRect 0 0 width height)
-      (focused/draw-simplified-geometry!))))
+    (.clearRect ctx 0 0 width height)
+    (case (re/rget *state :delay-model)
+      "focused"   (focused/draw-simplified-geometry! ctx)
+      "plane"     (plane/draw-simplified-geometry! ctx)
+      "diverging" (diverging/draw-simplified-geometry! ctx))))
 
 
 (defn render!
@@ -32,4 +37,4 @@
 
 (defn init! [canvas]
   (render! {:canvas canvas
-                   :ctx    (.getContext canvas "2d")}))
+            :ctx    (.getContext canvas "2d")}))

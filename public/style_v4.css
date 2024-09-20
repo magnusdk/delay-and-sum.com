@@ -1,0 +1,264 @@
+:root {
+    --light-pink: rgba(255, 194, 213, 1);
+    --pink: rgba(255, 25, 94, 1);
+    --cyan: rgba(0, 240, 255, 1);
+    --blue: rgba(0, 133, 255, 1);
+    --dark-blue: rgba(29, 81, 153, 1);
+
+    /* 50% opactity */
+    --light-pink-50: rgba(255, 194, 213, 0.5);
+    --pink-50: rgba(255, 25, 94, 0.5);
+    --cyan-50: rgba(0, 240, 255, 0.5);
+    --blue-50: rgba(0, 133, 255, 0.5);
+    --dark-blue-50: rgba(29, 81, 153, 0.5);
+}
+
+html,
+body {
+    margin: 0;
+    touch-action: none;
+    font-size: 12px;
+    font-family: sans-serif;
+}
+
+#root {
+    height: 100dvh;
+    width: 100%;
+}
+
+.verticalContainer {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.horizontalContainer {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1;
+    height: 100%;
+}
+
+.stackedContainer {
+    position: relative;
+    height: 100%;
+    width: 100%;
+}
+
+.stackedContainer * {
+    position: absolute;
+}
+
+.fillSpace {
+    height: 100%;
+    width: 100%;
+}
+
+#side-panel {
+    height: 100%;
+    width: 200px;
+    /* Make it be in front of timeline */
+    z-index: 1;
+    background-color: white;
+    box-shadow: 0 0px 5px 0px var(--dark-blue-50);
+}
+
+.grid-tick {
+    position: "absolute";
+    white-space: "nowrap";
+    opacity: 0.66;
+    font-size: 0.8em;
+    pointer-events: none;
+    user-select: none;
+}
+
+.grid-tick.x-tick {
+    margin-top: 0.1em;
+    margin-left: 4px;
+}
+
+.grid-tick.y-tick {
+    margin-top: -1.2em;
+    margin-left: 2px;
+}
+
+#timelineContainer {
+    outline: var(--dark-blue) 2px solid;
+    width: 100%;
+    min-height: 100px;
+    height: 100px;
+    /* Make it be behind side panel */
+    z-index: 0;
+}
+
+.timeline-time-cursor {
+    transform: translate(-1.5px, 3px);
+    height: 94px;
+    width: 3px;
+    background-color: var(--pink);
+    position: absolute;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.timeline-time-cursor-hovering {
+    transform: translate(-2px, 2.5px);
+    height: 95px;
+    width: 4px;
+}
+
+.timeline-time-cursor-dragging {
+    transform: translate(-2.5px, 2px);
+    height: 96px;
+    width: 5px;
+    background-color: var(--pink-50);
+}
+
+
+.menu-container {
+    width: 220px;
+    min-width: 220px;
+    background-color: white;
+    color: var(--menu-main-text-color);
+    outline: var(--dark-blue) 2px solid;
+    z-index: 100;
+    overflow-x: hidden;
+    overflow-y: scroll;
+}
+
+
+.menu {
+    color: var(--menu-faded-text-color);
+}
+
+.menu-section {
+    margin-bottom: 16px;
+}
+
+.menu-minimized h2,
+.menu-minimized .control,
+.menu-minimized .control-canvas,
+.menu-minimized .control-select {
+    display: none;
+}
+
+.menu h1 {
+    font-weight: 400;
+    font-size: 1.2em;
+    color: white;
+    background-color: var(--dark-blue);
+    padding: 8px 16px 8px 16px;
+    margin: 0 0 8px 0;
+    cursor: pointer;
+}
+
+.menu-section.menu-minimized {
+    margin: 0;
+}
+
+.menu-minimized h1 {
+    margin: 0 0 2px 0;
+}
+
+.menu h2 {
+    font-weight: 400;
+    font-size: 1.2em;
+    color: var(--menu-faded-text-color);
+    padding: 8px 16px 8px 16px;
+    margin: 16px 0 0px 0;
+}
+
+.menu canvas {
+    width: 100%;
+}
+
+.control {
+    display: flex;
+    gap: 2px;
+    align-items: center;
+    border: rgb(0, 0, 0, 0) solid 2px;
+    border-radius: 2px;
+    padding: 0px 8px 0px 8px;
+    margin: 0px 8px 0px 8px;
+}
+
+.control label {
+    flex-grow: 1;
+
+    vertical-align: middle;
+    min-height: 22px;
+    /* Align label with input */
+    transform: translate(0, 4px);
+    /* Disable selecting text. */
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.control-canvas {
+    margin: 0px 16px 0px 16px;
+    padding: 0px;
+}
+
+.control-select {
+    margin: 0px 8px 0px 8px;
+    padding: 0px;
+}
+
+.control-select select {
+    width: 100%;
+    border-radius: 2px;
+    border: rgb(0, 0, 0, 0) solid 2px;
+    color: var(--menu-faded-text-color);
+    height: 26px;
+    line-height: 26px;
+    /* Use 4px instead of 8px for padding (hack) because select elements are a 
+    pain-in-the-ass to style.*/
+    padding: 0 4px 0 4px;
+    font-size: 1em;
+}
+
+input {
+    text-align: right;
+    border: none;
+    background-color: rgb(0, 0, 0, 0);
+    font-size: 1em;
+    color: var(--menu-strong-text-color);
+}
+
+.control .control-units {
+    min-width: 25px;
+}
+
+.slidable-control * {
+    cursor: ew-resize;
+}
+
+.slidable-control input {
+    cursor: auto;
+}
+
+input:focus {
+    outline: none;
+}
+
+.control:hover,
+.control:focus,
+.control-select select:hover,
+.control-select select:focus {
+    border: #0085FF solid 2px;
+    outline: none;
+}
+
+.controlContainer {
+    padding: 0 8px 0 8px;
+}
+
+#beamProfileCanvas {
+    width: 100%;
+}

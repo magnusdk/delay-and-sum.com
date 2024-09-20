@@ -25,7 +25,8 @@ vec2 signalForPoint(vec2 pointPos, float time) {
     float distElementPixel = distance(element.pos, pointPos);
     float phaseScatter0 = basePhase - distElementPixel / u_soundSpeed;
     vec2 signalScatter0 = gaussianWeightedSine(phaseScatter0, u_centerFrequency, u_pulseLength);
-    signalScatter0 *= attenuation(distElementPixel, 1.0);
+    signalScatter0 *= attenuation(distElementPixel, u_attenuationFactor);
+    signalScatter0 *= element.weight;
 
     // Get the signal for the pixel after reflecting off of the scatterer.
     float distElementScatterer = distance(element.pos, u_samplePoint);
@@ -36,7 +37,8 @@ vec2 signalForPoint(vec2 pointPos, float time) {
     // Likewise, we weight the signal by the amplitude of the signal when it hit the 
     // scatterer (dependent on the distance between the element and the scatterer), 
     // times the attenuation weighting from the scatterer to the pixel.
-    signalScatter1 *= attenuation(distElementScatterer, 1.0) * attenuationScattererPixel;
+    signalScatter1 *= attenuation(distElementScatterer, u_attenuationFactor) * attenuationScattererPixel;
+    signalScatter1 *= element.weight;
 
     // Add both the scatter0 (signal without accounting for scatterers) and the scatter1
     // (signal reflected from the scatterer) to the final signal.

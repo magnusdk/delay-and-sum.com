@@ -12,6 +12,7 @@
             [codes.magnus.reactive.core :as re]
             [codes.magnus.state :refer [*state]]
             [codes.magnus.timeline-view.timeline-canvas :as timeline-canvas]
+            [codes.magnus.menu.core :as menu]
             [replicant.dom :as r]))
 
 (defonce webgl2-supported?
@@ -69,18 +70,19 @@
                        :update! (fn [_ pos _] (swap! *state assoc-in [:probe :center] pos))})
 
 
-      (into draggable [{:name :corner-1 :type :point :pos corner-1-screen :update! (fn [_ pos _] (probe/update-from-corners! corner-2 pos))}
-                       {:name :corner-2 :type :point :pos corner-2-screen :update! (fn [_ pos _] (probe/update-from-corners! pos corner-1))}
-                       (when (not= corner-1-screen corner-2-screen)
-                         {:name        :probe-body
-                          :type        :line
-                          :corners     [corner-1-screen corner-2-screen]
-                          :update-type :relative
-                          :update!     (fn [previous-pos current-pos snap-to-grid]
-                                         (if snap-to-grid
-                                           (swap! *state assoc-in [:probe :center] current-pos)
-                                           (swap! *state update-in [:probe :center] #(mat/add % (mat/sub current-pos previous-pos)))))
-                          :priority    1})]))))
+      (-> draggable
+          (into [{:name :corner-1 :type :point :pos corner-1-screen :update! (fn [_ pos _] (probe/update-from-corners! corner-2 pos))}
+                 {:name :corner-2 :type :point :pos corner-2-screen :update! (fn [_ pos _] (probe/update-from-corners! pos corner-1))}])
+          (into (when (not= corner-1-screen corner-2-screen)
+                  [{:name        :probe-body
+                    :type        :line
+                    :corners     [corner-1-screen corner-2-screen]
+                    :update-type :relative
+                    :update!     (fn [previous-pos current-pos snap-to-grid]
+                                   (if snap-to-grid
+                                     (swap! *state assoc-in [:probe :center] current-pos)
+                                     (swap! *state update-in [:probe :center] #(mat/add % (mat/sub current-pos previous-pos)))))
+                    :priority    1}]))))))
 
 
 (defn init-container! [element]
@@ -124,8 +126,7 @@
      [:div.verticalContainer
       (simulation-container)
       (timeline-canvas/container)]
-     #_[:div#side-panel
-        [:p "Hello, world!"]]]))
+     (menu/main-component)]))
 
 
 (defn ^:dev/after-load render! []

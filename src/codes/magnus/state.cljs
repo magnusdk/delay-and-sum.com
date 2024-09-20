@@ -1,27 +1,82 @@
-(ns codes.magnus.state)
+(ns codes.magnus.state
+  (:require [clojure.data :as data]
+            [goog.functions :refer [debounce]]
+            [goog.crypt.base64 :as b64]
+            [goog.string.format]))
 
-(def *state
-  (atom
-   {:camera {:scale 0.08
-             :pos   [0 -0.01]}
-    :n-pixels 1e6
+(def default-state
+  {:camera {:scale 0.08
+            :pos   [0 -0.01]}
+   :n-pixels 1e6
 
-    :virtual-source   [0 0.04]
-    :sample-point     [-0.02 0.05]
+   :virtual-source   [0 0.04]
+   :sample-point     [-0.02 0.05]
 
-    :center-frequency 3e6
-    :pulse-length     2
-    :sound-speed      1540
-    :time             (/ 0.065 1540)
-    :delay-model      :focused
+   :center-frequency   3e6
+   :pulse-length       2
+   :sound-speed        1540
+   :sound-speed-tx     1540
+   :time               (/ 0.065 1540)
+   :delay-model        "focused"
+   :attenuation-factor 1
+   :tukey-roll         0
 
-    :minimum-time 0
-    :maximum-time 1e-4
-    :minimum-db   -60
-    :maximum-db   0
+   :display-mode "phase"  ; #{"phase" "envelope" "intensity"}
+   :minimum-time 0
+   :maximum-time 1e-4
+   :minimum-db   -60
+   :maximum-db   0
+   :display-db?  true
 
-    :probe {:center         [0 0]
-            :n-elements     256
-            :array-width    2e-2
-            :element-width  6e-5
-            :normal-azimuth 0}}))
+   :probe {:center         [0 0]
+           :n-elements     256
+           :array-width    2e-2
+           :element-width  6e-5
+           :normal-azimuth 0}})
+
+(defn merge-diff [original diff]
+  (cond
+    (and (map? original) (map? diff))
+    (reduce-kv
+     (fn [m k v]
+       (assoc m k (merge-diff (get original k) v)))
+     original
+     diff)
+
+    (and (vector? original) (vector? diff))
+    (mapv merge-diff original (concat diff (repeat nil)))
+
+    :else
+    (or diff original)))
+
+
+(defonce *state
+  (let [params  (.-searchParams (js/URL. js/window.location.href))
+        changes (some-> (.get params "state")
+                        (b64/decodeString)
+                        (js/JSON.parse)
+                        (js->clj :keywordize-keys true))]
+    (atom (merge-diff default-state changes))))
+
+
+(defn dump-state-to-url! [changes]
+  (let [data (some-> changes
+                     (clj->js)
+                     (js/JSON.stringify)
+                     (b64/encodeString))
+        url  (js/URL. js/window.location.href)]
+    (if data
+      (.set (.-searchParams url) "state" data)
+      (.delete (.-searchParams url) "state"))
+    (.replaceState js/window.history #js{} "" (.toString url))))
+
+(def dump-state-to-url!-debounced
+  (debounce dump-state-to-url! 100))
+
+(defn- *state-change-watcher
+  [_ _ _ new-state]
+  (let [new-state (select-keys new-state (keys default-state))
+        [_ changed _] (data/diff default-state new-state)]
+    (dump-state-to-url!-debounced changed)))
+
+(add-watch *state ::update-url *state-change-watcher)
