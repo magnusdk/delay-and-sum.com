@@ -58,6 +58,9 @@
                         (js->clj :keywordize-keys true))]
     (atom (merge-diff default-state changes))))
 
+(defn reset-state! []
+  (swap! *state merge default-state))
+
 
 (defn dump-state-to-url! [changes]
   (let [data (some-> changes

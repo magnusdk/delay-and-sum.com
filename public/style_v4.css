@@ -166,8 +166,6 @@ body {
     font-weight: 400;
     font-size: 1.2em;
     color: var(--menu-faded-text-color);
-    padding: 8px 16px 8px 16px;
-    margin: 16px 0 0px 0;
 }
 
 .menu canvas {
@@ -223,6 +221,25 @@ body {
     font-size: 1em;
 }
 
+button {
+    /* Reset common button properties */
+    appearance: none;
+    border: none;
+    background: none;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    font: inherit;
+
+    width: 100%;
+    padding: 8px 8px;
+    background-color: var(--blue);
+    border-radius: 4px;
+    color: white;
+    text-align: center;
+    cursor: pointer;
+}
+
 input {
     text-align: right;
     border: none;
@@ -261,4 +278,16 @@ input:focus {
 
 #beamProfileCanvas {
     width: 100%;
+}
+
+hr {
+    margin: 8px 16px 8px 16px;
+}
+
+.content {
+    padding: 0 16px 0 16px;
+}
+
+.content h2 {
+    margin: 16px 0 8px 0;
 }

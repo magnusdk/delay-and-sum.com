@@ -5,7 +5,7 @@
             [codes.magnus.menu.beam-profile :as beam-profile]
             [codes.magnus.probe :as probe]
             [codes.magnus.reactive.core :as re]
-            [codes.magnus.state :refer [*state]]
+            [codes.magnus.state :refer [*state reset-state!]]
             [thi.ng.color.core :as col]))
 
 (set! *warn-on-infer* false)
@@ -194,6 +194,11 @@
                  (.add class-list "menu-minimized"))))))}
    title])
 
+(defn button [title on-click]
+  [:div.control
+   [:button {:on {:click on-click}}
+    title]])
+
 
 (defn main-component []
   [:div.menu-container
@@ -201,6 +206,7 @@
     #_[:div.menu-section
        (header "Plots")
        (beam-profile/main)]
+
     [:div.menu-section
      (header "Array")
      (slider "No. of elements" [:probe :n-elements]
@@ -226,6 +232,7 @@
              :n-decimals  1
              :wrap-around 180
              :units       "°")]
+
     [:div.menu-section
      (header "Transmitted wave")
      (select [:delay-model] [["focused"   "Focused wave"]
@@ -262,13 +269,15 @@
      (slider "Sound speed assumed during focusing" [:sound-speed-tx]
              :min         1
              :units       "m/s")
-     [:h2 "Transmit apodization"]
+     [:div.content
+      [:h2 "Transmit apodization"]]
      (apodization-plot)
      (slider "Tukey roll" [:tukey-roll]
              :sensitivity 1e-2
              :n-decimals  2
              :min 0
              :max 1)]
+
     [:div.menu-section
      (header "Display")
      (select [:display-mode] [["phase"     "Display phase"]
@@ -282,4 +291,21 @@
              :sensitivity 1e-1
              :n-decimals  1
              :units       "dB")
-     (checkbox [:display-db?] "Display in dB?")]]])
+     (checkbox [:display-db?] "Display in dB?")]
+
+    [:div.menu-section
+     (header "General")
+     (button "Reset all state" #(reset-state!))
+     [:hr]
+     [:div.content
+      [:h2 "About"]
+      [:p "Developed at NTNU. "
+       [:a {:href "https://github.com/magnusdk/delay-and-sum.com"}
+        "Find the source code on GitHub."]]
+      [:p "If you find any bugs or have suggestions for improvements, "
+       [:a {:href "https://github.com/magnusdk/delay-and-sum.com/issues/new"}
+        "please create an issue on GitHub."]
+       " Thank you! <3"]
+      [:p "Otherwise, to get in touch: "
+       [:a {:href "mailto:magnus.kvalevag@ntnu.no"}
+        "magnus.kvalevag@ntnu.no"]]]]]])
