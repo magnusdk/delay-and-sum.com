@@ -8,6 +8,8 @@
       (> (.-maxTouchPoints js/navigator) 0)))
 
 (defn init! [element namespace get-pointer-pos support-camera-gestures]
+  ; Note: this makes it so that devices that support both touch screen and mouse 
+  ; pointer can only use touch screen for dragging stuff around.
   (if touch-device?
     (mobile/init! element namespace get-pointer-pos support-camera-gestures)
     (desktop/init! element namespace get-pointer-pos)))
