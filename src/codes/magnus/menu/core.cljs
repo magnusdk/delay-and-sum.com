@@ -81,17 +81,17 @@
     [:div.control.slidable-control
      {:replicant/on-mount (fn [{:replicant/keys [node]}]
                             (let [*drag-state (atom {:dragging false})]
-                              (.addEventListener node "mousedown"
+                              (.addEventListener node "pointerdown"
                                                  (fn [e]
                                                    (when-not (-> (.-target e)
                                                                  (.-tagName)
                                                                  (.toLowerCase)
                                                                  (= "input"))
                                                      (swap! *drag-state assoc :dragging true))))
-                              (.addEventListener js/document "mouseup"
+                              (.addEventListener js/document "pointerup"
                                                  (fn [e]
                                                    (swap! *drag-state assoc :dragging false)))
-                              (.addEventListener js/document "mousemove"
+                              (.addEventListener js/document "pointermove"
                                                  (fn [e]
                                                    (when (:dragging @*drag-state)
                                                      (let [delta   (* (.-movementX e) (or sensitivity 1))

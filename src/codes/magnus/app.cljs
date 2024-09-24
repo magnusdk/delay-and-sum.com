@@ -8,6 +8,7 @@
             [codes.magnus.main-view.main-simulation :as main-simulation]
             [codes.magnus.main-view.simplified-wave-geometry :as simplified-wave-geometry]
             [codes.magnus.main-view.simulation-ui :as simulation-ui]
+            [codes.magnus.menu.core :as menu]
             [codes.magnus.probe :as probe]
             [codes.magnus.reactive.core :as re]
             [codes.magnus.state :refer [*state]]
@@ -126,12 +127,12 @@
       (simulation-container)
       (timeline-canvas/container)]
      #_[:div {:style {:position "absolute"
-                    :width    "100%"
-                    :height   "100px"
-                    :background-color "white"}}
-      (re/rget *state :simulation-container :fsm :current-state)
-      (str (re/rget *state :debug))]
-     #_(menu/main-component)]))
+                      :width    "100%"
+                      :height   "100px"
+                      :background-color "white"}}
+        (re/rget *state :simulation-container :fsm :current-state)
+        (str (re/rget *state :debug))]
+     (menu/main-component)]))
 
 
 (defn ^:dev/after-load render! []
