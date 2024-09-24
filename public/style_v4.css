@@ -310,7 +310,7 @@ hr {
     display: none;
 }
 
-@media (max-width: 480px) {
+@media (max-width: 750px) {
     .menu-container {
         position: absolute;
         right: 0;
