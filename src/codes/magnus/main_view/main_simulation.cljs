@@ -62,7 +62,6 @@
                        (clj->js {:canvas             hidden-canvas
                                  :alpha              true
                                  :premultipliedAlpha false
-                                 :precision          "lowp"
                                  :powerPreference    "high-performance"}))
 
         field-render-target

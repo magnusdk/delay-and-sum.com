@@ -40,7 +40,6 @@
                        (clj->js {:canvas             hidden-canvas
                                  :alpha              true
                                  :premultipliedAlpha false
-                                 :precision          "lowp"
                                  :powerPreference    "high-performance"}))
 
         render-target (three/WebGLRenderTarget. n-samples 1)
