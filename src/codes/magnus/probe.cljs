@@ -67,9 +67,11 @@
   (let [origin         (re/rget *state :probe :center)
         virtual-source (re/rget *state :virtual-source)
         sound-speed    (re/rget *state :sound-speed-tx)
+        probe-angle    (deg2rad (re/rget *state :probe :normal-azimuth))
         focusing-angle (-> (mat/sub virtual-source origin)
                            (angle)
-                           (- (/ math/PI 2)))]
+                           (- (/ math/PI 2))
+                           (- (* 2 probe-angle)))]
     (-> element-position
         (mat/sub origin)
         (mat/mul [(math/sin focusing-angle) (math/cos focusing-angle)])
