@@ -327,7 +327,7 @@ hr {
     pointer-events: none;
 }
 
-@media (max-width: 75px) {
+@media (max-width: 750px) {
     .menu-container {
         position: absolute;
         right: 0;
