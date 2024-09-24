@@ -311,6 +311,10 @@ hr {
     display: none;
 }
 
+.menu-container.is-updating-parameter {
+    overflow: hidden;
+    touch-action: none;
+}
 
 .menu-gradient-overlay {
     position: fixed;
@@ -340,8 +344,6 @@ hr {
 
     .menu-container.is-updating-parameter {
         opacity: 0.5;
-        overflow: hidden;
-        touch-action: none;
     }
 
     .menu-button-mobile {
