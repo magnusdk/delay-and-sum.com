@@ -291,3 +291,16 @@ hr {
 .content h2 {
     margin: 16px 0 8px 0;
 }
+
+#simulationCanvasesContainer {
+    -webkit-touch-callout: none;
+    /* Disable the tap-and-hold context menu on iOS */
+    -webkit-user-select: none;
+    /* Disable text selection on iOS */
+    -moz-user-select: none;
+    /* Disable text selection on Firefox */
+    -ms-user-select: none;
+    /* Disable text selection on IE */
+    user-select: none;
+    /* Disable text selection on modern browsers */
+}

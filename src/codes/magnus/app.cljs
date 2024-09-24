@@ -3,8 +3,8 @@
             [clojure.core.matrix :as mat]
             [codes.magnus.main-view.camera :as camera]
             [codes.magnus.main-view.grid :as grid]
+            [codes.magnus.main-view.interaction.core :as interaction]
             [codes.magnus.main-view.interaction.draggable :as draggable]
-            [codes.magnus.main-view.interaction.pointers :as pointers]
             [codes.magnus.main-view.main-simulation :as main-simulation]
             [codes.magnus.main-view.simplified-wave-geometry :as simplified-wave-geometry]
             [codes.magnus.main-view.simulation-ui :as simulation-ui]
@@ -12,7 +12,6 @@
             [codes.magnus.reactive.core :as re]
             [codes.magnus.state :refer [*state]]
             [codes.magnus.timeline-view.timeline-canvas :as timeline-canvas]
-            [codes.magnus.menu.core :as menu]
             [replicant.dom :as r]))
 
 (defonce webgl2-supported?
@@ -24,11 +23,11 @@
 (defn mapv-round [v]
   (mapv math/round v))
 
-(defn get-pointer-pos [{:keys [event]}]
+
+(defn get-pos [_ pointer-pos-offset]
   (let [{[viewport-width viewport-height] :simulation-container/size} @*state
-        pointer-pos-screen     [(.-offsetX event) (.-offsetY event)]
         pointer-pos-simulation (camera/transform-point
-                                pointer-pos-screen
+                                pointer-pos-offset
                                 (camera/screen-to-world-matrix viewport-width viewport-height))
         meters-per-px           (camera/meters-per-pixel viewport-width viewport-height)
         mag-base-10             (math/log10 meters-per-px)
@@ -37,7 +36,7 @@
                                     (mat/mul (math/pow 10 (- mag-base-10-snap)))
                                     (mapv-round)
                                     (mat/mul (math/pow 10 mag-base-10-snap)))]
-    {:screen     pointer-pos-screen
+    {:offset     pointer-pos-offset
      :simulation pointer-pos-simulation
      :simulation-snap-to-grid simulation-snap-to-grid}))
 
@@ -91,7 +90,7 @@
                    [(.-offsetWidth element) (.-offsetHeight element)]))]
     (.addEventListener js/window "resize" set-container-size!)
     (set-container-size!)
-    (pointers/init-pointer-event-handlers! element :simulation-container get-pointer-pos)
+    (interaction/init! element :simulation-container get-pos true)
     (draggable/init! element :simulation-container-draggable get-draggable)))
 
 
@@ -126,7 +125,13 @@
      [:div.verticalContainer
       (simulation-container)
       (timeline-canvas/container)]
-     (menu/main-component)]))
+     #_[:div {:style {:position "absolute"
+                    :width    "100%"
+                    :height   "100px"
+                    :background-color "white"}}
+      (re/rget *state :simulation-container :fsm :current-state)
+      (str (re/rget *state :debug))]
+     #_(menu/main-component)]))
 
 
 (defn ^:dev/after-load render! []
@@ -134,4 +139,9 @@
     (r/render (.getElementById js/document "root") (main))))
 
 (defn ^:export init! []
+  (aset
+   js/window "onerror"
+   (fn [& args]
+     (swap! *state assoc-in [:debug :error] args)))
+  (re/register!)
   (render!))

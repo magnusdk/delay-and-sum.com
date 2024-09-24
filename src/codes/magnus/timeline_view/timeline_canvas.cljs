@@ -1,8 +1,8 @@
 (ns codes.magnus.timeline-view.timeline-canvas
   (:require ["three" :as three]
             [clojure.core.matrix :as mat]
+            [codes.magnus.main-view.interaction.core :as core]
             [codes.magnus.main-view.interaction.draggable :as draggable]
-            [codes.magnus.main-view.interaction.pointers :as pointers]
             [codes.magnus.reactive.core :as re]
             [codes.magnus.state :refer [*state]]
             [codes.magnus.three.common :as three-common]
@@ -126,16 +126,16 @@
       :style {:left (str (* 100 perc) "%")
               :top  0}}]))
 
-(defn get-pointer-pos [{:keys [event]}]
+
+(defn get-pointer-pos [element pointer-pos-offset]
   (let [interval               (- (re/rget *state :maximum-time)
                                   (re/rget *state :minimum-time))
-        width                  (.-offsetWidth (.-target event))
-        height                 (.-offsetHeight (.-target event))
-        pointer-pos-screen     [(.-offsetX event) (.-offsetY event)]
-        pointer-pos-simulation (-> pointer-pos-screen
+        width                  (.-offsetWidth element)
+        height                 (.-offsetHeight element)
+        pointer-pos-simulation (-> pointer-pos-offset
                                    (mat/mul [(/ interval width) (/ (re/rget *state :probe :n-elements) height)])
                                    (mat/add [(re/rget *state :minimum-time) 0]))]
-    {:screen     pointer-pos-screen
+    {:offset     pointer-pos-offset
      :simulation pointer-pos-simulation
      :simulation-snap-to-grid pointer-pos-simulation}))
 
@@ -161,7 +161,7 @@
                    [(.-offsetWidth element) (.-offsetHeight element)]))]
     (.addEventListener js/window "resize" set-container-size!)
     (set-container-size!)
-    (pointers/init-pointer-event-handlers! element :timeline-container get-pointer-pos)
+    (core/init! element :timeline-container get-pointer-pos false)
     (draggable/init! element :timeline-container-draggable get-draggable)))
 
 (defn container []
