@@ -263,9 +263,9 @@
              :min         1e-2
              :units       "MHz")
      (slider "Pulse length" [:pulse-length]
-             :sensitivity 1e-2
+             :sensitivity 1e-1
              :n-decimals  2
-             :min         1e-2
+             :min         1e-1
              :units       "λ")
      (slider "Attenuation" [:attenuation-factor]
              :min         0
