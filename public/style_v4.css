@@ -19,6 +19,7 @@ body {
     touch-action: none;
     font-size: 12px;
     font-family: sans-serif;
+    overflow: hidden;
 }
 
 #root {
@@ -120,7 +121,7 @@ body {
 .menu-container {
     width: 220px;
     min-width: 220px;
-    background-color: white;
+    background-color: rgba(255, 255, 255, 1);
     color: var(--menu-main-text-color);
     outline: var(--dark-blue) 2px solid;
     z-index: 100;
@@ -303,4 +304,51 @@ hr {
     /* Disable text selection on IE */
     user-select: none;
     /* Disable text selection on modern browsers */
+}
+
+.menu-button-mobile {
+    display: none;
+}
+
+@media (max-width: 480px) {
+    .menu-container {
+        position: absolute;
+        right: 0;
+        height: 100%;
+    }
+
+    .menu-container {
+        visibility: hidden;
+    }
+
+    .menu-container.is-open {
+        visibility: visible;
+    }
+
+    .menu-container.is-updating-parameter {
+        opacity: 0.5;
+        overflow: hidden;
+        touch-action: none;
+    }
+
+    .menu-button-mobile {
+        display: block;
+        position: fixed;
+        top: 15px;
+        right: 10px;
+        width: auto;
+        background-color: rgba(255, 255, 255, 0.5);
+        border: solid 2px;
+        border-color: var(--blue);
+        border-radius: 4px;
+        color: var(--blue);
+    }
+
+    .menu-container .menu-button-mobile {
+        visibility: visible;
+    }
+
+    .menu-container.is-open .menu-button-mobile {
+        visibility: hidden;
+    }
 }

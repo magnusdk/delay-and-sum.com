@@ -87,9 +87,11 @@
                                                                  (.-tagName)
                                                                  (.toLowerCase)
                                                                  (= "input"))
+                                                     (swap! *state assoc ::dragging true)
                                                      (swap! *drag-state assoc :dragging true))))
                               (.addEventListener js/document "pointerup"
                                                  (fn [e]
+                                                   (swap! *state assoc ::dragging false)
                                                    (swap! *drag-state assoc :dragging false)))
                               (.addEventListener js/document "pointermove"
                                                  (fn [e]
@@ -124,7 +126,7 @@
      [:span.control-units units]]))
 
 (defn select [data-path select-options]
-  [:div.control-select
+  [:div.control-select;.is-updating-parameter
    [:select
     {:replicant/on-mount (fn [{:replicant/keys [node]}]
                            (aset node "value" (apply re/rget *state data-path)))
@@ -202,11 +204,17 @@
 
 (defn main-component []
   [:div.menu-container
+   {:class [(when (re/rget *state ::menu-open?) :is-open)
+            (when (re/rget *state ::dragging) :is-updating-parameter)]}
+   [:button.menu-button-mobile
+    {:on {:click (fn [_] (swap! *state assoc ::menu-open? true))}}
+    "Open menu"]
    [:div.menu
     #_[:div.menu-section
        (header "Plots")
        (beam-profile/main)]
-
+    (when (re/rget *state ::menu-open?)
+      (button "Close menu" #(swap! *state assoc ::menu-open? false)))
     [:div.menu-section
      (header "Array")
      (slider "No. of elements" [:probe :n-elements]
