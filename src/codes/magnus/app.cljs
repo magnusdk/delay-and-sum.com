@@ -126,12 +126,13 @@
      [:div.verticalContainer
       (simulation-container)
       (timeline-canvas/container)]
-     #_[:div {:style {:position "absolute"
-                      :width    "100%"
-                      :height   "100px"
-                      :background-color "white"}}
-        (re/rget *state :simulation-container :fsm :current-state)
-        (str (re/rget *state :debug))]
+     (let [params (js/URLSearchParams. (.. js/window -location -search))]
+       (when (.has params "debug")
+         [:div {:style {:position "absolute"
+                        :width    "100%"
+                        :height   "100px"
+                        :background-color "white"}}
+          (str (re/rget *state :debug))]))
      (menu/main-component)]))
 
 
