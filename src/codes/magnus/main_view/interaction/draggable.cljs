@@ -26,7 +26,7 @@
   (let [pointer-pos (:pointer-pos (.-detail event))
         {:keys [distance update!]
          :as draggable} (->> (get-draggable)
-                             (closest-draggable (:offset pointer-pos) hover-distance))]
+                             (closest-draggable (:offset pointer-pos) hover-distance))] 
     (when (< distance hover-distance)
       (swap! *state update namespace assoc
              :dragging     draggable
