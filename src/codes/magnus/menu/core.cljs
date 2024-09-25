@@ -308,7 +308,7 @@
      [:hr]
      [:div.content
       [:h2 "About"]
-      [:p "Developed at NTNU. "
+      [:p "Developed at and funded by NTNU. "
        [:a {:href "https://github.com/magnusdk/delay-and-sum.com"}
         "Find the source code on GitHub."]]
       [:p "If you find any bugs or have suggestions for improvements, "
@@ -317,4 +317,5 @@
        " Thank you! <3"]
       [:p "Otherwise, to get in touch: "
        [:a {:href "mailto:magnus.kvalevag@ntnu.no"}
-        "magnus.kvalevag@ntnu.no"]]]]]])
+        "magnus.kvalevag@ntnu.no"]]]
+     [:div {:style {:height "120px"}}]]]])
