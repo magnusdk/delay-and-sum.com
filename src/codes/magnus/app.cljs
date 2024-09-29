@@ -33,7 +33,7 @@
       (main-simulation-container/container)
       (timeline-canvas/container)]
      (debug-panel)
-     (menu/main-component)]))
+     (menu/container)]))
 
 
 (defn ^:dev/after-load render! []

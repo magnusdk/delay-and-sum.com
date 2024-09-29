@@ -202,7 +202,7 @@
     title]])
 
 
-(defn main-component []
+(defn container []
   [:div.menu-container
    {:class [(when (re/rget *state ::menu-open?) :is-open)
             (when (re/rget *state ::dragging) :is-updating-parameter)]}
