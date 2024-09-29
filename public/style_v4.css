@@ -86,6 +86,7 @@ body {
 }
 
 #timelineContainer {
+    cursor: pointer;
     outline: var(--dark-blue) 2px solid;
     width: 100%;
     min-height: 100px;

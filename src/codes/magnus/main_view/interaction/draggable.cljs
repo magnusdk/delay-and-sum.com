@@ -26,7 +26,7 @@
   (let [pointer-pos (:pointer-pos (.-detail event))
         {:keys [distance update!]
          :as draggable} (->> (get-draggable)
-                             (closest-draggable (:offset pointer-pos) hover-distance))] 
+                             (closest-draggable (:offset pointer-pos) hover-distance))]
     (when (< distance hover-distance)
       (swap! *state update namespace assoc
              :dragging     draggable
@@ -68,7 +68,9 @@
   (.addEventListener js/document "keyup"   #(swap! *state update namespace assoc :snap-to-grid (.-shiftKey %))))
 
 
-(defn init! [element namespace get-draggable]
+(defn init!
+  [element namespace get-draggable & {:keys [hover-distance]
+                                      :or   {hover-distance (* 10 util/device-pixel-ratio)}}]
   (swap! *state assoc-in [namespace :fsm]
          (fsm/FiniteStateMachine.
           {:idle     {:interaction/start-drag maybe-start-dragging!
@@ -83,7 +85,7 @@
                             (fsm/handle! namespace
                                          {:type           type
                                           :element        element
-                                          :hover-distance (* 10 util/device-pixel-ratio)
+                                          :hover-distance hover-distance
                                           :get-draggable  get-draggable
                                           :event          event}))]
               (.addEventListener element type handler)))]

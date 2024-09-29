@@ -120,8 +120,12 @@
         hovered?  (= :hovering (re/rget *state :timeline-container-draggable :fsm :current-state))
         dragging? (= :dragging (re/rget *state :timeline-container-draggable :fsm :current-state))]
     [:div.timeline-time-cursor
-     {:class [(cond hovered? :timeline-time-cursor-hovering
-                    dragging? :timeline-time-cursor-dragging)]
+     {:class [(cond
+                ; Timeline is always hovered since it can be "dragged" from everywhere 
+                ; on the timeline. I.e.: the user can click anywhere on the timeline to 
+                ; set the current time. Disregard :timeline-time-cursor-hovering class.
+                ; hovered? :timeline-time-cursor-hovering
+                dragging? :timeline-time-cursor-dragging)]
       :style {:left (str (* 100 perc) "%")
               :top  0}}]))
 
@@ -161,7 +165,10 @@
     (.addEventListener js/window "resize" set-container-size!)
     (set-container-size!)
     (core/init! element :timeline-container get-pointer-pos false)
-    (draggable/init! element :timeline-container-draggable get-draggable)))
+    (draggable/init!
+     element :timeline-container-draggable get-draggable
+     ; Timeline marker could be dragged from everywhere, so set hover distance to something really high :)
+     :hover-distance 1e9)))
 
 (defn container []
   [:div#timelineContainer.stackedContainer
