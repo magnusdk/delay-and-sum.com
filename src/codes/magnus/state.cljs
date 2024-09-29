@@ -1,7 +1,7 @@
 (ns codes.magnus.state
   (:require [clojure.data :as data]
-            [goog.functions :refer [debounce]]
             [goog.crypt.base64 :as b64]
+            [goog.functions :refer [debounce]]
             [goog.string.format]))
 
 (def default-state
@@ -47,8 +47,11 @@
     (and (vector? original) (vector? diff))
     (mapv merge-diff original (concat diff (repeat nil)))
 
+    (some? diff)
+    diff
+
     :else
-    (or diff original)))
+    original))
 
 
 (defonce *state
