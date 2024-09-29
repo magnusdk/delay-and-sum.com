@@ -21,12 +21,13 @@
    :attenuation-factor 1
    :tukey-roll         0
 
-   :display-mode "phase"  ; #{"phase" "envelope" "intensity"}
-   :minimum-time 0
-   :maximum-time 1e-4
-   :minimum-db   -60
-   :maximum-db   0
-   :display-db?  true
+   :display-mode              "phase"  ; #{"phase" "envelope" "intensity"}
+   :minimum-time              0
+   :maximum-time              1e-4
+   :minimum-db                -60
+   :maximum-db                0
+   :display-db?               true
+   :show-simplified-geometry? true
 
    :probe {:center         [0 0]
            :n-elements     256

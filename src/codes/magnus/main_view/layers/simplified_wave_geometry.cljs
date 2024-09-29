@@ -18,14 +18,17 @@
     ; Must have some with and height, else return false
     (> (* expected-width expected-height) 0)))
 
-(defn draw! [{:keys [canvas ctx]}]
-  (let [width  (.-width canvas)
-        height (.-height canvas)]
-    (.clearRect ctx 0 0 width height)
-    (case (re/rget *state :delay-model)
-      "focused"   (focused/draw-simplified-geometry! ctx)
-      "plane"     (plane/draw-simplified-geometry! ctx)
-      "diverging" (diverging/draw-simplified-geometry! ctx))))
+(defn clear! [{:keys [canvas ctx]}]
+  (let  [width  (.-width canvas)
+         height (.-height canvas)]
+    (.clearRect ctx 0 0 width height)))
+
+(defn draw! [{:keys [ctx] :as render-data}]
+  (clear! render-data)
+  (case (re/rget *state :delay-model)
+    "focused"   (focused/draw-simplified-geometry! ctx)
+    "plane"     (plane/draw-simplified-geometry! ctx)
+    "diverging" (diverging/draw-simplified-geometry! ctx)))
 
 
 (defn render!
@@ -33,7 +36,9 @@
   (re/with-reactive ::resize
     (when (resize! render-data)
       (re/with-reactive ::draw
-        (draw! render-data)))))
+        (clear! render-data)
+        (when (re/rget *state :show-simplified-geometry?)
+          (draw! render-data))))))
 
 (defn init! [canvas]
   (render! {:canvas canvas

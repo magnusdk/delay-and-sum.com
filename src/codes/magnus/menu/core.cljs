@@ -300,7 +300,8 @@
              :sensitivity 1e-1
              :n-decimals  1
              :units       "dB")
-     (checkbox [:display-db?] "Display in dB?")]
+     (checkbox [:display-db?] "Display in dB?")
+     (checkbox [:show-simplified-geometry?] "Show simplified geometry?")]
 
     [:div.menu-section
      (header "General")
