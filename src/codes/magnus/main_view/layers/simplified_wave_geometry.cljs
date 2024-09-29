@@ -1,4 +1,4 @@
-(ns codes.magnus.main-view.simplified-wave-geometry
+(ns codes.magnus.main-view.layers.simplified-wave-geometry
   (:require [codes.magnus.main-view.common :as common]
             [codes.magnus.main-view.simplified-wave-geometry.diverging :as diverging]
             [codes.magnus.main-view.simplified-wave-geometry.focused :as focused]

@@ -1,4 +1,4 @@
-(ns codes.magnus.main-view.main-simulation
+(ns codes.magnus.main-view.layers.main-simulation
   (:require ["three" :as three]
             [codes.magnus.main-view.common :as common]
             [codes.magnus.reactive.core :as re]

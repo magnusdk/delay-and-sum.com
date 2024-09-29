@@ -1,4 +1,4 @@
-(ns codes.magnus.main-view.grid
+(ns codes.magnus.main-view.layers.grid
   (:require [cljs.math :as math]
             [codes.magnus.main-view.camera :as camera]
             [codes.magnus.reactive.core :as re]

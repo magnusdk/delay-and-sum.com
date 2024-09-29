@@ -1,4 +1,4 @@
-(ns codes.magnus.main-view.simulation-ui
+(ns codes.magnus.main-view.layers.simulation-ui
   (:require [cljs.math :as math]
             [codes.magnus.colors :as colors]
             [codes.magnus.main-view.camera :as camera]
