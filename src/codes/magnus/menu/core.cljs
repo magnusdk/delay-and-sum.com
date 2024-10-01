@@ -128,10 +128,12 @@
 (defn select [data-path select-options]
   [:div.control-select;.is-updating-parameter
    [:select
-    {:replicant/on-mount (fn [{:replicant/keys [node]}]
-                           (aset node "value" (apply re/rget *state data-path)))
-     :on    {:change (fn [e]
-                       (swap! *state assoc-in data-path (aget e "target" "value")))}}
+    {:replicant/on-mount  (fn [{:replicant/keys [node]}]
+                            (aset node "value" (apply re/rget *state data-path)))
+     :replicant/on-update (fn [{:replicant/keys [node]}]
+                            (aset node "value" (apply re/rget *state data-path)))
+     :on                  {:change (fn [e]
+                                     (swap! *state assoc-in data-path (aget e "target" "value")))}}
     (map (fn [[value label]]
            [:option {:value value} label])
          select-options)]])
@@ -141,7 +143,9 @@
    [:label label]
    [:input {:on      {:change (fn [e] (swap! *state assoc-in data-path (aget e "target" "checked")))}
             :type    "checkbox"
-            :checked (apply re/rget *state data-path)}]
+            :checked (apply re/rget *state data-path)
+            :replicant/on-update (fn [{:replicant/keys [node]}]
+                                   (aset node "checked" (apply re/rget *state data-path)))}]
    [:span.control-units]])
 
 
