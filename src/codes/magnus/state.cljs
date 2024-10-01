@@ -28,6 +28,7 @@
    :maximum-db                0
    :display-db?               true
    :show-simplified-geometry? true
+   :show-grid?                true
 
    :probe {:center         [0 0]
            :n-elements     256

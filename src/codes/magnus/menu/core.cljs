@@ -305,7 +305,8 @@
              :n-decimals  1
              :units       "dB")
      (checkbox [:display-db?] "Display in dB?")
-     (checkbox [:show-simplified-geometry?] "Show simplified geometry?")]
+     (checkbox [:show-simplified-geometry?] "Show simplified geometry?")
+     (checkbox [:show-grid?] "Show grid")]
 
     [:div.menu-section
      (header "General")
