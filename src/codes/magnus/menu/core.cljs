@@ -232,23 +232,6 @@
       (button "Close menu" #(swap! *state assoc ::menu-open? false)))
 
     [:div.menu-section
-     (header "Plot")
-     (select [:plot-type] [["no-plot"              "Don't display plot"]
-                           ["lateral-beam-profile" "Lateral beam profile"]
-                           ["axial-beam-profile"   "Axial beam profile"]])
-     (when (not= (re/rget *state :plot-type) "no-plot")
-       (slider "Beam profile sample line width" [:beam-profile-sample-line-length]
-               :min         0
-               :magnitude   1e-3
-               :n-decimals  1
-               :sensitivity 1e-1
-               :units       "mm"
-               :on          {:pointerdown  (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
-                             :pointermove  (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
-                             :pointerup    (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))
-                             :pointerleave (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))}))]
-
-    [:div.menu-section
      (header "Array")
      (slider "No. of elements" [:probe :n-elements]
              :min 1
@@ -335,6 +318,23 @@
      (checkbox [:display-db?] "Display in dB?")
      (checkbox [:show-simplified-geometry?] "Show simplified geometry?")
      (checkbox [:show-grid?] "Show grid")]
+
+    [:div.menu-section
+     (header "Plot")
+     (select [:plot-type] [["no-plot"              "Don't display plot"]
+                           ["lateral-beam-profile" "Lateral beam profile"]
+                           ["axial-beam-profile"   "Axial beam profile"]])
+     (when (not= (re/rget *state :plot-type) "no-plot")
+       (slider "Beam profile sample line width" [:beam-profile-sample-line-length]
+               :min         0
+               :magnitude   1e-3
+               :n-decimals  1
+               :sensitivity 1e-1
+               :units       "mm"
+               :on          {:pointerdown  (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
+                             :pointermove  (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
+                             :pointerup    (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))
+                             :pointerleave (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))}))]
 
     [:div.menu-section
      (header "General")
