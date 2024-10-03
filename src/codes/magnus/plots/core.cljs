@@ -65,12 +65,14 @@
                               {:plot/hover-pos-uv-x     uv-x
                                :plot/hover-pos-offset-x (.-offsetX e)
                                :plot/hover-pos          (mat/add center (mat/mul beam-profile-direction width uv-x))}))))
-    (.addEventListener "pointerleave" #(swap! *state dissoc
-                                              :plot/hover-pos-uv-x
-                                              :plot/hover-pos-offset-x
-                                              :plot/hover-pos
-                                              :plot/left-most-pos
-                                              :plot/right-most-pos))))
+    (.addEventListener
+     "pointerleave" (fn [_]
+                      (swap! *state dissoc
+                             :plot/hover-pos-uv-x
+                             :plot/hover-pos-offset-x
+                             :plot/hover-pos
+                             :plot/left-most-pos
+                             :plot/right-most-pos)))))
 
 
 (defn init-main-canvas! [canvas]
@@ -116,7 +118,8 @@
            x
            ; Don't draw the line outside of the plot bounds
            (<= -1 uv-x 1))
-      [:div {:style {:position         "absolute"
+      [:div {:style {:pointer-events   "none"
+                     :position         "absolute"
                      :left             x
                      :top              0
                      :height           "100%"
