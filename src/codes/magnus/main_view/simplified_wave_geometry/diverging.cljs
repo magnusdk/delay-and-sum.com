@@ -65,7 +65,6 @@
             (mat/add corner-2 (mat/mul source-corner-2-dir viewport-diag-length 10))
             corner-2]
        (:col (col/as-css (colors/with-alpha colors/cyan 0.3)))))
-    (println source-corner-1-dir source-corner-2-dir)
     (let [[vs-flipped-x vs-flipped-y] virtual-source-flipped
           [beyond-vs-x beyond-vs-y] (-> virtual-source
                                         (mat/sub wave-origin)
