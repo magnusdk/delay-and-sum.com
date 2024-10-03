@@ -10,7 +10,7 @@
         material (three/ShaderMaterial.
                   (clj->js {:vertexShader   (resource/inline "shaders/quad_gpgpu.vert")
                             :fragmentShader fragment-shader
-                            :uniforms       (apply merge (map :initial uniforms))}))
+                            :uniforms       (apply merge {} (map :initial uniforms))}))
         scene    (three/Scene.)
         geometry (three/Mesh. (three/PlaneGeometry. 2 2) material)]
     (.add scene geometry)
