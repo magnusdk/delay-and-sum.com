@@ -32,12 +32,24 @@
 
 (defn rot90 [[x y]] [y (- x)])
 
+(defn beam-profile-start-and-end-pos []
+  (let [{:keys [time sound-speed plot-type beam-profile-sample-line-length]} @*state
+        {:keys [wave-origin wave-direction t0]} (probe/element-geometry)
+        beam-profile-direction (if (= plot-type "lateral-beam-profile")
+                                 (rot90 wave-direction)
+                                 wave-direction)
+        dist   (* (- time t0) sound-speed)
+        width  (/ beam-profile-sample-line-length 2)
+        center (mat/add wave-origin (mat/mul wave-direction dist))]
+    {:plot/left-most-pos (mat/add center (mat/mul beam-profile-direction width -1))
+     :plot/right-most-pos (mat/add center (mat/mul beam-profile-direction width 1))}))
+
 (defn add-event-handlers!
   [canvas]
   (doto canvas
     (.addEventListener
      "pointermove" (fn [e]
-                     (let [{:keys [time sound-speed center-frequency plot-type]} @*state
+                     (let [{:keys [time sound-speed plot-type beam-profile-sample-line-length]} @*state
                            {:keys [wave-origin wave-direction t0]} (probe/element-geometry)
                            beam-profile-direction (if (= plot-type "lateral-beam-profile")
                                                     (rot90 wave-direction)
@@ -46,15 +58,19 @@
                            uv-x   (-> (.-offsetX e) (/ (.-offsetWidth canvas))
                                       (* 2) (- 1))
                            dist   (* (- time t0) sound-speed)
-                           width  (* 20 (/ sound-speed center-frequency))
+                           width  (/ beam-profile-sample-line-length 2)
                            center (mat/add wave-origin (mat/mul wave-direction dist))]
-                       (swap! *state assoc
-                              :plot/hover-pos-uv-x     uv-x
-                              :plot/hover-pos-offset-x (.-offsetX e)
-                              :plot/hover-pos          (mat/add center (mat/mul beam-profile-direction width uv-x))
-                              :plot/left-most-pos      (mat/add center (mat/mul beam-profile-direction width -1))
-                              :plot/right-most-pos     (mat/add center (mat/mul beam-profile-direction width 1))))))
-    (.addEventListener "pointerleave" #(swap! *state dissoc :plot/hover-pos :plot/hover-pos-offset-x))))
+                       (swap! *state merge
+                              (beam-profile-start-and-end-pos)
+                              {:plot/hover-pos-uv-x     uv-x
+                               :plot/hover-pos-offset-x (.-offsetX e)
+                               :plot/hover-pos          (mat/add center (mat/mul beam-profile-direction width uv-x))}))))
+    (.addEventListener "pointerleave" #(swap! *state dissoc
+                                              :plot/hover-pos-uv-x
+                                              :plot/hover-pos-offset-x
+                                              :plot/hover-pos
+                                              :plot/left-most-pos
+                                              :plot/right-most-pos))))
 
 
 (defn init-main-canvas! [canvas]
@@ -74,7 +90,7 @@
          (resource/inline "shaders/calculate_beam_profile.frag")
          [:u_elementsTexture :u_nElements :u_centerFrequency :u_samplePoint
           :u_pulseLength :u_time :u_soundSpeed :u_attenuationFactor :u_waveOrigin :u_t0
-          :u_waveDirection :u_lateralBeamProfile])
+          :u_waveDirection :u_lateralBeamProfile :u_beamProfileSampleLineLength])
 
         postprocess-pass
         (three-common/create-pass

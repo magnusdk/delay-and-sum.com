@@ -92,22 +92,25 @@
     (draw-dot! render-data :virtual-source colors/pink virtual-source)
     (draw-dot! render-data :sample-point colors/blue sample-point)
     (when-let [hover-pos (re/rget *state :plot/hover-pos)]
-      (let [uv-x (re/rget *state :plot/hover-pos-uv-x)
-            [hover-pos
-             left-most-pos
-             right-most-pos] (camera/transform-vec
-                              [hover-pos
-                               (re/rget *state :plot/left-most-pos)
-                               (re/rget *state :plot/right-most-pos)]
-                              (camera/world-to-canvas-matrix viewport-width viewport-height width height))]
+      (let [uv-x      (re/rget *state :plot/hover-pos-uv-x)
+            hover-pos (camera/transform-point
+                       hover-pos
+                       (camera/world-to-canvas-matrix viewport-width viewport-height width height))]
         (when (<= -1 uv-x 1)
-          (draw-dot! render-data :plot/hover-pos colors/dark-blue hover-pos))
-        (doto ctx
-          (.beginPath)
-          (aset "strokeStyle" (:col (col/as-css colors/dark-blue)))
-          (.moveTo (nth left-most-pos 0) (nth left-most-pos 1))
-          (.lineTo (nth right-most-pos 0) (nth right-most-pos 1))
-          (.stroke))))))
+          (draw-dot! render-data :plot/hover-pos colors/dark-blue hover-pos))))
+    (let [left-most-pos  (re/rget *state :plot/left-most-pos)
+          right-most-pos (re/rget *state :plot/right-most-pos)]
+      (when (and left-most-pos right-most-pos)
+        (let [[left-most-pos
+               right-most-pos] (camera/transform-vec
+                                [left-most-pos right-most-pos]
+                                (camera/world-to-canvas-matrix viewport-width viewport-height width height))]
+          (doto ctx
+            (.beginPath)
+            (aset "strokeStyle" (:col (col/as-css colors/dark-blue)))
+            (.moveTo (nth left-most-pos 0) (nth left-most-pos 1))
+            (.lineTo (nth right-most-pos 0) (nth right-most-pos 1))
+            (.stroke)))))))
 
 (defn resize!
   [{:keys [canvas]}]

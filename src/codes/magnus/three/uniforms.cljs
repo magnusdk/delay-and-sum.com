@@ -130,3 +130,8 @@
               (let [plot-type   (re/rget *state :plot-type)
                     is-lateral? (= plot-type "lateral-beam-profile")]
                 (aset material "uniforms" "u_lateralBeamProfile" "value" is-lateral?)))})
+
+
+(defmethod get-uniform :u_beamProfileSampleLineLength [_]
+  {:initial {:u_beamProfileSampleLineLength {:value true}}
+   :update! (get-state-update! :u_beamProfileSampleLineLength [:beam-profile-sample-line-length])})

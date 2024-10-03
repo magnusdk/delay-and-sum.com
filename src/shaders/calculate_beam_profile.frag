@@ -11,6 +11,7 @@ uniform float u_t0;
 uniform vec2 u_waveDirection;
 uniform vec2 u_samplePoint;
 uniform bool u_lateralBeamProfile;  // Sample laterally if true, else axially
+uniform float u_beamProfileSampleLineLength;  // Meters
 
 #include <simulation>
 
@@ -27,7 +28,7 @@ void main() {
     // Move by dist in the direction of the wave.
     pointPos += u_waveDirection * dist;
     // As a function of the plot's x-axis (v_uv.x), sample a point across the orthogonal wave direction.
-    pointPos += beamProfileDirection * v_uv.x * w;
+    pointPos += beamProfileDirection * v_uv.x * u_beamProfileSampleLineLength / 2.0;
     vec2 v = signalForPoint(pointPos, u_time);
     gl_FragColor = packVec2ToVec4(v);
 }

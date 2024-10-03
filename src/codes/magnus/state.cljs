@@ -31,7 +31,9 @@
    :show-simplified-geometry? true
    :show-grid?                true
 
-   :plot-type "no-plot"  ; #{"no-plot" "lateral-beam-profile" "axial-beam-profile"}
+   ; plot-type can be #{"no-plot" "lateral-beam-profile" "axial-beam-profile"}
+   :plot-type                      "no-plot"
+   :beam-profile-sample-line-length 0.02  ; Meters
 
    :probe {:center         [0 0]
            :n-elements     256
