@@ -119,6 +119,52 @@ body {
 }
 
 
+.plot-container {
+    position: absolute;
+    top: 15px;
+    left: 10px;
+    border: var(--dark-blue) solid 2px;
+    padding: 0;
+    background-color: white;
+}
+
+.plot-container h1 {
+    font-weight: 400;
+    font-size: 1em;
+    text-align: center;
+}
+
+.plot-container canvas {
+    width: 256px;
+    height: 128px;
+    display: block;
+}
+
+.plot-container .close-button {
+    position: absolute;
+    top: 7px;
+    right: 7px;
+    width: 10px;
+    height: 10px;
+    background-color: white;
+    color: black;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.plot-container .close-button:hover {
+    outline: solid 2px var(--dark-blue);
+    background-color: var(--dark-blue);
+    color: white;
+}
+
+.plot-container .close-button::before {
+    font-size: 12px;
+    line-height: 1;
+    content: "X";
+}
+
 .menu-container {
     width: 220px;
     min-width: 220px;

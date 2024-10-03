@@ -1,6 +1,7 @@
 (ns codes.magnus.app
   (:require [codes.magnus.main-view.container :as main-simulation-container]
             [codes.magnus.menu.core :as menu]
+            [codes.magnus.plots.core :as plots]
             [codes.magnus.reactive.core :as re]
             [codes.magnus.state :refer [*state]]
             [codes.magnus.timeline-view.timeline-canvas :as timeline-canvas]
@@ -28,12 +29,16 @@
     [:div
      [:p "Sorry, your browser does not support WebGL 2 :/"]
      [:p "Please try another browser."]]
-    [:div.horizontalContainer
-     [:div.verticalContainer
-      (main-simulation-container/container)
-      (timeline-canvas/container)]
-     (debug-panel)
-     (menu/container)]))
+    [:div.fillSpace
+     ; Main app UI
+     [:div.horizontalContainer
+      [:div.verticalContainer
+       (main-simulation-container/container)
+       (timeline-canvas/container)]
+      (debug-panel)
+      (menu/container)]
+     ; Window for showing plots
+     (plots/container)]))
 
 
 (defn ^:dev/after-load render! []

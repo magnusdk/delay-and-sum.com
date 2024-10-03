@@ -30,6 +30,8 @@
    :show-simplified-geometry? true
    :show-grid?                true
 
+   :plot-type "no-plot"  ; #{"no-plot" "lateral-beam-profile" "axial-beam-profile"}
+
    :probe {:center         [0 0]
            :n-elements     256
            :array-width    2e-2

@@ -220,6 +220,13 @@
        (beam-profile/main)]
     (when (re/rget *state ::menu-open?)
       (button "Close menu" #(swap! *state assoc ::menu-open? false)))
+
+    [:div.menu-section
+     (header "Plot")
+     (select [:plot-type] [["no-plot"              "Don't display plot"]
+                           ["lateral-beam-profile" "Lateral beam profile"]
+                           ["axial-beam-profile"   "Axial beam profile"]])]
+
     [:div.menu-section
      (header "Array")
      (slider "No. of elements" [:probe :n-elements]

@@ -123,3 +123,10 @@
               (let [{[x y] :wave-direction} (probe/element-geometry)]
                 (aset material "uniforms" "u_waveDirection" "value" (three/Vector2. x y))))})
 
+
+(defmethod get-uniform :u_lateralBeamProfile [_]
+  {:initial {:u_lateralBeamProfile {:value nil}}
+   :update! (fn [material]
+              (let [plot-type   (re/rget *state :plot-type)
+                    is-lateral? (= plot-type "lateral-beam-profile")]
+                (aset material "uniforms" "u_lateralBeamProfile" "value" is-lateral?)))})
