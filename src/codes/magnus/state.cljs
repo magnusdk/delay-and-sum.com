@@ -9,8 +9,9 @@
             :pos   [0 -0.01]}
    :n-pixels 1e6
 
-   :virtual-source   [0 0.04]
-   :sample-point     [-0.02 0.05]
+   :virtual-source              [0 0.04]
+   :sample-point                [-0.02 0.05]
+   :force-current-time-at-focus false
 
    :center-frequency   3e6
    :pulse-length       2

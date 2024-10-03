@@ -317,6 +317,7 @@
 
     [:div.menu-section
      (header "General")
+     (checkbox [:force-current-time-at-focus] "Force wavefront to be at focus point")
      (button "Reset all state" #(reset-state!))
      [:hr]
      [:div.content

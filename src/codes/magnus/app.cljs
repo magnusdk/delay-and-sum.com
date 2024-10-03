@@ -5,6 +5,7 @@
             [codes.magnus.reactive.core :as re]
             [codes.magnus.state :refer [*state]]
             [codes.magnus.timeline-view.timeline-canvas :as timeline-canvas]
+            [codes.magnus.reactive.dependent-state :as dependent-state]
             [replicant.dom :as r]))
 
 (defonce webgl2-supported?
@@ -51,4 +52,5 @@
    (fn [& args]
      (swap! *state assoc-in [:debug :error] args)))
   (re/register!)
+  (dependent-state/init!)
   (render!))
