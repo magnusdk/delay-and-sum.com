@@ -71,7 +71,7 @@
     (resize! element)))
 
 (defn slider
-  [label data-path & {:keys [units sensitivity] :as opts}]
+  [label data-path & {:keys [units sensitivity on] :as opts}]
   (let [value            (from-state-format (apply re/rget *state data-path) opts)
         handle-key-down! (fn [event]
                            (let [key (.-key event)
@@ -80,7 +80,7 @@
                                (.select input-element))))]
     [:div.control.slidable-control
      {:replicant/on-mount (fn [{:replicant/keys [node]}]
-                            (let [*drag-state (atom {:dragging false})]
+                            (let [*local-state (atom {})]
                               (.addEventListener node "pointerdown"
                                                  (fn [e]
                                                    (when-not (-> (.-target e)
@@ -88,14 +88,14 @@
                                                                  (.toLowerCase)
                                                                  (= "input"))
                                                      (swap! *state assoc ::dragging true)
-                                                     (swap! *drag-state assoc :dragging true))))
+                                                     (swap! *local-state assoc :dragging true))))
                               (.addEventListener js/document "pointerup"
                                                  (fn [e]
                                                    (swap! *state assoc ::dragging false)
-                                                   (swap! *drag-state assoc :dragging false)))
+                                                   (swap! *local-state assoc :dragging false)))
                               (.addEventListener js/document "pointermove"
                                                  (fn [e]
-                                                   (when (:dragging @*drag-state)
+                                                   (when (:dragging @*local-state)
                                                      (let [delta   (* (.-movementX e) (or sensitivity 1))
                                                            element (.querySelector node "input")
                                                            value   (-> (.-value element)
@@ -105,6 +105,14 @@
                                                        (swap! *state assoc-in data-path value)
                                                        (aset element "value" (from-state-format value opts))
                                                        (resize! element))))))
+
+                            (when-let [callback (:pointerdown on)]
+                              (.addEventListener node "pointerdown" callback))
+                            (when-let [callback (:pointermove on)]
+                              (.addEventListener node "pointermove" callback))
+                            (when-let [callback (:pointerup on)]
+                              (.addEventListener node "pointerup" callback))
+
                             (.addEventListener
                              node "focus"
                              #(.addEventListener js/document "keydown" handle-key-down!))
