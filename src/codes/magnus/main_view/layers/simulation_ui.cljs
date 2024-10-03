@@ -103,6 +103,7 @@
         (when (<= -1 uv-x 1)
           (draw-dot! render-data :plot/hover-pos colors/dark-blue hover-pos))
         (doto ctx
+          (.beginPath)
           (aset "strokeStyle" (:col (col/as-css colors/dark-blue)))
           (.moveTo (nth left-most-pos 0) (nth left-most-pos 1))
           (.lineTo (nth right-most-pos 0) (nth right-most-pos 1))
