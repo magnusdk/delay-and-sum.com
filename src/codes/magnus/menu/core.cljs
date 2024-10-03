@@ -112,6 +112,8 @@
                               (.addEventListener node "pointermove" callback))
                             (when-let [callback (:pointerup on)]
                               (.addEventListener node "pointerup" callback))
+                            (when-let [callback (:pointerleave on)]
+                              (.addEventListener node "pointerleave" callback))
 
                             (.addEventListener
                              node "focus"
@@ -241,9 +243,10 @@
                :n-decimals  1
                :sensitivity 1e-1
                :units       "mm"
-               :on          {:pointerdown (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
-                             :pointermove (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
-                             :pointerup   (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))}))]
+               :on          {:pointerdown  (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
+                             :pointermove  (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
+                             :pointerup    (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))
+                             :pointerleave (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))}))]
 
     [:div.menu-section
      (header "Array")
