@@ -104,3 +104,22 @@
                   (aset data-texture "image" "data" packed-elements)
                   (aset data-texture "needsUpdate" true)
                   (aset material "uniforms" "u_elementsTexture" "value" data-texture)))}))
+
+(defmethod get-uniform :u_waveOrigin [_]
+  {:initial {:u_waveOrigin {:value (three/Vector2.)}}
+   :update! (fn [material]
+              (let [{[x y] :wave-origin} (probe/element-geometry)]
+                (aset material "uniforms" "u_waveOrigin" "value" (three/Vector2. x y))))})
+
+(defmethod get-uniform :u_t0 [_]
+  {:initial {:u_t0 {:value nil}}
+   :update! (fn [material]
+              (let [{:keys [t0]} (probe/element-geometry)]
+                (aset material "uniforms" "u_t0" "value" t0)))})
+
+(defmethod get-uniform :u_waveDirection [_]
+  {:initial {:u_waveDirection {:value (three/Vector2.)}}
+   :update! (fn [material]
+              (let [{[x y] :wave-direction} (probe/element-geometry)]
+                (aset material "uniforms" "u_waveDirection" "value" (three/Vector2. x y))))})
+

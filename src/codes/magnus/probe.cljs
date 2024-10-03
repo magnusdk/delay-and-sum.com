@@ -97,6 +97,7 @@
                 array-width
                 normal-azimuth
                 element-width]} (re/rget *state :probe)
+        sound-speed          (re/rget *state :sound-speed)
         virtual-source       (re/rget *state :virtual-source)
         [center-x center-y]  center
         normal-azimuth-rad   (deg2rad normal-azimuth)
@@ -137,7 +138,11 @@
      ; The angle from each corner to the virtual source
      :corner-1-virtual-source-azimuth-rad corner-1-virtual-source-azimuth-rad
      :corner-2-virtual-source-azimuth-rad corner-2-virtual-source-azimuth-rad
-     :wave-origin          wave-origin}))
+     :wave-origin          wave-origin
+     :t0                   (mat/div (mat/sub (mat/distance virtual-source center)
+                                             (mat/distance virtual-source wave-origin))
+                                    sound-speed)
+     :wave-direction       (mat/normalise (mat/sub virtual-source wave-origin))}))
 
 (defn update-from-corners!
   [corner-1 corner-2]
