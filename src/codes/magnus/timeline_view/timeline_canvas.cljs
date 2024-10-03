@@ -164,6 +164,8 @@
                    [(.-offsetWidth element) (.-offsetHeight element)]))]
     (.addEventListener js/window "resize" set-container-size!)
     (set-container-size!)
+    ; Disable :force-current-time-at-focus when changing current time
+    (.addEventListener element "pointerdown" (fn [_] (swap! *state assoc :force-current-time-at-focus false)))
     (core/init! element :timeline-container get-pointer-pos false)
     (draggable/init!
      element :timeline-container-draggable get-draggable
