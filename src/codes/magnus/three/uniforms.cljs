@@ -5,84 +5,107 @@
             [codes.magnus.reactive.core :as re]
             [codes.magnus.state :refer [*state]]))
 
-(defn get-state-update!
-  ([uniform-name db-path]
-   (get-state-update! uniform-name db-path identity))
-  ([uniform-name db-path convert]
-   (fn [material]
-     (aset material "uniforms" (name uniform-name) "value"
-           (convert (apply re/rget *state db-path))))))
+(defn get-default-update-fn!
+  ([uniform-name]
+   (get-default-update-fn! uniform-name identity))
+  ([uniform-name convert]
+   (fn [material value]
+     (aset material "uniforms" (name uniform-name) "value" (convert value)))))
 
 
-; get-uniform takes the identifier/name of the uniform and the *viewport-state of the 
-; containing element of the render-target, and returns a map of its initial value and a 
-; function that takes a material and the *viewport-state, and updates the uniform value 
-; on that material.
+; get-uniform takes the identifier/name of the uniform and returns a map of its:
+; - Uniform-name
+; - Initial value
+; - A function for getting the latest, updated value
+; - A function that takes the material and a value, and updates the material's uniform.
 (defmulti get-uniform (fn [name] name))
-
 (defmethod get-uniform :u_nElements [_]
-  {:initial {:u_nElements {:value nil}}
-   :update! (get-state-update! :u_nElements [:probe :n-elements])})
+  {:name      :u_nElements
+   :initial   {:value nil}
+   :get-value #(re/rget *state :probe :n-elements)
+   :update!   (get-default-update-fn! :u_nElements)})
 
 (defmethod get-uniform :u_centerFrequency [_]
-  {:initial {:u_centerFrequency {:value nil}}
-   :update! (get-state-update! :u_centerFrequency [:center-frequency])})
+  {:name      :u_centerFrequency
+   :initial   {:value nil}
+   :get-value #(re/rget *state :center-frequency)
+   :update!   (get-default-update-fn! :u_centerFrequency)})
 
 (defmethod get-uniform :u_pulseLength [_]
-  {:initial {:u_pulseLength {:value nil}}
-   :update! (get-state-update! :u_pulseLength [:pulse-length])})
+  {:name      :u_pulseLength
+   :initial   {:value nil}
+   :get-value #(re/rget *state :pulse-length)
+   :update!   (get-default-update-fn! :u_pulseLength)})
 
 (defmethod get-uniform :u_time [_]
-  {:initial {:u_time {:value nil}}
-   :update! (get-state-update! :u_time [:time])})
+  {:name      :u_time
+   :initial   {:value nil}
+   :get-value #(re/rget *state :time)
+   :update!   (get-default-update-fn! :u_time)})
 
 (defmethod get-uniform :u_soundSpeed [_]
-  {:initial {:u_soundSpeed {:value nil}}
-   :update! (get-state-update! :u_soundSpeed [:sound-speed])})
+  {:name      :u_soundSpeed
+   :initial   {:value nil}
+   :get-value #(re/rget *state :sound-speed)
+   :update!   (get-default-update-fn! :u_soundSpeed)})
 
 (defmethod get-uniform :u_samplePoint [_]
-  {:initial {:u_samplePoint (three/Vector2.)}
-   :update! (get-state-update! :u_samplePoint [:sample-point] (fn [[x y]] (three/Vector2. x y)))})
+  {:name      :u_samplePoint
+   :initial   {:value (three/Vector2.)}
+   :get-value #(let [[x y] (re/rget *state :sample-point)] (three/Vector2. x y))
+   :update!   (get-default-update-fn! :u_samplePoint)})
 
 (defmethod get-uniform :u_attenuationFactor [_]
-  {:initial {:u_attenuationFactor {:value nil}}
-   :update! (get-state-update! :u_attenuationFactor [:attenuation-factor])})
+  {:name      :u_attenuationFactor
+   :initial   {:value nil}
+   :get-value #(re/rget *state :attenuation-factor)
+   :update!   (get-default-update-fn! :u_attenuationFactor)})
 
 (defmethod get-uniform :u_minimumTime [_]
-  {:initial {:u_minimumTime {:value nil}}
-   :update! (get-state-update! :u_minimumTime [:minimum-time])})
+  {:name      :u_minimumTime
+   :initial   {:value nil}
+   :get-value #(re/rget *state :minimum-time)
+   :update!   (get-default-update-fn! :u_minimumTime)})
 
 (defmethod get-uniform :u_maximumTime [_]
-  {:initial {:u_maximumTime {:value nil}}
-   :update! (get-state-update! :u_maximumTime [:maximum-time])})
+  {:name      :u_maximumTime
+   :initial   {:value nil}
+   :get-value #(re/rget *state :maximum-time)
+   :update!   (get-default-update-fn! :u_maximumTime)})
 
 (defmethod get-uniform :u_minimumDb [_]
-  {:initial {:u_minimumDb {:value nil}}
-   :update! (get-state-update! :u_minimumDb [:minimum-db])})
+  {:name      :u_minimumDb
+   :initial   {:value nil}
+   :get-value #(re/rget *state :minimum-db)
+   :update!   (get-default-update-fn! :u_minimumDb)})
 
 (defmethod get-uniform :u_maximumDb [_]
-  {:initial {:u_maximumDb {:value nil}}
-   :update! (get-state-update! :u_maximumDb [:maximum-db])})
+  {:name      :u_maximumDb
+   :initial   {:value nil}
+   :get-value #(re/rget *state :maximum-db)
+   :update!   (get-default-update-fn! :u_maximumDb)})
 
 (defmethod get-uniform :u_useDb [_]
-  {:initial {:u_useDb {:value true}}
-   :update! (get-state-update! :u_useDb [:display-db?])})
+  {:name      :u_useDb
+   :initial   {:value true}
+   :get-value #(re/rget *state :display-db?)
+   :update!   (get-default-update-fn! :u_useDb)})
 
 (defmethod get-uniform :u_displayMode [_]
-  {:initial {:u_displayMode {:value nil}}
-   :update! (fn [material]
-              (aset material "uniforms" "u_displayMode" "value"
-                    (case (re/rget *state :display-mode)
-                      "phase"     0
-                      "envelope"  1
-                      "intensity" 2)))})
+  {:name      :u_displayMode
+   :initial   {:value nil}
+   :get-value #(case (re/rget *state :display-mode)
+                 "phase"     0
+                 "envelope"  1
+                 "intensity" 2)
+   :update!   (get-default-update-fn! :u_displayMode)})
 
 (defmethod get-uniform :u_cameraMatrix [_]
-  {:initial {:u_cameraMatrix (three/Matrix3.)}
-   :update! (fn [material]
-              (let [[viewport-width viewport-height] (re/rget *state :simulation-container/size)
-                    camera-matrix (camera/to-three-js (camera/clip-to-world-matrix viewport-width viewport-height))]
-                (aset material "uniforms" "u_cameraMatrix" "value" camera-matrix)))})
+  {:name      :u_cameraMatrix
+   :initial   {:value (three/Matrix3.)}
+   :get-value #(let [[viewport-width viewport-height] (re/rget *state :simulation-container/size)]
+                 (camera/to-three-js (camera/clip-to-world-matrix viewport-width viewport-height)))
+   :update!   (get-default-update-fn! :u_cameraMatrix)})
 
 (defmethod get-uniform :u_elementsTexture [_]
   (let [data-texture (three/DataTexture.
@@ -92,46 +115,49 @@
                       three/RGBAFormat  ; Each value holds 3 numbers
                       three/FloatType  ; Use floats instead of the default (uint8)
                       )]
-    {:initial {:u_elementsTexture {:value data-texture}}
-     :update! (fn [material]
-                (let [{:keys [positions delays weights normal-azimuth-rad width n-elements]} (probe/element-geometry)
-                      packed-elements (-> (for [[[x y] delay weight] (map vector positions delays weights)]
-                                            [x y weight delay normal-azimuth-rad width nil nil])
-                                          (flatten)
-                                          (concat (repeat (* 8 (- 256 n-elements)) 0))
-                                          (clj->js)
-                                          (js/Float32Array.))]
-                  (aset data-texture "image" "data" packed-elements)
-                  (aset data-texture "needsUpdate" true)
-                  (aset material "uniforms" "u_elementsTexture" "value" data-texture)))}))
+    {:name      :u_elementsTexture
+     :initial   {:value data-texture}
+     :get-value #(let [{:keys [positions delays weights normal-azimuth-rad width n-elements]} (probe/element-geometry)
+                       packed-elements (-> (for [[[x y] delay weight] (map vector positions delays weights)]
+                                             [x y weight delay normal-azimuth-rad width nil nil])
+                                           (flatten)
+                                           (concat (repeat (* 8 (- 256 n-elements)) 0))
+                                           (clj->js)
+                                           (js/Float32Array.))]
+                   (aset data-texture "image" "data" packed-elements)
+                   (aset data-texture "needsUpdate" true)
+                   data-texture)
+     :update!   (get-default-update-fn! :u_elementsTexture)}))
 
 (defmethod get-uniform :u_waveOrigin [_]
-  {:initial {:u_waveOrigin {:value (three/Vector2.)}}
-   :update! (fn [material]
-              (let [{[x y] :wave-origin} (probe/element-geometry)]
-                (aset material "uniforms" "u_waveOrigin" "value" (three/Vector2. x y))))})
+  {:name      :u_waveOrigin
+   :initial   {:value (three/Vector2.)}
+   :get-value #(let [{[x y] :wave-origin} (probe/element-geometry)]
+                 (three/Vector2. x y))
+   :update!   (get-default-update-fn! :u_waveOrigin)})
 
 (defmethod get-uniform :u_t0 [_]
-  {:initial {:u_t0 {:value nil}}
-   :update! (fn [material]
-              (let [{:keys [t0]} (probe/element-geometry)]
-                (aset material "uniforms" "u_t0" "value" t0)))})
+  {:name      :u_t0
+   :initial   {:value nil}
+   :get-value #(let [{:keys [t0]} (probe/element-geometry)] t0)
+   :update!   (get-default-update-fn! :u_t0)})
 
 (defmethod get-uniform :u_waveDirection [_]
-  {:initial {:u_waveDirection {:value (three/Vector2.)}}
-   :update! (fn [material]
-              (let [{[x y] :wave-direction} (probe/element-geometry)]
-                (aset material "uniforms" "u_waveDirection" "value" (three/Vector2. x y))))})
-
+  {:name      :u_waveDirection
+   :initial   {:value (three/Vector2.)}
+   :get-value #(let [{[x y] :wave-direction} (probe/element-geometry)]
+                 (three/Vector2. x y))
+   :update!   (get-default-update-fn! :u_waveDirection)})
 
 (defmethod get-uniform :u_lateralBeamProfile [_]
-  {:initial {:u_lateralBeamProfile {:value nil}}
-   :update! (fn [material]
-              (let [plot-type   (re/rget *state :plot-type)
-                    is-lateral? (= plot-type "lateral-beam-profile")]
-                (aset material "uniforms" "u_lateralBeamProfile" "value" is-lateral?)))})
-
+  {:name      :u_lateralBeamProfile
+   :initial   {:value nil}
+   :get-value #(let [plot-type   (re/rget *state :plot-type)]
+                 (= plot-type "lateral-beam-profile"))
+   :update!   (get-default-update-fn! :u_lateralBeamProfile)})
 
 (defmethod get-uniform :u_beamProfileSampleLineLength [_]
-  {:initial {:u_beamProfileSampleLineLength {:value true}}
-   :update! (get-state-update! :u_beamProfileSampleLineLength [:beam-profile-sample-line-length])})
+  {:name      :u_beamProfileSampleLineLength
+   :initial   {:value true}
+   :get-value #(re/rget *state :beam-profile-sample-line-length)
+   :update!   (get-default-update-fn! :u_beamProfileSampleLineLength)})

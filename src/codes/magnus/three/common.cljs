@@ -10,15 +10,16 @@
         material (three/ShaderMaterial.
                   (clj->js {:vertexShader   (resource/inline "shaders/quad_gpgpu.vert")
                             :fragmentShader fragment-shader
-                            :uniforms       (apply merge {} (map :initial uniforms))}))
+                            :uniforms       (apply merge {} (map (juxt :name :initial) uniforms))}))
         scene    (three/Scene.)
         geometry (three/Mesh. (three/PlaneGeometry. 2 2) material)]
     (.add scene geometry)
     {:scene    scene
      :material material
-     :update! (fn []
-                (doseq [{update-uniform! :update!} uniforms]
-                  (update-uniform! material))
+     :update! (fn [& {:as uniform-overrides}]
+                (doseq [{:keys [name get-value update!]} uniforms]
+                  (let [value (get uniform-overrides name (get-value))]
+                    (update! material value)))
                 (aset material "uniformsNeedUpdate" true)
                 scene)}))
 
