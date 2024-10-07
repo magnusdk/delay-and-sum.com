@@ -131,7 +131,10 @@
     [:div.plot-container
      [:button.close-button
       {:on {:click #(swap! *state assoc :plot-type "no-plot")}}]
-     [:h1 "Lateral Beam Profile"]
+     [:h1 (case (re/rget *state :plot-type)
+            "lateral-beam-profile" "Lateral Beam Profile"
+            "axial-beam-profile" "Axial Beam Profile"
+            nil)]
      [:canvas.fillSpace {:replicant/on-mount (fn [{:replicant/keys [node]}]
                                                (init-main-canvas! node))}]
      (hovered-line)]))
