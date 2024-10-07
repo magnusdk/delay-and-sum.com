@@ -11,7 +11,7 @@
 
 (defn calculate!
   [{:keys [renderer camera passes render-target]}]
-  (let [{:keys [update! scene]} (:lateral-beam-profile passes)]
+  (let [{:keys [update! scene]} (:beam-profile passes)]
     (update!)
     (.setRenderTarget renderer render-target)
     (.render renderer scene camera)))
@@ -87,7 +87,7 @@
         render-target
         (three/WebGLRenderTarget. n-samples 1)
 
-        lateral-beam-profile-pass
+        beam-profile-pass
         (three-common/create-pass
          (resource/inline "shaders/calculate_beam_profile.frag")
          [:u_elementsTexture :u_nElements :u_centerFrequency :u_samplePoint
@@ -104,8 +104,8 @@
                      :renderer      renderer
                      :camera        camera
                      :render-target render-target
-                     :passes        {:lateral-beam-profile lateral-beam-profile-pass
-                                     :postprocess          postprocess-pass}}]
+                     :passes        {:beam-profile beam-profile-pass
+                                     :postprocess  postprocess-pass}}]
     (.setSize renderer n-samples n-samples false)
     (render! render-data)
     (add-event-handlers! canvas)))
