@@ -64,7 +64,7 @@
 
 (defn calculate-maximum-amplitude-field!
   [{:keys [renderer camera passes render-targets] :as render-data}] 
-  (when (< (re/rget *state ::iteration) 500)
+  (when (< (re/rget *state ::iteration) 50)
     (calculate-field! render-data
                       :render-target :max-amplitude-compare
                       :pass          :calculate-field-stochasticly)
