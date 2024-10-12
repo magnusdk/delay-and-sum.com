@@ -64,7 +64,7 @@
 
 (defn calculate-maximum-amplitude-field!
   [{:keys [renderer camera passes render-targets] :as render-data}]
-  (when (< (re/rget *state ::iteration) 100)
+  (when (< (re/rget *state ::iteration) 500)
     (calculate-field! render-data
                       :render-target :max-amplitude-compare
                       :pass          :calculate-field-stochasticly)
@@ -84,13 +84,13 @@
 (defn render! [render-data]
   (re/with-reactive ::resize
     (when (resize! render-data)
-      (re/with-reactive ::calculate-field
+      (re/with-reactive ::check-for-maximum-amplitude-mode
         (if (re/rget *state :maximum-amplitude-simulation?)
           (do
             (init-maximum-amplitude-field! render-data)
-            (re/with-reactive ::max-amplitude-passes
+            (re/with-reactive ::calculate
               (calculate-maximum-amplitude-field! render-data)))
-          (re/with-reactive ::single-pass
+          (re/with-reactive ::calculate
             (calculate-field! render-data)
             (re/with-reactive ::postprocess-field
               (postprocess-field! render-data)
