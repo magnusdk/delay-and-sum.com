@@ -44,10 +44,8 @@
      (mat/distance (t touch-1) (t touch-2)))))
 
 
-(defn handle! [{:keys [namespace get-pos element support-camera-gestures]} event]
-  (.preventDefault event)
-  (swap! *state assoc-in [:debug :mobile]
-         {:offset-pos (get-offset-pos event element) :pointer-pos (get-pos element (get-offset-pos event element))})
+(defn handle! [{:keys [namespace get-pos element support-camera-gestures]} event] 
+  (.preventDefault event) 
   (let [previous-touches (re/rget *state namespace :touches)
         new-touches      (get-touches event)
         pointer-pos      (get-pos element (first (vals new-touches)))]
@@ -64,10 +62,6 @@
       [0 1] (send-custom-event! element :interaction/start-drag {:pointer-pos pointer-pos})
       [1 1] (send-custom-event! element :interaction/drag {:pointer-pos pointer-pos})
       (send-custom-event! element :interaction/end-drag {:pointer-pos nil}))
-
-    (swap! *state assoc-in [:debug :touches]
-           {:previous-touches previous-touches
-            :new-touches      new-touches})
 
     ; Now we handle touch gestures like panning and zooming
     (when (and support-camera-gestures
