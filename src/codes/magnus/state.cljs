@@ -23,6 +23,7 @@
    :tukey-roll         0
 
    :display-mode              "phase"  ; #{"phase" "envelope" "intensity"}
+   :maximum-amplitude-plot?   false
    :minimum-time              0
    :maximum-time              1e-4
    :minimum-db                -60

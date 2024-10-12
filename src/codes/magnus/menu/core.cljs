@@ -315,6 +315,7 @@
              :sensitivity 1e-1
              :n-decimals  1
              :units       "dB")
+     (checkbox [:maximum-amplitude-plot?] "Show maximum amplitude?")
      (checkbox [:display-db?] "Display in dB?")
      (checkbox [:show-simplified-geometry?] "Show simplified geometry?")
      (checkbox [:show-grid?] "Show grid")]

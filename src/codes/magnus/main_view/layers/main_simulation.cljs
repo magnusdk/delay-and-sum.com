@@ -56,38 +56,45 @@
     (.clearRect ctx-2d 0 0 (.-width canvas) (.-height canvas))
     (.drawImage ctx-2d canvas 0 0)))
 
-(defn calculate-maximum-amplitude-field!
-  [{:keys [renderer camera passes render-targets] :as render-data}]
+(defn init-maximum-amplitude-field! [render-data]
   (calculate-field! render-data
                     :render-target :max-amplitude-current
                     :pass          :calculate-field-stochasticly)
-  (swap! *state assoc ::iteration 0)
-  (re/with-reactive ::max-amplitude-passes
-    (when (< (re/rget *state ::iteration) 1000)
-      (calculate-field! render-data
-                        :render-target :max-amplitude-compare
-                        :pass          :calculate-field-stochasticly)
-      (let [{:keys [update! scene material]} (:select-maximum-amplitude passes)]
-        (update!)
-        (three-common/set-texture! material "t_data1" (:max-amplitude-compare render-targets))
-        (three-common/set-texture! material "t_data2" (:max-amplitude-current render-targets))
-        (.setRenderTarget renderer (:main render-targets))
-        (.render renderer scene camera))
-      (copy-texture render-data :main :max-amplitude-current)
-      (re/with-reactive ::postprocess-field
-        (postprocess-field! render-data)
-        (draw-field-to-canvas! render-data))
-      (swap! *state update ::iteration inc))))
+  (swap! *state assoc ::iteration 0))
+
+(defn calculate-maximum-amplitude-field!
+  [{:keys [renderer camera passes render-targets] :as render-data}] 
+  (when (< (re/rget *state ::iteration) 500)
+    (calculate-field! render-data
+                      :render-target :max-amplitude-compare
+                      :pass          :calculate-field-stochasticly)
+    (let [{:keys [update! scene material]} (:select-maximum-amplitude passes)]
+      (update!)
+      (three-common/set-texture! material "t_data1" (:max-amplitude-compare render-targets))
+      (three-common/set-texture! material "t_data2" (:max-amplitude-current render-targets))
+      (.setRenderTarget renderer (:main render-targets))
+      (.render renderer scene camera))
+    (copy-texture render-data :main :max-amplitude-current)
+    (re/with-reactive ::postprocess-field
+      (postprocess-field! render-data)
+      (draw-field-to-canvas! render-data))
+    (swap! *state update ::iteration inc)))
 
 
 (defn render! [render-data]
-  (re/with-reactive ::resize
+  (re/with-reactive ::resize 
     (when (resize! render-data)
       (re/with-reactive ::calculate-field
-        (calculate-maximum-amplitude-field! render-data)
-        (re/with-reactive ::postprocess-field
-          (postprocess-field! render-data)
-          (draw-field-to-canvas! render-data))))))
+        (if (re/rget *state :maximum-amplitude-plot?)
+          (do
+            (init-maximum-amplitude-field! render-data)
+            (re/with-reactive ::max-amplitude-passes
+              (calculate-maximum-amplitude-field! render-data)))
+          (re/with-reactive ::single-pass
+            (calculate-field! render-data) 
+            (re/with-reactive ::postprocess-field
+              (postprocess-field! render-data)
+              (draw-field-to-canvas! render-data))))))))
 
 
 (defn init! [canvas]
