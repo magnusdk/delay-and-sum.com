@@ -10,25 +10,56 @@
             [thi.ng.color.core :as col]))
 
 (defn calculate!
-  [{:keys [renderer camera passes render-target]}]
-  (let [{:keys [update! scene]} (:beam-profile passes)]
+  [{:keys [renderer camera passes render-targets]} render-target pass]
+  (let [{:keys [update! scene]} (pass passes)]
     (update!)
-    (.setRenderTarget renderer render-target)
+    (.setRenderTarget renderer (render-target render-targets))
     (.render renderer scene camera)))
 
 (defn postprocess-and-render-to-canvas!
-  [{:keys [renderer camera passes render-target]}]
+  [{:keys [renderer camera passes render-targets]}]
   (let [{:keys [update! scene material]} (:postprocess passes)]
     (update!)
-    (three-common/set-previous-render-texture! material render-target)
+    (three-common/set-texture! material "t_previousRender" (:main render-targets))
     (.setRenderTarget renderer nil)
     (.render renderer scene camera)))
 
 
+(defn copy-texture
+  [{:keys [renderer camera passes render-targets]} from to]
+  (let [{:keys [update! scene material]} (:copy-maximum-amplitude-pass passes)]
+    (update!)
+    (three-common/set-texture! material "t_data" (from render-targets))
+    (.setRenderTarget renderer (to render-targets))
+    (.render renderer scene camera)))
+
+(defn init-maximum-amplitude-field! [render-data]
+  (calculate! render-data :max-amplitude-current :beam-profile-stochasticly)
+  (swap! *state assoc ::iteration 0))
+
+(defn calculate-maximum-amplitude!
+  [{:keys [renderer camera passes render-targets] :as render-data}]
+  (when (< (re/rget *state ::iteration) 50)
+    (calculate! render-data :max-amplitude-compare :beam-profile-stochasticly)
+    (let [{:keys [update! scene material]} (:select-maximum-amplitude passes)]
+      (update!)
+      (three-common/set-texture! material "t_data1" (:max-amplitude-compare render-targets))
+      (three-common/set-texture! material "t_data2" (:max-amplitude-current render-targets))
+      (.setRenderTarget renderer (:main render-targets))
+      (.render renderer scene camera))
+    (copy-texture render-data :main :max-amplitude-current)
+    (postprocess-and-render-to-canvas! render-data)
+    (swap! *state update ::iteration inc)))
+
 (defn render! [render-data]
   (re/with-reactive ::calculate
-    (calculate! render-data)
-    (postprocess-and-render-to-canvas! render-data)))
+    (if (re/rget *state :plot-use-maximum-amplitude?)
+      (do (init-maximum-amplitude-field! render-data)
+          (re/with-reactive ::maximum-amplitude
+            (calculate-maximum-amplitude! render-data)))
+      (do
+        (calculate! render-data :main :beam-profile)
+        (postprocess-and-render-to-canvas! render-data)))))
 
 (defn rot90 [[x y]] [y (- x)])
 
@@ -84,9 +115,6 @@
                                  :premultipliedAlpha false
                                  :powerPreference    "high-performance"}))
 
-        render-target
-        (three/WebGLRenderTarget. n-samples 1)
-
         beam-profile-pass
         (three-common/create-pass
          (resource/inline "shaders/calculate_beam_profile.frag")
@@ -94,19 +122,43 @@
           :u_pulseLength :u_time :u_soundSpeed :u_attenuationFactor :u_waveOrigin :u_t0
           :u_waveDirection :u_lateralBeamProfile :u_beamProfileSampleLineLength])
 
+        beam-profile-stochasticly-pass
+        (three-common/create-pass
+         (resource/inline "shaders/stochastic_time_beam_profile.frag")
+         [:u_elementsTexture :u_nElements :u_centerFrequency :u_samplePoint
+          :u_pulseLength :u_time :u_soundSpeed :u_attenuationFactor :u_waveOrigin :u_t0
+          :u_waveDirection :u_lateralBeamProfile :u_beamProfileSampleLineLength :u_seed])
+
+        select-maximum-amplitude-pass
+        (three-common/create-pass
+         (resource/inline "shaders/select_maximum_amplitude.frag")
+         [])
+
+        copy-maximum-amplitude-pass
+        (three-common/create-pass
+         (resource/inline "shaders/copy_texture.frag")
+         [])
+
         postprocess-pass
         (three-common/create-pass
          (resource/inline "shaders/postprocess_beam_profile.frag")
          [])
 
-        render-data {:canvas        canvas
-                     :ctx-2d        (.getContext canvas "2d")
-                     :renderer      renderer
-                     :camera        camera
-                     :render-target render-target
-                     :passes        {:beam-profile beam-profile-pass
-                                     :postprocess  postprocess-pass}}]
-    (.setSize renderer n-samples n-samples false)
+        render-data {:canvas         canvas
+                     :ctx-2d         (.getContext canvas "2d")
+                     :renderer       renderer
+                     :camera         camera
+                     :render-targets {:main                  (three/WebGLRenderTarget. 1 1)
+                                      :max-amplitude-compare (three/WebGLRenderTarget. 1 1)
+                                      :max-amplitude-current (three/WebGLRenderTarget. 1 1)}
+                     :passes          {:beam-profile                beam-profile-pass
+                                       :beam-profile-stochasticly   beam-profile-stochasticly-pass
+                                       :select-maximum-amplitude    select-maximum-amplitude-pass
+                                       :copy-maximum-amplitude-pass copy-maximum-amplitude-pass
+                                       :postprocess                 postprocess-pass}}]
+    (.setSize renderer n-samples 256 false)
+    (doseq [render-target (vals (:render-targets render-data))]
+      (.setSize render-target n-samples 256))
     (render! render-data)
     (add-event-handlers! canvas)))
 

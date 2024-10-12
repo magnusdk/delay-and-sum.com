@@ -63,8 +63,8 @@
   (swap! *state assoc ::iteration 0))
 
 (defn calculate-maximum-amplitude-field!
-  [{:keys [renderer camera passes render-targets] :as render-data}] 
-  (when (< (re/rget *state ::iteration) 50)
+  [{:keys [renderer camera passes render-targets] :as render-data}]
+  (when (< (re/rget *state ::iteration) 100)
     (calculate-field! render-data
                       :render-target :max-amplitude-compare
                       :pass          :calculate-field-stochasticly)
@@ -82,16 +82,16 @@
 
 
 (defn render! [render-data]
-  (re/with-reactive ::resize 
+  (re/with-reactive ::resize
     (when (resize! render-data)
       (re/with-reactive ::calculate-field
-        (if (re/rget *state :maximum-amplitude-plot?)
+        (if (re/rget *state :maximum-amplitude-simulation?)
           (do
             (init-maximum-amplitude-field! render-data)
             (re/with-reactive ::max-amplitude-passes
               (calculate-maximum-amplitude-field! render-data)))
           (re/with-reactive ::single-pass
-            (calculate-field! render-data) 
+            (calculate-field! render-data)
             (re/with-reactive ::postprocess-field
               (postprocess-field! render-data)
               (draw-field-to-canvas! render-data))))))))
@@ -106,11 +106,6 @@
                                  :premultipliedAlpha false
                                  :powerPreference    "high-performance"}))
 
-        render-targets
-        {:main                  (three/WebGLRenderTarget. 1 1)
-         :max-amplitude-compare (three/WebGLRenderTarget. 1 1)
-         :max-amplitude-current (three/WebGLRenderTarget. 1 1)}
-
         calculate-field-pass
         (three-common/create-pass
          (resource/inline "shaders/main_simulation.frag")
@@ -122,7 +117,7 @@
         (three-common/create-pass
          (resource/inline "shaders/stochastic_time_simulation.frag")
          [:u_cameraMatrix :u_elementsTexture :u_nElements :u_centerFrequency
-          :u_pulseLength :u_soundSpeed :u_attenuationFactor :u_virtualSource :u_seed])
+          :u_pulseLength :u_soundSpeed :u_attenuationFactor :u_seed])
 
         select-maximum-amplitude-pass
         (three-common/create-pass
@@ -142,7 +137,9 @@
                      :ctx-2d         (.getContext canvas "2d")
                      :renderer       renderer
                      :camera         camera
-                     :render-targets render-targets
+                     :render-targets {:main                  (three/WebGLRenderTarget. 1 1)
+                                      :max-amplitude-compare (three/WebGLRenderTarget. 1 1)
+                                      :max-amplitude-current (three/WebGLRenderTarget. 1 1)}
                      :passes         {:calculate-field              calculate-field-pass
                                       :calculate-field-stochasticly calculate-field-stochasticly-pass
                                       :select-maximum-amplitude     select-maximum-amplitude-pass

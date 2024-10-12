@@ -8,7 +8,6 @@ uniform float u_pulseLength;
 uniform float u_soundSpeed;
 uniform float u_attenuationFactor;
 uniform float u_seed;
-uniform vec2 u_virtualSource;
 
 #include <simulation>
 
@@ -17,7 +16,6 @@ void main() {
     int elementIndex = int(rand(u_seed, v_uv + vec2(10, 10)) * float(u_nElements));
     Element element = getElement(elementIndex);
 
-    float w = u_pulseLength * u_centerFrequency * u_soundSpeed;
     float time = distance(pointPos, element.pos) / u_soundSpeed - element.delay;
     time += (rand(u_seed + 1.0, v_uv) * 2.0 - 1.0) * u_pulseLength / u_centerFrequency;
 

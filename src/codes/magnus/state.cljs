@@ -22,18 +22,19 @@
    :attenuation-factor 1
    :tukey-roll         0
 
-   :display-mode              "phase"  ; #{"phase" "envelope" "intensity"}
-   :maximum-amplitude-plot?   false
-   :minimum-time              0
-   :maximum-time              1e-4
-   :minimum-db                -60
-   :maximum-db                0
-   :display-db?               true
-   :show-simplified-geometry? true
-   :show-grid?                true
+   :display-mode                  "phase"  ; #{"phase" "envelope" "intensity"}
+   :maximum-amplitude-simulation? false
+   :minimum-time                  0
+   :maximum-time                  1e-4
+   :minimum-db                    -60
+   :maximum-db                    0
+   :display-db?                   true
+   :show-simplified-geometry?     true
+   :show-grid?                    true
 
    ; plot-type can be #{"no-plot" "lateral-beam-profile" "axial-beam-profile"}
    :plot-type                      "no-plot"
+   :plot-use-maximum-amplitude?    true
    :beam-profile-sample-line-length 0.02  ; Meters
 
    :probe {:center         [0 0]

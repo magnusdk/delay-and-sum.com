@@ -315,7 +315,7 @@
              :sensitivity 1e-1
              :n-decimals  1
              :units       "dB")
-     (checkbox [:maximum-amplitude-plot?] "Show maximum amplitude?")
+     (checkbox [:maximum-amplitude-simulation?] "Show maximum amplitude?")
      (checkbox [:display-db?] "Display in dB?")
      (checkbox [:show-simplified-geometry?] "Show simplified geometry?")
      (checkbox [:show-grid?] "Show grid")]
@@ -326,16 +326,18 @@
                            ["lateral-beam-profile" "Lateral beam profile"]
                            ["axial-beam-profile"   "Axial beam profile"]])
      (when (not= (re/rget *state :plot-type) "no-plot")
-       (slider "Beam profile sample line width" [:beam-profile-sample-line-length]
-               :min         0
-               :magnitude   1e-3
-               :n-decimals  1
-               :sensitivity 1e-1
-               :units       "mm"
-               :on          {:pointerdown  (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
-                             :pointermove  (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
-                             :pointerup    (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))
-                             :pointerleave (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))}))]
+       (list
+        (checkbox [:plot-use-maximum-amplitude?] "Show maximum amplitude?")
+        (slider "Beam profile sample line width" [:beam-profile-sample-line-length]
+                :min         0
+                :magnitude   1e-3
+                :n-decimals  1
+                :sensitivity 1e-1
+                :units       "mm"
+                :on          {:pointerdown  (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
+                              :pointermove  (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
+                              :pointerup    (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))
+                              :pointerleave (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))})))]
 
     [:div.menu-section
      (header "General")
