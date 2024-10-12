@@ -38,7 +38,7 @@
   [{:keys [renderer camera postprocess-field-pass field-render-target]}]
   (let [{:keys [update! scene material]} postprocess-field-pass]
     (update!)
-    (three-common/set-previous-render-texture! material field-render-target)
+    (three-common/set-texture! material "t_simulatedField" field-render-target)
     (.setRenderTarget renderer nil)
     (.render renderer scene camera)))
 
@@ -68,8 +68,7 @@
                                  :powerPreference    "high-performance"}))
 
         field-render-target
-        (three/WebGLRenderTarget. 1 1 (clj->js {:magFilter three/NearestFilter
-                                                :minFilter three/NearestFilter}))
+        (three/WebGLRenderTarget. 1 1)
 
         calculate-field-pass
         (three-common/create-pass

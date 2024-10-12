@@ -1,13 +1,11 @@
-float TAU   = 6.28318;
-float PI    = 3.14159;
+float TAU = 6.28318;
+float PI = 3.14159;
 float SQRT2 = 1.41421;
-float EPS   = 1e-12;
+float EPS = 1e-12;
 
-vec3  PINK      = vec3(1.0, 0.09803921568627451, 0.3686274509803922);
-vec3  BLUE      = vec3(0, 0.5215686274509804, 1.0);
-vec3  DARK_BLUE = vec3(0.11372549019, 0.31764705882, 0.6);
-
-
+vec3 PINK = vec3(1.0, 0.09803921568627451, 0.3686274509803922);
+vec3 BLUE = vec3(0, 0.5215686274509804, 1.0);
+vec3 DARK_BLUE = vec3(0.11372549019, 0.31764705882, 0.6);
 
 vec4 packVec2ToVec4(vec2 v) {
     // Ensure input is in range [-1, 1]
@@ -43,4 +41,8 @@ float dB(float v) {
 
 float invDB(float v) {
     return pow(10.0, v / 20.0);
+}
+
+float rand(float seed, vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898, 78.233) + seed)) * 43758.5453);
 }

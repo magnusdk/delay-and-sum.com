@@ -15,6 +15,6 @@ void main() {
     int i = int((v_uv.y + 1.0) / 2.0 * float(u_nElements));
     Element element = getElement(i);
     float time = (v_uv.x + 1.0) / 2.0 * (u_maximumTime - u_minimumTime) + u_minimumTime;
-    vec2 v = signalForPoint(element.pos, time);
+    vec2 v = signalForPointScatter1(element.pos, time);
     gl_FragColor = packVec2ToVec4(v);
 }

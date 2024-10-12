@@ -13,6 +13,6 @@ uniform float u_attenuationFactor;
 
 void main() {
   vec2 pointPos = (vec3(v_uv, 1.0) * u_cameraMatrix).xy;
-  vec2 v = signalForPoint(pointPos, u_time);
+  vec2 v = signalForPointScatter1(pointPos, u_time);
   gl_FragColor = packVec2ToVec4(v);
 }

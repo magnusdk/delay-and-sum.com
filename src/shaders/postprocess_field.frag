@@ -1,5 +1,5 @@
 varying vec2 v_uv;
-uniform sampler2D t_previousRender;
+uniform sampler2D t_simulatedField;
 uniform float u_minimumDb;
 uniform float u_maximumDb;
 uniform bool u_useDb;
@@ -34,6 +34,6 @@ vec4 displayPhaseKernel(vec2 v) {
 }
 
 void main() {
-    vec4 previousColor = texture2D(t_previousRender, v_uv / 2.0 + vec2(0.5, 0.5));
+    vec4 previousColor = texture2D(t_simulatedField, v_uv / 2.0 + vec2(0.5, 0.5));
     gl_FragColor = displayPhaseKernel(unpackVec4ToVec2(previousColor));
 }

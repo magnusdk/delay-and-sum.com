@@ -13,7 +13,7 @@ uniform vec4 u_beamProfileEndPoints;
 
 void main() {
     vec2 pointPos = v_uv;
-    // vec2 v = signalForPoint(pointPos, u_time);
+    // vec2 v = signalForPointScatter1(pointPos, u_time);
     vec2 v = v_uv;
     gl_FragColor = packVec2ToVec4(v);
 }

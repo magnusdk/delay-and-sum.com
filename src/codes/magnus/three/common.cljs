@@ -23,9 +23,9 @@
                 (aset material "uniformsNeedUpdate" true)
                 scene)}))
 
-(defn set-previous-render-texture!
-  [material previous-render-target]
-  (aset material "uniforms" "t_previousRender" (clj->js {:value (.-texture previous-render-target)}))
+(defn set-texture!
+  [material name render-target]
+  (aset material "uniforms" name (clj->js {:value (.-texture render-target)}))
   (aset material "needsUpdate" true)
   (aset material "uniformsNeedUpdate" true))
 

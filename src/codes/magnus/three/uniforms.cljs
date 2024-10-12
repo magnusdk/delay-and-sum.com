@@ -161,3 +161,21 @@
    :initial   {:value true}
    :get-value #(re/rget *state :beam-profile-sample-line-length)
    :update!   (get-default-update-fn! :u_beamProfileSampleLineLength)})
+
+(defmethod get-uniform :u_probeCenter [_]
+  {:name      :u_probeCenter
+   :initial   {:value (three/Vector2.)}
+   :get-value #(let [[x y] (re/rget *state :probe :center)] (three/Vector2. x y))
+   :update!   (get-default-update-fn! :u_probeCenter)})
+
+(defmethod get-uniform :u_virtualSource [_]
+  {:name      :u_virtualSource
+   :initial   {:value (three/Vector2.)}
+   :get-value #(let [[x y] (re/rget *state :virtual-source)] (three/Vector2. x y))
+   :update!   (get-default-update-fn! :u_virtualSource)})
+
+(defmethod get-uniform :u_seed [_]
+  {:name      :u_seed
+   :initial   {:value true}
+   :get-value #(rand)
+   :update!   (get-default-update-fn! :u_seed)})
