@@ -327,7 +327,6 @@
                            ["axial-beam-profile"   "Axial beam profile"]])
      (when (not= (re/rget *state :plot-type) "no-plot")
        (list
-        (checkbox [:plot-use-maximum-amplitude?] "Show maximum amplitude?")
         (slider "Beam profile sample line width" [:beam-profile-sample-line-length]
                 :min         0
                 :magnitude   1e-3
@@ -337,7 +336,16 @@
                 :on          {:pointerdown  (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
                               :pointermove  (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
                               :pointerup    (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))
-                              :pointerleave (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))})))]
+                              :pointerleave (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))})
+        (checkbox [:plot-use-maximum-amplitude?] "Show maximum amplitude?")
+        (slider "Minimum dB" [:plot-minimum-db]
+                :sensitivity 1e-1
+                :n-decimals  1
+                :units       "dB")
+        (slider "Maximum dB" [:plot-maximum-db]
+                :sensitivity 1e-1
+                :n-decimals  1
+                :units       "dB")))]
 
     [:div.menu-section
      (header "General")

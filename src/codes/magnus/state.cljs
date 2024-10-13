@@ -33,9 +33,11 @@
    :show-grid?                    true
 
    ; plot-type can be #{"no-plot" "lateral-beam-profile" "axial-beam-profile"}
-   :plot-type                      "no-plot"
-   :plot-use-maximum-amplitude?    true
+   :plot-type                       "no-plot"
+   :plot-use-maximum-amplitude?     true
    :beam-profile-sample-line-length 0.02  ; Meters
+   :plot-minimum-db                 -60
+   :plot-maximum-db                 0
 
    :probe {:center         [0 0]
            :n-elements     256

@@ -24,7 +24,6 @@
     (.setRenderTarget renderer nil)
     (.render renderer scene camera)))
 
-
 (defn copy-texture
   [{:keys [renderer camera passes render-targets]} from to]
   (let [{:keys [update! scene material]} (:copy-maximum-amplitude-pass passes)]
@@ -48,16 +47,16 @@
       (.setRenderTarget renderer (:main render-targets))
       (.render renderer scene camera))
     (copy-texture render-data :main :max-amplitude-current)
-    (postprocess-and-render-to-canvas! render-data)
-    (swap! *state update ::iteration inc)))
+    (swap! *state update ::iteration inc))
+  (postprocess-and-render-to-canvas! render-data))
 
 (defn render! [render-data]
-  (re/with-reactive ::calculate
+  (re/with-reactive ::check-maximum-amplitude?
     (if (re/rget *state :plot-use-maximum-amplitude?)
       (do (init-maximum-amplitude-field! render-data)
-          (re/with-reactive ::maximum-amplitude
+          (re/with-reactive ::calculate
             (calculate-maximum-amplitude! render-data)))
-      (do
+      (re/with-reactive ::calculate
         (calculate! render-data :main :beam-profile)
         (postprocess-and-render-to-canvas! render-data)))))
 
@@ -142,7 +141,7 @@
         postprocess-pass
         (three-common/create-pass
          (resource/inline "shaders/postprocess_beam_profile.frag")
-         [])
+         [:u_plotMinimumDb :u_plotMaximumDb])
 
         render-data {:canvas         canvas
                      :ctx-2d         (.getContext canvas "2d")

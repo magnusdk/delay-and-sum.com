@@ -162,6 +162,19 @@
    :get-value #(re/rget *state :beam-profile-sample-line-length)
    :update!   (get-default-update-fn! :u_beamProfileSampleLineLength)})
 
+(defmethod get-uniform :u_plotMinimumDb [_]
+  {:name      :u_plotMinimumDb
+   :initial   {:value true}
+   :get-value #(re/rget *state :plot-minimum-db)
+   :update!   (get-default-update-fn! :u_plotMinimumDb)})
+
+(defmethod get-uniform :u_plotMaximumDb [_]
+  {:name      :u_plotMaximumDb
+   :initial   {:value true}
+   :get-value #(re/rget *state :plot-maximum-db)
+   :update!   (get-default-update-fn! :u_plotMaximumDb)})
+
+
 (defmethod get-uniform :u_probeCenter [_]
   {:name      :u_probeCenter
    :initial   {:value (three/Vector2.)}
