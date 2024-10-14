@@ -31,7 +31,9 @@
    :display-db?                   true
    :show-simplified-geometry?     true
    :show-grid?                    true
-   :sample-timeline-at            "probe"
+
+   :sample-timeline-at "probe"
+   :timeline-gain      1
 
    ; plot-type can be #{"no-plot" "lateral-beam-profile" "axial-beam-profile"}
    :plot-type                       "no-plot"

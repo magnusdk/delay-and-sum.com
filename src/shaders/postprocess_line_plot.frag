@@ -1,13 +1,15 @@
 varying vec2 v_uv;
 uniform sampler2D t_simulatedField;
 uniform int u_textureWidth;
+uniform float u_timelineGain;
 
 #include <common>
 
 vec2 getSample(int offsetXPixels) {
     float offsetX = float(offsetXPixels) / float(u_textureWidth);
     vec2 coord = vec2(v_uv.x / 2.0 + 0.5 - offsetX, 0.0);
-    return unpackVec4ToVec2(texture2D(t_simulatedField, coord));
+    vec2 value = unpackVec4ToVec2(texture2D(t_simulatedField, coord));
+    return value * u_timelineGain;
 }
 
 void main() {

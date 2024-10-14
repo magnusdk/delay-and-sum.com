@@ -174,7 +174,6 @@
    :get-value #(re/rget *state :plot-maximum-db)
    :update!   (get-default-update-fn! :u_plotMaximumDb)})
 
-
 (defmethod get-uniform :u_probeCenter [_]
   {:name      :u_probeCenter
    :initial   {:value (three/Vector2.)}
@@ -192,3 +191,9 @@
    :initial   {:value true}
    :get-value #(rand)
    :update!   (get-default-update-fn! :u_seed)})
+
+(defmethod get-uniform :u_timelineGain [_]
+  {:name      :u_timelineGain
+   :initial   {:value true}
+   :get-value #(re/rget *state :timeline-gain)
+   :update!   (get-default-update-fn! :u_timelineGain)})

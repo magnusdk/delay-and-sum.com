@@ -303,7 +303,7 @@
              :max 1)]
 
     [:div.menu-section
-     (header "Display")
+     (header "Field display options")
      (select [:display-mode] [["phase"     "Display phase"]
                               ["envelope"  "Display envelope"]
                               ["intensity" "Display intensity"]])
@@ -319,6 +319,15 @@
      (checkbox [:display-db?] "Display in dB?")
      (checkbox [:show-simplified-geometry?] "Show simplified geometry?")
      (checkbox [:show-grid?] "Show grid")]
+
+    [:div.menu-section
+     (header "Timeline display options")
+     (select [:sample-timeline-at] [["probe"        "Probe (render channel data)"]
+                                    ["sample-point" "Sample point"]])
+     (when (= (re/rget *state :sample-timeline-at) "sample-point")
+       (slider "Timeline gain" [:timeline-gain]
+               :sensitivity 1e-1
+               :n-decimals  1))]
 
     [:div.menu-section
      (header "Plot")

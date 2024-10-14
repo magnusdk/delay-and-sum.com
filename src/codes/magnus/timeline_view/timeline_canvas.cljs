@@ -104,7 +104,7 @@
         postprocess-field-at-scatterer-pass
         (three-common/create-pass
          (resource/inline "shaders/postprocess_line_plot.frag")
-         [])
+         [:u_timelineGain])
 
         render-data {:canvas                 canvas
                      :ctx-2d                 (.getContext canvas "2d")
