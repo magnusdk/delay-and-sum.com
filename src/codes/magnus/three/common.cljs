@@ -29,6 +29,10 @@
   (aset material "needsUpdate" true)
   (aset material "uniformsNeedUpdate" true))
 
+(defn set-extra-uniform!
+  [material name value]
+  (aset material "uniforms" name (clj->js {:value value}))
+  (aset material "uniformsNeedUpdate" true))
 
 (aset three/ShaderChunk "common" (resource/inline "shaders/common.glsl"))
 (aset three/ShaderChunk "packedElements" (resource/inline "shaders/packed_elements.glsl"))

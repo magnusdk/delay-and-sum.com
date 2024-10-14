@@ -3,6 +3,7 @@ float PI = 3.14159;
 float SQRT2 = 1.41421;
 float EPS = 1e-12;
 
+vec3 WHITE = vec3(1, 1, 1);
 vec3 PINK = vec3(1.0, 0.09803921568627451, 0.3686274509803922);
 vec3 BLUE = vec3(0, 0.5215686274509804, 1.0);
 vec3 DARK_BLUE = vec3(0.11372549019, 0.31764705882, 0.6);
@@ -45,4 +46,12 @@ float invDB(float v) {
 
 float rand(float seed, vec2 p) {
     return fract(sin(dot(p, vec2(12.9898, 78.233) + seed)) * 43758.5453);
+}
+
+float lineSDF(vec2 p, vec2 a, vec2 b) {
+    vec2 ba = b - a;
+    vec2 pa = p - a;
+    float h = dot(pa, ba) / dot(ba, ba);
+    h = clamp(h, 0.0, 1.0);
+    return length(pa - h * ba);
 }

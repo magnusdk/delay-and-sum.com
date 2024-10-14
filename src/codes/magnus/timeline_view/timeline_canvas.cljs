@@ -8,36 +8,48 @@
             [codes.magnus.three.common :as three-common]
             [shadow.resource :as resource]))
 
+(def n-timeline-samples 2048)
+
 
 (defn resize!
   [{:keys [canvas renderer field-render-target]}]
-  (let [canvas-width    (.-width canvas)
-        canvas-height   (.-height canvas)
-        expected-width  1024
-        expected-height (re/rget *state :probe :n-elements)
-        hidden-canvas   (.-domElement renderer)]
+  (let [canvas-width          (.-width canvas)
+        canvas-height         (.-height canvas)
+        expected-width        n-timeline-samples
+        expected-height       (if (= (re/rget *state :sample-timeline-at) "probe")
+                                (re/rget *state :probe :n-elements)
+                                256)
+        render-target-height  (if (= (re/rget *state :sample-timeline-at) "probe")
+                                (re/rget *state :probe :n-elements)
+                                1)
+        hidden-canvas         (.-domElement renderer)]
     (when (not= [canvas-width canvas-height]
                 [expected-width expected-height])
-      (set! (.-width canvas) expected-width)
-      (set! (.-height canvas) expected-height)
       (set! (.-width hidden-canvas) expected-width)
       (set! (.-height hidden-canvas) expected-height)
+      (set! (.-width canvas) expected-width)
+      (set! (.-height canvas) expected-height)
       (.setSize renderer expected-width expected-height false)
-      (.setSize field-render-target expected-width expected-height))
+      (.setSize field-render-target expected-width render-target-height))
     ; Must have some with and height, else return false
     (> (* expected-width expected-height) 0)))
 
 (defn calculate-field!
-  [{:keys [renderer camera calculate-field-pass field-render-target]}]
-  (let [{:keys [update! scene]} calculate-field-pass]
+  [{:keys [renderer camera passes field-render-target]}]
+  (let [{:keys [update! scene]} (if (= (re/rget *state :sample-timeline-at) "probe")
+                                  (:calculate-channel-data       passes)
+                                  (:calculate-field-at-scatterer passes))]
     (update!)
     (.setRenderTarget renderer field-render-target)
     (.render renderer scene camera)))
 
 (defn postprocess-field!
-  [{:keys [renderer camera postprocess-field-pass field-render-target]}]
-  (let [{:keys [update! scene material]} postprocess-field-pass]
+  [{:keys [renderer camera passes field-render-target]}]
+  (let [{:keys [update! scene material]} (if (= (re/rget *state :sample-timeline-at) "probe")
+                                           (:postprocess-channel-data       passes)
+                                           (:postprocess-field-at-scatterer passes))]
     (update!)
+    (three-common/set-extra-uniform! material "u_textureWidth" n-timeline-samples)
     (three-common/set-texture! material "t_simulatedField" field-render-target)
     (.setRenderTarget renderer nil)
     (.render renderer scene camera)))
@@ -70,24 +82,39 @@
         field-render-target
         (three/WebGLRenderTarget. 1 1)
 
-        calculate-field-pass
+        calculate-channel-data-pass
         (three-common/create-pass
-         (resource/inline "shaders/timeline.frag")
+         (resource/inline "shaders/timeline_sampled_at_probe.frag")
          [:u_elementsTexture :u_nElements :u_samplePoint :u_centerFrequency
           :u_pulseLength :u_soundSpeed :u_minimumTime :u_maximumTime
           :u_attenuationFactor])
 
-        postprocess-field-pass
+        calculate-field-at-scatterer-pass
+        (three-common/create-pass
+         (resource/inline "shaders/timeline_sampled_at_scatterer.frag")
+         [:u_elementsTexture :u_nElements :u_samplePoint :u_centerFrequency
+          :u_pulseLength :u_soundSpeed :u_minimumTime :u_maximumTime
+          :u_attenuationFactor])
+
+        postprocess-channel-data-pass
         (three-common/create-pass
          (resource/inline "shaders/postprocess_field.frag")
          [:u_minimumDb :u_maximumDb :u_useDb :u_displayMode])
+
+        postprocess-field-at-scatterer-pass
+        (three-common/create-pass
+         (resource/inline "shaders/postprocess_line_plot.frag")
+         [])
+
         render-data {:canvas                 canvas
                      :ctx-2d                 (.getContext canvas "2d")
                      :renderer               renderer
                      :camera                 camera
                      :field-render-target    field-render-target
-                     :calculate-field-pass   calculate-field-pass
-                     :postprocess-field-pass postprocess-field-pass}]
+                     :passes                 {:calculate-channel-data         calculate-channel-data-pass
+                                              :calculate-field-at-scatterer   calculate-field-at-scatterer-pass
+                                              :postprocess-channel-data       postprocess-channel-data-pass
+                                              :postprocess-field-at-scatterer postprocess-field-at-scatterer-pass}}]
     (render! render-data)))
 
 
