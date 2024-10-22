@@ -1,8 +1,8 @@
-(ns codes.magnus.main-view.interaction.mobile
+(ns codes.magnus.main-view.interaction.touch
   (:require [clojure.core.matrix :as mat]
+            [codes.magnus.main-view.camera :as camera]
             [codes.magnus.reactive.core :as re]
-            [codes.magnus.state :refer [*state]]
-            [codes.magnus.main-view.camera :as camera]))
+            [codes.magnus.state :refer [*state]]))
 
 (defn send-custom-event!
   ([element type]
@@ -44,8 +44,8 @@
      (mat/distance (t touch-1) (t touch-2)))))
 
 
-(defn handle! [{:keys [namespace get-pos element support-camera-gestures]} event] 
-  (.preventDefault event) 
+(defn handle-touch! [{:keys [namespace get-pos element support-camera-gestures event]}] 
+  (.preventDefault event)
   (let [previous-touches (re/rget *state namespace :touches)
         new-touches      (get-touches event)
         pointer-pos      (get-pos element (first (vals new-touches)))]
@@ -74,29 +74,5 @@
                            (distance new-touches to-simulation))]
         (camera/transform-camera!
          (-> (camera/scale-matrix (center new-touches to-simulation) scale)
-             (mat/mmul (camera/translate-matrix dx dy))))))))
-
-
-
-(defn handle-start! [state event]
-  (handle! state event))
-
-(defn handle-move! [state event]
-  (handle! state event))
-
-(defn handle-cancel! [state event]
-  (handle! state event))
-
-(defn handle-end! [state event]
-  (handle! state event))
-
-
-(defn init! [element namespace get-pos support-camera-gestures]
-  (let [state {:element                 element
-               :namespace               namespace
-               :get-pos                 get-pos
-               :support-camera-gestures support-camera-gestures}]
-    (.addEventListener element "touchstart" (partial handle-start! state))
-    (.addEventListener element "touchmove" (partial handle-move! state))
-    (.addEventListener element "touchcancel" (partial handle-cancel! state))
-    (.addEventListener element "touchend" (partial handle-end! state))))
+             (mat/mmul (camera/translate-matrix dx dy)))))))
+  {:target :touch})
