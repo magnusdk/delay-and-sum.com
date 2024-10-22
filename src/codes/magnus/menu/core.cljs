@@ -304,9 +304,12 @@
 
     [:div.menu-section
      (header "Field display options")
-     (select [:display-mode] [["phase"     "Display phase"]
-                              ["envelope"  "Display envelope"]
-                              ["intensity" "Display intensity"]])
+     (let [display-mode-options (cond-> [["phase"       "Display phase"]
+                                         ["envelope"    "Display envelope"]
+                                         ["intensity"   "Display intensity"]]
+                                  (re/rget *state :maximum-amplitude-simulation?)
+                                  (conj ["time-delays" "Display time delays"]))]
+       (select [:display-mode] display-mode-options))
      (slider "Minimum dB" [:minimum-db]
              :sensitivity 1e-1
              :n-decimals  1

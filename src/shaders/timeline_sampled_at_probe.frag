@@ -8,6 +8,7 @@ uniform float u_soundSpeed;
 uniform float u_minimumTime;
 uniform float u_maximumTime;
 uniform float u_attenuationFactor;
+out vec4 outColor;
 
 #include <simulation>
 
@@ -16,5 +17,5 @@ void main() {
     Element element = getElement(i);
     float time = (v_uv.x + 1.0) / 2.0 * (u_maximumTime - u_minimumTime) + u_minimumTime;
     vec2 v = signalForPointScatter1(element.pos, time);
-    gl_FragColor = packVec2ToVec4(v);
+    outColor = packVec2ToVec4(v);
 }

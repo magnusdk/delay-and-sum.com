@@ -2,6 +2,7 @@ varying vec2 v_uv;
 uniform sampler2D t_simulatedField;
 uniform int u_textureWidth;
 uniform float u_timelineGain;
+out vec4 outColor;
 
 #include <common>
 
@@ -26,5 +27,5 @@ void main() {
         d = min(d, lineSDF(p, a, b));
         a = b;
     }
-    gl_FragColor = vec4(mix(DARK_BLUE, WHITE, smoothstep(0.0, lineThickness, d)), 1);
+    outColor = vec4(mix(DARK_BLUE, WHITE, smoothstep(0.0, lineThickness, d)), 1);
 }

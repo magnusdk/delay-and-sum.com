@@ -95,9 +95,10 @@
   {:name      :u_displayMode
    :initial   {:value nil}
    :get-value #(case (re/rget *state :display-mode)
-                 "phase"     0
-                 "envelope"  1
-                 "intensity" 2)
+                 "phase"       0
+                 "envelope"    1
+                 "intensity"   2
+                 "time-delays" 3)
    :update!   (get-default-update-fn! :u_displayMode)})
 
 (defmethod get-uniform :u_cameraMatrix [_]

@@ -2,6 +2,7 @@ varying vec2 v_uv;
 uniform sampler2D t_previousRender;
 uniform float u_plotMinimumDb;
 uniform float u_plotMaximumDb;
+out vec4 outColor;
 
 #include <common>
 
@@ -13,8 +14,8 @@ void main() {
     float y = (v_uv.y - 1.0) / 2.0;
     float amp = (dB(length(v)) + u_plotMaximumDb) / (u_plotMaximumDb - u_plotMinimumDb);
 
-    gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0);
+    outColor = vec4(1.0, 1.0, 1.0, 1.0);
     if(y <= amp) {
-        gl_FragColor = vec4(BLUE, 1.0);
+        outColor = vec4(BLUE, 1.0);
     }
 }

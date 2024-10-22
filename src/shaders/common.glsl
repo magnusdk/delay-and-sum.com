@@ -36,6 +36,36 @@ vec2 unpackVec4ToVec2(vec4 packed) {
     return v * 2.0 - 1.0;
 }
 
+vec4 packFloatToVec4(float v) {
+    // Ensure input is in range [-1, 1]
+    v = clamp(v, -1.0, 1.0);
+
+    // Convert from [-1, 1] to [0, 1]
+    v = (v + 1.0) / 2.0;
+
+    // Convert to 32-bit representation
+    float v32 = v * 4294967295.0; // 2^32 - 1
+
+    // Split into 8-bit components
+    vec4 packed;
+    packed.r = floor(fract(v32 / 16777216.0) * 256.0) / 255.0; // 16777216 = 256^3
+    packed.g = floor(fract(v32 / 65536.0) * 256.0) / 255.0;    // 65536 = 256^2
+    packed.b = floor(fract(v32 / 256.0) * 256.0) / 255.0;
+    packed.a = floor(v32 / 256.0) / 255.0;
+
+    return packed;
+}
+
+float unpackVec4ToFloat(vec4 packed) {
+    float v32 = (packed.r * 255.0) * 16777216.0 +
+        (packed.g * 255.0) * 65536.0 +
+        (packed.b * 255.0) * 256.0 +
+        (packed.a * 255.0);
+
+    float v = v32 / 4294967295.0;
+    return v * 2.0 - 1.0;
+}
+
 float dB(float v) {
     return 20.0 * log2(v) / log2(10.0);
 }

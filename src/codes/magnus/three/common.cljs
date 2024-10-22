@@ -10,7 +10,8 @@
         material (three/ShaderMaterial.
                   (clj->js {:vertexShader   (resource/inline "shaders/quad_gpgpu.vert")
                             :fragmentShader fragment-shader
-                            :uniforms       (apply merge {} (map (juxt :name :initial) uniforms))}))
+                            :uniforms       (apply merge {} (map (juxt :name :initial) uniforms))
+                            :glslVersion    three/GLSL3}))
         scene    (three/Scene.)
         geometry (three/Mesh. (three/PlaneGeometry. 2 2) material)]
     (.add scene geometry)
@@ -24,8 +25,10 @@
                 scene)}))
 
 (defn set-texture!
-  [material name render-target]
-  (aset material "uniforms" name (clj->js {:value (.-texture render-target)}))
+  [material name render-target & {:keys [texture-index]}]
+  (if texture-index
+    (aset material "uniforms" name (clj->js {:value (aget render-target "textures" texture-index)}))
+    (aset material "uniforms" name (clj->js {:value (.-texture render-target)})))
   (aset material "needsUpdate" true)
   (aset material "uniformsNeedUpdate" true))
 

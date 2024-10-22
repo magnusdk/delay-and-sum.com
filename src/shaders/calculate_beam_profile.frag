@@ -12,6 +12,7 @@ uniform vec2 u_waveDirection;
 uniform vec2 u_samplePoint;
 uniform bool u_lateralBeamProfile;  // Sample laterally if true, else axially
 uniform float u_beamProfileSampleLineLength;  // Meters
+out vec4 outColor;
 
 #include <simulation>
 
@@ -30,5 +31,5 @@ void main() {
     // As a function of the plot's x-axis (v_uv.x), sample a point across the orthogonal wave direction.
     pointPos += beamProfileDirection * v_uv.x * u_beamProfileSampleLineLength / 2.0;
     vec2 v = signalForPointScatter1(pointPos, u_time);
-    gl_FragColor = packVec2ToVec4(v);
+    outColor = packVec2ToVec4(v);
 }

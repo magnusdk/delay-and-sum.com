@@ -22,7 +22,7 @@
    :attenuation-factor 1
    :tukey-roll         0
 
-   :display-mode                  "phase"  ; #{"phase" "envelope" "intensity"}
+   :display-mode                  "phase"  ; #{"phase" "envelope" "intensity" "time-delays"}
    :maximum-amplitude-simulation? false
    :minimum-time                  0
    :maximum-time                  1e-4

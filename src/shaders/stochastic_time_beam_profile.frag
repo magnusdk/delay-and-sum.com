@@ -13,6 +13,7 @@ uniform vec2 u_samplePoint;
 uniform bool u_lateralBeamProfile;  // Sample laterally if true, else axially
 uniform float u_beamProfileSampleLineLength;  // Meters
 uniform float u_seed;
+out vec4 outColor;
 
 #include <simulation>
 
@@ -38,5 +39,5 @@ void main() {
     time += (rand(u_seed + 1.0, v_uv) * 2.0 - 1.0) * u_pulseLength / u_centerFrequency;
 
     vec2 v = signalForPointScatter0(pointPos, time);
-    gl_FragColor = packVec2ToVec4(v);
+    outColor = packVec2ToVec4(v);
 }

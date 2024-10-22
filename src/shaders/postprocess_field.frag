@@ -5,6 +5,7 @@ uniform float u_maximumDb;
 uniform bool u_useDb;
 // Mode is either 0: phase, 1: envelope, or 2: intensity
 uniform int u_displayMode;
+out vec4 outColor;
 
 #include <common>
 
@@ -35,5 +36,5 @@ vec4 displayPhaseKernel(vec2 v) {
 
 void main() {
     vec4 previousColor = texture2D(t_simulatedField, v_uv / 2.0 + vec2(0.5, 0.5));
-    gl_FragColor = displayPhaseKernel(unpackVec4ToVec2(previousColor));
+    outColor = displayPhaseKernel(unpackVec4ToVec2(previousColor));
 }
