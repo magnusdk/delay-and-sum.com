@@ -1,0 +1,39 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: delay-and-sum.com
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Magnus Dalen
+    family-names: Kvalevåg
+    email: magnus.kvalevag@ntnu.no
+    affiliation: Norwegian University of Science and Technology
+    orcid: 'https://orcid.org/0009-0000-3589-4575'
+  - given-names: Svein-Erik
+    family-names: Måsøy
+    orcid: 'https://orcid.org/0000-0001-9065-622X'
+    affiliation: Norwegian University of Science and Technology
+    email: svein-erik.masoy@ntnu.no
+  - affiliation: Norwegian University of Science and Technology
+    given-names: Lasse
+    family-names: Løvstakken
+    orcid: 'https://orcid.org/0000-0003-2474-9588'
+    email: lasse.lovstakken@ntnu.no
+repository-code: 'https://github.com/magnusdk/delay-and-sum.com'
+url: 'https://www.delay-and-sum.com/'
+abstract: >-
+  delay-and-sum.com is a GPU-based interactive wave
+  simulator that runs in real-time in a web-browser. It aims
+  to be a tool for gaining insight into both simple and
+  complex array setups with a focus on being educational and
+  providing simple baseline simulation setups that can later
+  be expanded on by the user.
+keywords:
+  - ultrasound
+  - simulation
+  - beamforming
+license: Apache-2.0
