@@ -4,6 +4,8 @@ Any change you make in the simulation is automatically reflected in the URL, [wh
 
 If you are using delay-and-sum.com as part of lecturing, please let me know by email at magnus.kvalevag@ntnu.no. I'm just curious about whether and how people are using my app :)
 
+To cite this software, click on the _**Cite this repository**_ button to the right (on GitHub) and copy either the APA or BibTeX string.
+
 With love,
 <br>
 <img src="https://github.com/user-attachments/assets/acf78749-b858-47c0-a934-4f5a4039698c" alt="NTNU hovedlogo - farger - bredde" style="height: 20px;">
