@@ -38,7 +38,7 @@
 
 (defn calculate-maximum-amplitude!
   [{:keys [renderer camera passes render-targets] :as render-data}]
-  (when (< (re/rget *state ::iteration) 100)
+  (when (< (re/rget *state ::iteration) 200)
     (calculate! render-data :max-amplitude-compare :beam-profile-stochasticly)
     (let [{:keys [update! scene material]} (:select-maximum-amplitude passes)]
       (update!)

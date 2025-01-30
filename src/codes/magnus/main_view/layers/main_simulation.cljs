@@ -145,7 +145,7 @@
 
         copy-texture-pass
         (three-common/create-pass
-         (resource/inline "shaders/copy_texture.frag")
+         (resource/inline "shaders/copy_values_and_times.frag")
          [])
 
         postprocess-field-pass
