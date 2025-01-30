@@ -318,9 +318,9 @@
              :sensitivity 1e-1
              :n-decimals  1
              :units       "dB")
-     (checkbox [:maximum-amplitude-simulation?] "Show maximum amplitude?")
-     (checkbox [:display-db?] "Display in dB?")
-     (checkbox [:show-simplified-geometry?] "Show simplified geometry?")
+     (checkbox [:maximum-amplitude-simulation?] "Show maximum amplitude")
+     (checkbox [:display-db?] "Display in dB")
+     (checkbox [:show-simplified-geometry?] "Show simplified geometry")
      (checkbox [:show-grid?] "Show grid")]
 
     [:div.menu-section
@@ -349,7 +349,7 @@
                               :pointermove  (fn [_] (swap! *state merge (plots/beam-profile-start-and-end-pos)))
                               :pointerup    (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))
                               :pointerleave (fn [_] (swap! *state dissoc :plot/left-most-pos :plot/right-most-pos))})
-        (checkbox [:plot-use-maximum-amplitude?] "Show maximum amplitude?")
+        (checkbox [:plot-use-maximum-amplitude?] "Sample maximum amplitude")
         (slider "Minimum dB" [:plot-minimum-db]
                 :sensitivity 1e-1
                 :n-decimals  1
