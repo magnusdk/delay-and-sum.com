@@ -369,6 +369,9 @@
       [:p "Developed at and funded by NTNU. "
        [:a {:href "https://github.com/magnusdk/delay-and-sum.com"}
         "Find the source code on GitHub."]]
+      [:p "This work was presented as a poster at IUS 2024. "
+       [:a {:href "https://delay-and-sum.com/poster_delay_and_sum_com.pdf"}
+        "Click here to view the poster as a PDF."]]
       [:p "If you find any bugs or have suggestions for improvements, "
        [:a {:href "https://github.com/magnusdk/delay-and-sum.com/issues/new"}
         "please create an issue on GitHub."]
