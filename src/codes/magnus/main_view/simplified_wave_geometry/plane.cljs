@@ -9,9 +9,6 @@
             [codes.magnus.state :refer [*state]]
             [thi.ng.color.core :as col]))
 
-(defn angle [[x y]]
-  (math/atan2 y x))
-
 (defn draw-simplified-geometry!
   [ctx]
   (let [[viewport-width viewport-height] (re/rget *state :simulation-container/size)
@@ -35,19 +32,19 @@
                 wave-origin
                 n-elements]} (probe/element-geometry)
 
-        distance           (-> [(* time sound-speed) 0]
+        wave-dir              (mat/normalise (mat/sub virtual-source wave-origin))
+        wave-dir-90           [(- (nth wave-dir 1)) (nth wave-dir 0)]
+        distance           (-> (mat/mul wave-dir (* time sound-speed))
                                (camera/scale-vector view-to-canvas-matrix)
-                               (mat/magnitude))
+                               (mat/dot wave-dir))
 
         [virtual-source corner-1 corner-2 wave-origin]
         (camera/transform-vec
          [virtual-source corner-1 corner-2 wave-origin]
          view-to-canvas-matrix)
 
-        wave-dir              (mat/normalise (mat/sub virtual-source wave-origin))
-        wave-dir-90           [(- (nth wave-dir 1)) (nth wave-dir 0)]
         viewport-diag-length  (mat/magnitude [viewport-width viewport-height])
-        projected-length      (abs (apply + (mat/mul 0.5 (mat/sub corner-2 corner-1) wave-dir-90)))]
+        projected-length      (apply + (mat/mul 0.5 (mat/sub corner-2 corner-1) wave-dir-90))]
     (when (> n-elements 1)
       (common/draw-polygon!
        ctx [corner-1
