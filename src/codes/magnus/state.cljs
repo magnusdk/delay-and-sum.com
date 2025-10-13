@@ -11,6 +11,7 @@
 
    :virtual-source              [0 0.04]
    :sample-point                [-0.02 0.05]
+   :sample-point-strength       1
    :force-current-time-at-focus false
 
    :center-frequency   3e6

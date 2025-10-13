@@ -10,6 +10,7 @@ uniform vec2 u_waveOrigin;
 uniform float u_t0;
 uniform vec2 u_waveDirection;
 uniform vec2 u_samplePoint;
+uniform float u_samplePointStrength;
 uniform bool u_lateralBeamProfile;  // Sample laterally if true, else axially
 uniform float u_beamProfileSampleLineLength;  // Meters
 out vec4 outColor;

@@ -373,6 +373,15 @@
     [:div.menu-section
      (header "General")
      (checkbox [:force-current-time-at-focus] "Force wavefront to be at focus point")
+     [:div.control
+      [:label "Disable point scatterer"]
+      [:input {:on      {:change (fn [e]
+                                   (swap! *state assoc :sample-point-strength (if (aget e "target" "checked") 0 1)))}
+               :type    "checkbox"
+               :checked (re/rget *state :sample-point-strength)
+               :replicant/on-update (fn [{:replicant/keys [node]}]
+                                      (aset node "checked" (= 0 (re/rget *state :sample-point-strength))))}]
+      [:span.control-units]]
      (button "Reset all state" #(reset-state!))
      [:hr]
      [:div.content

@@ -1,6 +1,7 @@
 varying vec2 v_uv;
 uniform sampler2D u_elementsTexture;
 uniform vec2 u_samplePoint;
+uniform float u_samplePointStrength;
 uniform int u_nElements;
 uniform float u_centerFrequency;
 uniform float u_pulseLength;

@@ -55,6 +55,12 @@
    :get-value #(let [[x y] (re/rget *state :sample-point)] (three/Vector2. x y))
    :update!   (get-default-update-fn! :u_samplePoint)})
 
+(defmethod get-uniform :u_samplePointStrength [_]
+  {:name      :u_samplePointStrength
+   :initial   {:value nil}
+   :get-value #(re/rget *state :sample-point-strength)
+   :update!   (get-default-update-fn! :u_samplePointStrength)})
+
 (defmethod get-uniform :u_attenuationFactor [_]
   {:name      :u_attenuationFactor
    :initial   {:value nil}

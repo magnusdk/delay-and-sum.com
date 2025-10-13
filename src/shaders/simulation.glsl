@@ -39,6 +39,7 @@ vec2 signalForPointScatter1(vec2 pointPos, float time) {
     // times the attenuation weighting from the scatterer to the pixel.
     signalScatter1 *= attenuation(distElementScatterer, u_attenuationFactor) * attenuationScattererPixel;
     signalScatter1 *= element.weight;
+    signalScatter1 *= u_samplePointStrength;
 
     // Add both the scatter0 (signal without accounting for scatterers) and the scatter1
     // (signal reflected from the scatterer) to the final signal.

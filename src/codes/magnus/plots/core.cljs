@@ -117,7 +117,7 @@
         beam-profile-pass
         (three-common/create-pass
          (resource/inline "shaders/calculate_beam_profile.frag")
-         [:u_elementsTexture :u_nElements :u_centerFrequency :u_samplePoint
+         [:u_elementsTexture :u_nElements :u_centerFrequency :u_samplePoint :u_samplePointStrength
           :u_pulseLength :u_time :u_soundSpeed :u_attenuationFactor :u_waveOrigin :u_t0
           :u_waveDirection :u_lateralBeamProfile :u_beamProfileSampleLineLength])
 
