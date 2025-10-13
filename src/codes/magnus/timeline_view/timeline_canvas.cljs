@@ -127,21 +127,35 @@
 (defn x-ticks []
   [:div
    (let [[width height] (re/rget *state :timeline-container/size)
-         min-time    (re/rget *state :minimum-time)
-         max-time    (re/rget *state :maximum-time)
-         interval    (- max-time min-time)
-         step-size   (/ width 5)]
-     (when (> step-size 10)
-       (for [x (range 0 width step-size)]
-         (let [label (-> (/ x width)
-                         (* interval 1e6))]
-           (tick [x (- height 13)] (str (.toFixed label 0) "μs") :x)))))])
+         offset              (re/rget *state :timeline-offset)
+         length              (re/rget *state :timeline-length)
+         min-tick-spacing-px 80
+         microseconds-per-px (* (/ length width) 1e6)
+         raw-interval-us     (* microseconds-per-px min-tick-spacing-px)
+         ; Find the smallest tick interval, searching through this pattern:
+         ; (1, 20, 50, 100, 200, 500, etc)
+         tick-interval-us    (->> (iterate #(* % 10) 1)
+                                  (mapcat (fn [magnitude]
+                                            (map #(* magnitude %) [1 2 5])))
+                                  (some #(and (>= % raw-interval-us) %)))
+         tick-interval-s     (* tick-interval-us 1e-6)
+         ; Calculate how many ticks to render
+         min-time            offset
+         max-time            (+ offset length)
+         min-tick-index      (Math/floor (/ min-time tick-interval-s))
+         max-tick-index      (Math/ceil (/ max-time tick-interval-s))]
+
+     (for [tick-index (range min-tick-index (inc max-tick-index))]
+       (let [time-value (* tick-index tick-interval-s)
+             label-us   (* time-value 1e6)
+             screen-x   (* (/ (- time-value offset) length) width)]
+         (when (and (>= screen-x 0) (<= screen-x width))
+           (tick [screen-x (- height 13)] (str (.toFixed label-us 0) "μs") :x)))))])
 
 (defn time-cursor []
-  (let [interval  (- (re/rget *state :maximum-time)
-                     (re/rget *state :minimum-time))
+  (let [interval  (re/rget *state :timeline-length)
         perc      (-> (re/rget *state :time)
-                      (- (re/rget *state :minimum-time))
+                      (- (re/rget *state :timeline-offset))
                       (/ interval))
         hovered?  (= :hovering (re/rget *state :timeline-container-draggable :fsm :current-state))
         dragging? (= :dragging (re/rget *state :timeline-container-draggable :fsm :current-state))]
@@ -157,13 +171,12 @@
 
 
 (defn get-pointer-pos [element pointer-pos-offset]
-  (let [interval               (- (re/rget *state :maximum-time)
-                                  (re/rget *state :minimum-time))
+  (let [interval               (re/rget *state :timeline-length)
         width                  (.-offsetWidth element)
         height                 (.-offsetHeight element)
         pointer-pos-simulation (-> pointer-pos-offset
                                    (mat/mul [(/ interval width) (/ (re/rget *state :probe :n-elements) height)])
-                                   (mat/add [(re/rget *state :minimum-time) 0]))]
+                                   (mat/add [(re/rget *state :timeline-offset) 0]))]
     {:offset     pointer-pos-offset
      :simulation pointer-pos-simulation
      :simulation-snap-to-grid pointer-pos-simulation}))
@@ -171,10 +184,9 @@
 (defn get-draggable []
   (let [n-elements (re/rget *state :probe :n-elements)
         [width height] (re/rget *state :timeline-container/size)
-        interval (- (re/rget *state :maximum-time)
-                    (re/rget *state :minimum-time))
+        interval (re/rget *state :timeline-length)
         x        (-> (re/rget *state :time)
-                     (+ (re/rget *state :minimum-time))
+                     (+ (re/rget *state :timeline-offset))
                      (/ interval)
                      (* width))]
     [{:name    :timeline-cursor

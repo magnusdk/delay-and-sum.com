@@ -64,13 +64,13 @@
 (defmethod get-uniform :u_minimumTime [_]
   {:name      :u_minimumTime
    :initial   {:value nil}
-   :get-value #(re/rget *state :minimum-time)
+   :get-value #(re/rget *state :timeline-offset)
    :update!   (get-default-update-fn! :u_minimumTime)})
 
 (defmethod get-uniform :u_maximumTime [_]
   {:name      :u_maximumTime
    :initial   {:value nil}
-   :get-value #(re/rget *state :maximum-time)
+   :get-value #(+ (re/rget *state :timeline-length) (re/rget *state :timeline-offset))
    :update!   (get-default-update-fn! :u_maximumTime)})
 
 (defmethod get-uniform :u_minimumDb [_]

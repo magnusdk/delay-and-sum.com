@@ -330,7 +330,18 @@
      (when (= (re/rget *state :sample-timeline-at) "sample-point")
        (slider "Timeline gain" [:timeline-gain]
                :sensitivity 1e-1
-               :n-decimals  1))]
+               :n-decimals  1))
+     (slider "Timeline offset" [:timeline-offset]
+             :magnitude   1e-6
+             :sensitivity 1e-1
+             :n-decimals  1
+             :units       "μs")
+     (slider "Timeline length" [:timeline-length]
+             :magnitude   1e-6
+             :sensitivity 1e-1
+             :n-decimals  1
+             :min         0
+             :units       "μs")]
 
     [:div.menu-section
      (header "Plot")

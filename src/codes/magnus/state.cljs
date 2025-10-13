@@ -24,8 +24,8 @@
 
    :display-mode                  "phase"  ; #{"phase" "envelope" "intensity" "time-delays"}
    :maximum-amplitude-simulation? false
-   :minimum-time                  0
-   :maximum-time                  1e-4
+   :timeline-offset               0
+   :timeline-length               1e-4
    :minimum-db                    -60
    :maximum-db                    0
    :display-db?                   true
