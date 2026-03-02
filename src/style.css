@@ -4,25 +4,20 @@
     --cyan: rgba(0, 240, 255, 1);
     --blue: rgba(0, 133, 255, 1);
     --dark-blue: rgba(29, 81, 153, 1);
-
-    /* 50% opacity */
     --light-pink-50: rgba(255, 194, 213, 0.5);
     --pink-50: rgba(255, 25, 94, 0.5);
     --cyan-50: rgba(0, 240, 255, 0.5);
     --blue-50: rgba(0, 133, 255, 0.5);
     --dark-blue-50: rgba(29, 81, 153, 0.5);
-
     --menu-main-text-color: #333;
     --menu-faded-text-color: #666;
     --menu-strong-text-color: #111;
 }
 
-html,
-body {
+html, body {
     margin: 0;
     touch-action: none;
-    font-size: 12px;
-    font-family: sans-serif;
+    font: 12px sans-serif;
     overflow: hidden;
 }
 
@@ -41,7 +36,6 @@ body {
 
 .horizontalContainer {
     display: flex;
-    flex-direction: row;
     flex-grow: 1;
     height: 100%;
 }
@@ -64,10 +58,9 @@ body {
 #side-panel {
     height: 100%;
     width: 200px;
-    /* Make it be in front of timeline */
     z-index: 1;
     background-color: white;
-    box-shadow: 0 0px 5px 0px var(--dark-blue-50);
+    box-shadow: 0 0 5px 0 var(--dark-blue-50);
 }
 
 .grid-tick {
@@ -80,13 +73,11 @@ body {
 }
 
 .grid-tick.x-tick {
-    margin-top: 0.1em;
-    margin-left: 4px;
+    margin: 0.1em 0 0 4px;
 }
 
 .grid-tick.y-tick {
-    margin-top: -1.2em;
-    margin-left: 2px;
+    margin: -1.2em 0 0 2px;
 }
 
 #timelineContainer {
@@ -95,7 +86,6 @@ body {
     width: 100%;
     min-height: 100px;
     height: 100px;
-    /* Make it be behind side panel */
     z-index: 0;
 }
 
@@ -121,7 +111,6 @@ body {
     width: 5px;
     background-color: var(--pink-50);
 }
-
 
 .plot-container {
     position: absolute;
@@ -172,7 +161,7 @@ body {
 .menu-container {
     width: 220px;
     min-width: 220px;
-    background-color: rgba(255, 255, 255, 1);
+    background-color: white;
     color: var(--menu-main-text-color);
     outline: var(--dark-blue) 2px solid;
     z-index: 100;
@@ -180,7 +169,6 @@ body {
     overflow-y: scroll;
     position: relative;
 }
-
 
 .menu {
     color: var(--menu-faded-text-color);
@@ -202,8 +190,8 @@ body {
     font-size: 1.2em;
     color: white;
     background-color: var(--dark-blue);
-    padding: 8px 16px 8px 16px;
-    margin: 0 0 8px 0;
+    padding: 8px 16px;
+    margin: 0 0 8px;
     cursor: pointer;
 }
 
@@ -212,7 +200,7 @@ body {
 }
 
 .menu-minimized h1 {
-    margin: 0 0 2px 0;
+    margin: 0 0 2px;
 }
 
 .menu h2 {
@@ -229,53 +217,42 @@ body {
     display: flex;
     gap: 2px;
     align-items: center;
-    border: rgb(0, 0, 0, 0) solid 2px;
+    border: transparent solid 2px;
     border-radius: 2px;
-    padding: 0px 8px 0px 8px;
-    margin: 0px 8px 0px 8px;
+    padding: 0 8px;
+    margin: 0 8px;
 }
 
 .control label {
     flex-grow: 1;
-
     vertical-align: middle;
     min-height: 22px;
-    /* Align label with input */
-    transform: translate(0, 4px);
-    /* Disable selecting text. */
+    transform: translateY(4px);
     user-select: none;
-    -webkit-touch-callout: none;
-    -webkit-user-select: none;
-    -khtml-user-select: none;
-    -moz-user-select: none;
-    -ms-user-select: none;
 }
 
 .control-canvas {
-    margin: 0px 16px 0px 16px;
-    padding: 0px;
+    margin: 0 16px;
+    padding: 0;
 }
 
 .control-select {
-    margin: 0px 8px 0px 8px;
-    padding: 0px;
+    margin: 0 8px;
+    padding: 0;
 }
 
 .control-select select {
     width: 100%;
     border-radius: 2px;
-    border: rgb(0, 0, 0, 0) solid 2px;
+    border: transparent solid 2px;
     color: var(--menu-faded-text-color);
     height: 26px;
     line-height: 26px;
-    /* Use 4px instead of 8px for padding (hack) because select elements are a
-    pain-in-the-ass to style.*/
-    padding: 0 4px 0 4px;
+    padding: 0 4px;
     font-size: 1em;
 }
 
 button {
-    /* Reset common button properties */
     appearance: none;
     border: none;
     background: none;
@@ -283,9 +260,8 @@ button {
     margin: 0;
     box-sizing: border-box;
     font: inherit;
-
     width: 100%;
-    padding: 8px 8px;
+    padding: 8px;
     background-color: var(--blue);
     border-radius: 4px;
     color: white;
@@ -296,7 +272,7 @@ button {
 input {
     text-align: right;
     border: none;
-    background-color: rgb(0, 0, 0, 0);
+    background-color: transparent;
     font-size: 1em;
     color: var(--menu-strong-text-color);
 }
@@ -317,16 +293,14 @@ input:focus {
     outline: none;
 }
 
-.control:hover,
-.control:focus,
-.control-select select:hover,
-.control-select select:focus {
+.control:hover, .control:focus,
+.control-select select:hover, .control-select select:focus {
     border: #0085FF solid 2px;
     outline: none;
 }
 
 .controlContainer {
-    padding: 0 8px 0 8px;
+    padding: 0 8px;
 }
 
 #beamProfileCanvas {
@@ -334,28 +308,20 @@ input:focus {
 }
 
 hr {
-    margin: 8px 16px 8px 16px;
+    margin: 8px 16px;
 }
 
 .content {
-    padding: 0 16px 0 16px;
+    padding: 0 16px;
 }
 
 .content h2 {
-    margin: 16px 0 8px 0;
+    margin: 16px 0 8px;
 }
 
 #simulationCanvasesContainer {
-    -webkit-touch-callout: none;
-    /* Disable the tap-and-hold context menu on iOS */
-    -webkit-user-select: none;
-    /* Disable text selection on iOS */
-    -moz-user-select: none;
-    /* Disable text selection on Firefox */
-    -ms-user-select: none;
-    /* Disable text selection on IE */
     user-select: none;
-    /* Disable text selection on modern browsers */
+    -webkit-touch-callout: none;
 }
 
 .menu-button-mobile {
@@ -373,7 +339,7 @@ hr {
     right: 0;
     width: 220px;
     height: 120px;
-    background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 15%, rgba(255, 255, 255, 1) 100%);
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 15%, white 100%);
     z-index: 1;
     pointer-events: none;
 }
@@ -383,9 +349,6 @@ hr {
         position: absolute;
         right: 0;
         height: 100%;
-    }
-
-    .menu-container {
         visibility: hidden;
     }
 
@@ -404,8 +367,7 @@ hr {
         right: 10px;
         width: auto;
         background-color: rgba(255, 255, 255, 0.5);
-        border: solid 2px;
-        border-color: var(--blue);
+        border: solid 2px var(--blue);
         border-radius: 4px;
         color: var(--blue);
     }

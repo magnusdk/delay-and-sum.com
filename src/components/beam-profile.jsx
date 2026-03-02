@@ -4,14 +4,12 @@ import {
   initBeamProfile,
   renderBeamProfileFrame,
   elementGeometry,
-  normalize,
   sub,
   add,
   mul,
   rot90,
 } from "../simulation.js";
 
-/** Read beam-profile-relevant state into a plain object. */
 function getBeamProfileState() {
   return {
     virtualSource: state.virtualSource.value,
@@ -35,7 +33,6 @@ function getBeamProfileState() {
   };
 }
 
-/** Compute the beam profile sample line endpoints for overlay rendering. */
 function computeSampleLine(st) {
   const geo = elementGeometry(st);
   const isLateral = st.plotType === "lateral-beam-profile";
@@ -82,7 +79,6 @@ export function BeamProfile() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Init beam profile WebGL rendering
     const hiddenCanvas = document.createElement("canvas");
     const gl = hiddenCanvas.getContext("webgl2", {
       alpha: true,
@@ -99,7 +95,6 @@ export function BeamProfile() {
         if (rd && canvas) {
           renderBeamProfileFrame(rd, st, canvas);
 
-          // Update sample line positions for overlay
           const line = computeSampleLine(st);
           state.plotLeftMostPos.value = line.left;
           state.plotRightMostPos.value = line.right;
@@ -109,13 +104,11 @@ export function BeamProfile() {
       animFrameRef.current = requestAnimationFrame(renderLoop);
     }
 
-    // Pointer event handlers for hover position tracking
     const onPointerMove = (e) => {
       const uvX = (e.offsetX / canvas.offsetWidth) * 2 - 1;
       state.plotHoverPosUvX.value = uvX;
       state.plotHoverPosOffsetX.value = e.offsetX;
 
-      // Calculate hover world position from beam profile geometry
       const st = getBeamProfileState();
       const line = computeSampleLine(st);
       state.plotHoverPos.value = add(line.center, mul(line.beamDir, uvX * st.beamProfileSampleLineLength / 2));

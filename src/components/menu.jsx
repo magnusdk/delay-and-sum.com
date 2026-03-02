@@ -1,8 +1,6 @@
 import { useRef, useEffect, useCallback } from "preact/hooks";
 import * as state from "../state.js";
 
-// ---- Value conversion helpers ----
-
 function clamp(x, min, max) {
   if (min != null && max != null) return Math.max(min, Math.min(max, x));
   if (min != null) return Math.max(min, x);
@@ -38,9 +36,6 @@ function resizeInput(el) {
   el.size = Math.max(1, String(el.value).length);
 }
 
-// ---- Signal path helpers ----
-// For signals holding objects (like probe), read/write nested paths.
-
 function getSignalValue(sig, path) {
   let v = sig.value;
   if (path) for (const k of path) v = v[k];
@@ -52,7 +47,6 @@ function setSignalValue(sig, path, val) {
     sig.value = val;
     return;
   }
-  // Clone and set nested path
   const clone = Array.isArray(sig.value) ? [...sig.value] : { ...sig.value };
   let obj = clone;
   for (let i = 0; i < path.length - 1; i++) {
@@ -62,8 +56,6 @@ function setSignalValue(sig, path, val) {
   obj[path[path.length - 1]] = val;
   sig.value = clone;
 }
-
-// ---- Menu Section ----
 
 function MenuSection({ title, children }) {
   const ref = useRef(null);
@@ -79,8 +71,6 @@ function MenuSection({ title, children }) {
     </div>
   );
 }
-
-// ---- Slider ----
 
 function Slider({ label, signal: sig, path, magnitude, sensitivity, nDecimals, min, max, wrapAround: wrap, units, on }) {
   const opts = { magnitude, sensitivity, nDecimals, min, max, wrapAround: wrap };
@@ -119,9 +109,7 @@ function Slider({ label, signal: sig, path, magnitude, sensitivity, nDecimals, m
     };
 
     const handleKeyDown = (e) => {
-      if ("0123456789-Enter".includes(e.key) || e.key === "Enter") {
-        input.select();
-      }
+      if ("0123456789-Enter".includes(e.key)) input.select();
     };
 
     el.addEventListener("pointerdown", onPointerDown);
@@ -131,12 +119,8 @@ function Slider({ label, signal: sig, path, magnitude, sensitivity, nDecimals, m
     el.addEventListener("focus", () => document.addEventListener("keydown", handleKeyDown));
     el.addEventListener("blur", () => document.removeEventListener("keydown", handleKeyDown));
 
-    // Custom event listeners from `on` prop
     if (on) {
-      if (on.pointerdown) el.addEventListener("pointerdown", on.pointerdown);
-      if (on.pointermove) el.addEventListener("pointermove", on.pointermove);
-      if (on.pointerup) el.addEventListener("pointerup", on.pointerup);
-      if (on.pointerleave) el.addEventListener("pointerleave", on.pointerleave);
+      for (const [evt, fn] of Object.entries(on)) el.addEventListener(evt, fn);
     }
 
     return () => {
@@ -172,8 +156,6 @@ function Slider({ label, signal: sig, path, magnitude, sensitivity, nDecimals, m
   );
 }
 
-// ---- Select ----
-
 function Select({ signal: sig, path, options }) {
   const currentValue = getSignalValue(sig, path);
   const onChange = (e) => setSignalValue(sig, path, e.target.value);
@@ -189,8 +171,6 @@ function Select({ signal: sig, path, options }) {
   );
 }
 
-// ---- Checkbox ----
-
 function Checkbox({ signal: sig, path, label }) {
   const checked = getSignalValue(sig, path);
   const onChange = (e) => setSignalValue(sig, path, e.target.checked);
@@ -203,8 +183,6 @@ function Checkbox({ signal: sig, path, label }) {
     </div>
   );
 }
-
-// ---- Apodization Plot ----
 
 function tukey(n, r) {
   const w = [];
@@ -232,7 +210,6 @@ function ApodizationPlot() {
     const height = canvas.height;
     const ctx = canvas.getContext("2d");
 
-    // Subscribe to tukeyRoll changes by reading signal in effect
     const draw = () => {
       const roll = state.tukeyRoll.value;
       const points = tukey(width, roll).map((w, i) => [
@@ -242,13 +219,9 @@ function ApodizationPlot() {
 
       ctx.clearRect(0, 0, width, height);
 
-      // Background fill
       ctx.fillStyle = "rgba(0, 240, 255, 0.25)";
-      ctx.beginPath();
-      ctx.rect(0, 0, width, height);
-      ctx.fill();
+      ctx.fillRect(0, 0, width, height);
 
-      // Apodization shape
       ctx.beginPath();
       ctx.moveTo(-10, height);
       ctx.lineTo(-10, points[0][1]);
@@ -268,7 +241,6 @@ function ApodizationPlot() {
       ctx.stroke();
     };
 
-    // Use signal effect to reactively redraw
     const dispose = state.tukeyRoll.subscribe(draw);
     draw();
     return dispose;
@@ -280,8 +252,6 @@ function ApodizationPlot() {
     </div>
   );
 }
-
-// ---- Menu Container ----
 
 export function Menu() {
   const isOpen = state.menuOpen.value;
@@ -319,7 +289,6 @@ export function Menu() {
           </div>
         )}
 
-        {/* Array */}
         <MenuSection title="Array">
           <Slider label="No. of elements" signal={state.probe} path={["nElements"]} min={1} max={256} />
           <Slider label="X" signal={state.probe} path={["center", 0]} magnitude={1e-3} nDecimals={1} sensitivity={0.1} units="mm" />
@@ -328,7 +297,6 @@ export function Menu() {
           <Slider label="Normal azimuth" signal={state.probe} path={["normalAzimuth"]} nDecimals={1} wrapAround={180} units={"\u00B0"} />
         </MenuSection>
 
-        {/* Transmitted wave */}
         <MenuSection title="Transmitted wave">
           <Select signal={state.delayModel} options={[
             ["focused", "Focused wave"],
@@ -347,7 +315,6 @@ export function Menu() {
           <Slider label="Tukey roll" signal={state.tukeyRoll} sensitivity={0.01} nDecimals={2} min={0} max={1} />
         </MenuSection>
 
-        {/* Field display options */}
         <MenuSection title="Field display options">
           <Select signal={state.displayMode} options={displayModeOptions} />
           <Slider label="Minimum dB" signal={state.minimumDb} sensitivity={0.1} nDecimals={1} units="dB" />
@@ -358,7 +325,6 @@ export function Menu() {
           <Checkbox signal={state.showGrid} label="Show grid" />
         </MenuSection>
 
-        {/* Timeline display options */}
         <MenuSection title="Timeline display options">
           <Select signal={state.sampleTimelineAt} options={[
             ["probe", "Probe (render channel data)"],
@@ -371,7 +337,6 @@ export function Menu() {
           <Slider label="Timeline length" signal={state.timelineLength} magnitude={1e-6} sensitivity={0.1} nDecimals={1} min={0} units={"\u03BCs"} />
         </MenuSection>
 
-        {/* Plot */}
         <MenuSection title="Plot">
           <Select signal={state.plotType} options={[
             ["no-plot", "Don't display plot"],
@@ -397,7 +362,6 @@ export function Menu() {
           )}
         </MenuSection>
 
-        {/* General */}
         <MenuSection title="General">
           <Checkbox signal={state.forceCurrentTimeAtFocus} label="Force wavefront to be at focus point" />
           <div class="control">

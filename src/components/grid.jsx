@@ -1,8 +1,3 @@
-/**
- * CSS gradient grid with tick labels.
- * Port of grid.cljs.
- */
-
 import * as state from "../state.js";
 import {
   metersPerPixel,
@@ -61,11 +56,9 @@ export function Grid() {
   const origoModX = ((origoX % cellSize) + cellSize) % cellSize;
   const origoModY = ((origoY % cellSize) + cellSize) % cellSize;
 
-  // Soft grid
   const magSnapSoft = Math.ceil(magBase10 - 0.6);
   const cellSizeSoft = 100 / Math.pow(10, magBase10 - magSnapSoft);
 
-  // Tick spacing
   const magSnapTicks = Math.ceil(magBase10 - 0.3);
   const cellSizeTicks = 100 / Math.pow(10, magBase10 - magSnapTicks);
 
@@ -75,7 +68,6 @@ export function Grid() {
     "," +
     getGridCSS(origoModX, origoModY, cellSizeSoft, 0.2 * p, 1);
 
-  // Tick labels
   const startX = origoModX - Math.ceil(origoModX / cellSizeTicks) * cellSizeTicks;
   const startY = origoModY - Math.ceil(origoModY / cellSizeTicks) * cellSizeTicks;
 

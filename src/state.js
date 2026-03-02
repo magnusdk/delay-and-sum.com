@@ -1,6 +1,5 @@
 import { signal, effect, batch } from "@preact/signals";
 
-// ---- Defaults (used for URL diffing) ----
 export const DEFAULTS = {
   camera: { scale: 0.08, pos: [0, -0.01] },
   nPixels: 1e6,
@@ -41,46 +40,30 @@ export const DEFAULTS = {
   },
 };
 
-// ---- Signals (one per state field) ----
-export const camera = signal({ scale: DEFAULTS.camera.scale, pos: [...DEFAULTS.camera.pos] });
-export const nPixels = signal(DEFAULTS.nPixels);
-export const virtualSource = signal([...DEFAULTS.virtualSource]);
-export const samplePoint = signal([...DEFAULTS.samplePoint]);
-export const samplePointStrength = signal(DEFAULTS.samplePointStrength);
-export const forceCurrentTimeAtFocus = signal(DEFAULTS.forceCurrentTimeAtFocus);
-export const centerFrequency = signal(DEFAULTS.centerFrequency);
-export const pulseLength = signal(DEFAULTS.pulseLength);
-export const soundSpeed = signal(DEFAULTS.soundSpeed);
-export const soundSpeedTx = signal(DEFAULTS.soundSpeedTx);
-export const time = signal(DEFAULTS.time);
-export const delayModel = signal(DEFAULTS.delayModel);
-export const attenuationFactor = signal(DEFAULTS.attenuationFactor);
-export const tukeyRoll = signal(DEFAULTS.tukeyRoll);
-export const displayMode = signal(DEFAULTS.displayMode);
-export const maximumAmplitudeSimulation = signal(DEFAULTS.maximumAmplitudeSimulation);
-export const timelineOffset = signal(DEFAULTS.timelineOffset);
-export const timelineLength = signal(DEFAULTS.timelineLength);
-export const minimumDb = signal(DEFAULTS.minimumDb);
-export const maximumDb = signal(DEFAULTS.maximumDb);
-export const displayDb = signal(DEFAULTS.displayDb);
-export const showSimplifiedGeometry = signal(DEFAULTS.showSimplifiedGeometry);
-export const showGrid = signal(DEFAULTS.showGrid);
-export const sampleTimelineAt = signal(DEFAULTS.sampleTimelineAt);
-export const timelineGain = signal(DEFAULTS.timelineGain);
-export const plotType = signal(DEFAULTS.plotType);
-export const plotUseMaximumAmplitude = signal(DEFAULTS.plotUseMaximumAmplitude);
-export const beamProfileSampleLineLength = signal(DEFAULTS.beamProfileSampleLineLength);
-export const plotMinimumDb = signal(DEFAULTS.plotMinimumDb);
-export const plotMaximumDb = signal(DEFAULTS.plotMaximumDb);
-export const probe = signal({
-  center: [...DEFAULTS.probe.center],
-  nElements: DEFAULTS.probe.nElements,
-  arrayWidth: DEFAULTS.probe.arrayWidth,
-  elementWidth: DEFAULTS.probe.elementWidth,
-  normalAzimuth: DEFAULTS.probe.normalAzimuth,
-});
+function cloneDefault(v) {
+  if (Array.isArray(v)) return [...v];
+  if (v && typeof v === "object") return Object.fromEntries(
+    Object.entries(v).map(([k, val]) => [k, cloneDefault(val)])
+  );
+  return v;
+}
 
-// ---- UI-only signals (not serialized to URL) ----
+// Serializable signals (one per DEFAULTS field)
+export const signals = Object.fromEntries(
+  Object.entries(DEFAULTS).map(([k, v]) => [k, signal(cloneDefault(v))])
+);
+
+export const {
+  camera, nPixels, virtualSource, samplePoint, samplePointStrength,
+  forceCurrentTimeAtFocus, centerFrequency, pulseLength, soundSpeed, soundSpeedTx,
+  time, delayModel, attenuationFactor, tukeyRoll, displayMode,
+  maximumAmplitudeSimulation, timelineOffset, timelineLength,
+  minimumDb, maximumDb, displayDb, showSimplifiedGeometry, showGrid,
+  sampleTimelineAt, timelineGain, plotType, plotUseMaximumAmplitude,
+  beamProfileSampleLineLength, plotMinimumDb, plotMaximumDb, probe,
+} = signals;
+
+// UI-only signals (not serialized to URL)
 export const simulationContainerSize = signal([0, 0]);
 export const timelineContainerSize = signal([0, 0]);
 export const menuOpen = signal(false);
@@ -93,18 +76,6 @@ export const plotHoverPosOffsetX = signal(null);
 export const plotLeftMostPos = signal(null);
 export const plotRightMostPos = signal(null);
 
-// ---- Map of all serializable signals keyed by JS name ----
-const SIGNAL_MAP = {
-  camera, nPixels, virtualSource, samplePoint, samplePointStrength,
-  forceCurrentTimeAtFocus, centerFrequency, pulseLength, soundSpeed, soundSpeedTx,
-  time, delayModel, attenuationFactor, tukeyRoll, displayMode,
-  maximumAmplitudeSimulation, timelineOffset, timelineLength,
-  minimumDb, maximumDb, displayDb, showSimplifiedGeometry, showGrid,
-  sampleTimelineAt, timelineGain, plotType, plotUseMaximumAmplitude,
-  beamProfileSampleLineLength, plotMinimumDb, plotMaximumDb, probe,
-};
-
-// ---- URL Serialization ----
 // JS camelCase <-> JSON kebab-case for backward compat with ClojureScript app
 const KEY_MAP = {
   centerFrequency: "center-frequency",
@@ -137,7 +108,6 @@ const KEY_MAP = {
   plotMaximumDb: "plot-maximum-db",
 };
 
-// Probe sub-object keys: JS camelCase <-> JSON kebab-case
 const PROBE_KEY_MAP = {
   nElements: "n-elements",
   arrayWidth: "array-width",
@@ -145,107 +115,72 @@ const PROBE_KEY_MAP = {
   normalAzimuth: "normal-azimuth",
 };
 
-// Reverse maps
 const REVERSE_KEY_MAP = Object.fromEntries(Object.entries(KEY_MAP).map(([k, v]) => [v, k]));
 const REVERSE_PROBE_KEY_MAP = Object.fromEntries(Object.entries(PROBE_KEY_MAP).map(([k, v]) => [v, k]));
 
 function deepEqual(a, b) {
   if (a === b) return true;
-  if (Array.isArray(a) && Array.isArray(b)) {
+  if (Array.isArray(a) && Array.isArray(b))
     return a.length === b.length && a.every((v, i) => deepEqual(v, b[i]));
-  }
   if (a && b && typeof a === "object" && typeof b === "object") {
-    const ka = Object.keys(a), kb = Object.keys(b);
-    return ka.length === kb.length && ka.every(k => deepEqual(a[k], b[k]));
+    const ka = Object.keys(a);
+    return ka.length === Object.keys(b).length && ka.every(k => deepEqual(a[k], b[k]));
   }
   return false;
 }
 
-// Convert probe object keys to kebab-case for serialization
-function probeToKebab(obj) {
-  const out = {};
-  for (const [k, v] of Object.entries(obj)) {
-    out[PROBE_KEY_MAP[k] || k] = v;
-  }
-  return out;
+function mapKeys(obj, map) {
+  return Object.fromEntries(Object.entries(obj).map(([k, v]) => [map[k] || k, v]));
 }
 
-// Convert probe object keys from kebab-case to camelCase
-function probeFromKebab(obj) {
-  const out = {};
-  for (const [k, v] of Object.entries(obj)) {
-    out[REVERSE_PROBE_KEY_MAP[k] || k] = v;
-  }
-  return out;
-}
-
-// Deep merge: apply diff onto original, like the ClojureScript merge-diff
 function mergeDiff(original, diff) {
-  if (Array.isArray(original) && Array.isArray(diff)) {
+  if (Array.isArray(original) && Array.isArray(diff))
     return original.map((v, i) => i < diff.length && diff[i] != null ? mergeDiff(v, diff[i]) : v);
-  }
   if (original && diff && typeof original === "object" && typeof diff === "object" && !Array.isArray(original)) {
     const out = { ...original };
-    for (const k of Object.keys(diff)) {
+    for (const k of Object.keys(diff))
       out[k] = k in original ? mergeDiff(original[k], diff[k]) : diff[k];
-    }
     return out;
   }
   return diff != null ? diff : original;
 }
 
 export function loadFromURL() {
-  const params = new URL(window.location.href).searchParams;
-  const stateParam = params.get("state");
+  const stateParam = new URL(window.location.href).searchParams.get("state");
   if (!stateParam) return;
 
   let changes;
-  try {
-    changes = JSON.parse(atob(stateParam));
-  } catch (e) {
-    console.warn("Failed to parse state from URL:", e);
-    return;
-  }
+  try { changes = JSON.parse(atob(stateParam)); }
+  catch (e) { console.warn("Failed to parse state from URL:", e); return; }
 
   batch(() => {
     for (const [jsonKey, val] of Object.entries(changes)) {
-      // Map kebab-case JSON key to JS camelCase
       const jsKey = REVERSE_KEY_MAP[jsonKey] || jsonKey;
-      const sig = SIGNAL_MAP[jsKey];
+      const sig = signals[jsKey];
       if (!sig) continue;
-
-      if (jsKey === "probe") {
-        // Deep merge probe changes
-        const probeChanges = probeFromKebab(val);
-        sig.value = mergeDiff(DEFAULTS.probe, probeChanges);
-      } else if (jsKey === "camera") {
-        sig.value = mergeDiff(DEFAULTS.camera, val);
-      } else {
-        sig.value = val;
-      }
+      if (jsKey === "probe") sig.value = mergeDiff(DEFAULTS.probe, mapKeys(val, REVERSE_PROBE_KEY_MAP));
+      else if (jsKey === "camera") sig.value = mergeDiff(DEFAULTS.camera, val);
+      else sig.value = val;
     }
   });
 }
 
 function computeDiff() {
   const diff = {};
-  for (const [jsKey, sig] of Object.entries(SIGNAL_MAP)) {
-    const val = sig.value;
-    const def = DEFAULTS[jsKey];
+  for (const [jsKey, sig] of Object.entries(signals)) {
+    const val = sig.value, def = DEFAULTS[jsKey];
     if (jsKey === "probe") {
       const probeDiff = {};
       let hasDiff = false;
       for (const [pk, pv] of Object.entries(val)) {
         if (!deepEqual(pv, def[pk])) {
-          const kebabPk = PROBE_KEY_MAP[pk] || pk;
-          probeDiff[kebabPk] = pv;
+          probeDiff[PROBE_KEY_MAP[pk] || pk] = pv;
           hasDiff = true;
         }
       }
       if (hasDiff) diff["probe"] = probeDiff;
     } else if (!deepEqual(val, def)) {
-      const jsonKey = KEY_MAP[jsKey] || jsKey;
-      diff[jsonKey] = val;
+      diff[KEY_MAP[jsKey] || jsKey] = val;
     }
   }
   return Object.keys(diff).length > 0 ? diff : null;
@@ -254,50 +189,29 @@ function computeDiff() {
 export function saveToURL() {
   const diff = computeDiff();
   const url = new URL(window.location.href);
-  if (diff) {
-    url.searchParams.set("state", btoa(JSON.stringify(diff)));
-  } else {
-    url.searchParams.delete("state");
-  }
+  if (diff) url.searchParams.set("state", btoa(JSON.stringify(diff)));
+  else url.searchParams.delete("state");
   window.history.replaceState({}, "", url.toString());
 }
 
 export function resetState() {
   batch(() => {
-    for (const [jsKey, sig] of Object.entries(SIGNAL_MAP)) {
-      const def = DEFAULTS[jsKey];
-      if (jsKey === "probe") {
-        sig.value = { ...def, center: [...def.center] };
-      } else if (jsKey === "camera") {
-        sig.value = { scale: def.scale, pos: [...def.pos] };
-      } else if (Array.isArray(def)) {
-        sig.value = [...def];
-      } else {
-        sig.value = def;
-      }
-    }
+    for (const [jsKey, sig] of Object.entries(signals))
+      sig.value = cloneDefault(DEFAULTS[jsKey]);
   });
 }
 
-// ---- Dependent state: force time at focus ----
 effect(() => {
-  if (forceCurrentTimeAtFocus.value) {
-    const vs = virtualSource.value;
-    const pc = probe.value.center;
-    const ss = soundSpeed.value;
-    const dist = Math.sqrt((vs[0] - pc[0]) ** 2 + (vs[1] - pc[1]) ** 2);
-    time.value = dist / ss;
-  }
+  if (!forceCurrentTimeAtFocus.value) return;
+  const vs = virtualSource.value, pc = probe.value.center, ss = soundSpeed.value;
+  time.value = Math.sqrt((vs[0] - pc[0]) ** 2 + (vs[1] - pc[1]) ** 2) / ss;
 });
 
-// ---- Auto-save state to URL (debounced 100ms) ----
 let saveTimeout = null;
 effect(() => {
-  // Read all serializable signals to subscribe to changes
-  for (const sig of Object.values(SIGNAL_MAP)) sig.value;
+  for (const sig of Object.values(signals)) sig.value;
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(saveToURL, 100);
 });
 
-// ---- Load state from URL on init ----
 loadFromURL();

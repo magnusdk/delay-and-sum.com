@@ -6,24 +6,18 @@ import {
   elementGeometry,
   screenToWorldMatrix,
   worldToScreenMatrix,
-  worldToCanvasMatrix,
   metersPerPixel,
-  canvasViewportScaling,
   transformPoint,
   transformPoints,
   zoomCamera,
   panCamera,
-  transformCamera,
-  scaleVector,
   updateFromCorners,
   sub,
   add,
-  mul,
-  len,
 } from "../simulation.js";
 import { initInteraction } from "../interaction.js";
 import { Grid } from "./grid.jsx";
-import { Overlays, drawSimulationUI, drawWaveGeometry } from "./overlays.jsx";
+import { drawSimulationUI, drawWaveGeometry } from "./overlays.jsx";
 
 export function MainView() {
   const containerRef = useRef(null);
@@ -37,14 +31,12 @@ export function MainView() {
     const el = containerRef.current;
     if (!el) return;
 
-    // Set initial container size
     const updateSize = () => {
       state.simulationContainerSize.value = [el.offsetWidth, el.offsetHeight];
     };
     window.addEventListener("resize", updateSize);
     updateSize();
 
-    // Init WebGL for simulation
     const hiddenCanvas = document.createElement("canvas");
     const gl = hiddenCanvas.getContext("webgl2", {
       alpha: true,
@@ -55,7 +47,6 @@ export function MainView() {
 
     renderDataRef.current = initMainSimulation(gl);
 
-    // Coordinate conversion
     function getPos(element, offsetPos) {
       const [vw, vh] = state.simulationContainerSize.value;
       const cam = state.camera.value;
@@ -71,7 +62,6 @@ export function MainView() {
       return { offset: offsetPos, simulation, simulationSnapToGrid };
     }
 
-    // Draggables
     function getDraggables() {
       const vs = state.virtualSource.value;
       const sp = state.samplePoint.value;
@@ -150,7 +140,6 @@ export function MainView() {
       return draggables;
     }
 
-    // Init interaction
     const cleanupInteraction = initInteraction(el, {
       getPos,
       getDraggables,
@@ -162,7 +151,6 @@ export function MainView() {
         state.camera.value = panCamera(state.camera.value, dx, dy);
       },
       onCameraTransform: ({ anchor, scale, dx, dy }) => {
-        // Pinch zoom + pan combined transform
         let cam = state.camera.value;
         cam = zoomCamera(cam, anchor, scale);
         cam = panCamera(cam, dx, dy);
@@ -182,7 +170,6 @@ export function MainView() {
       },
     });
 
-    // Render loop
     function renderLoop() {
       const st = getCurrentState();
       const rd = renderDataRef.current;
@@ -190,7 +177,6 @@ export function MainView() {
         renderMainFrame(rd, st, simCanvasRef.current);
       }
 
-      // Draw 2D overlays
       if (uiCanvasRef.current) {
         drawSimulationUI(uiCanvasRef.current, st);
       }
@@ -230,7 +216,6 @@ export function MainView() {
   );
 }
 
-/** Read all signals into a plain state object for the render pipeline. */
 function getCurrentState() {
   return {
     camera: state.camera.value,

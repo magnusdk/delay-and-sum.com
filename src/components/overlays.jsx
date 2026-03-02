@@ -1,7 +1,3 @@
-/**
- * Canvas2D overlay rendering: probe dots, draggable points, and wave geometry.
- */
-
 import {
   elementGeometry,
   worldToCanvasMatrix,
@@ -18,7 +14,6 @@ import {
 } from "../simulation.js";
 import * as state from "../state.js";
 
-// ---- Colors (matching CSS variables) ----
 const LIGHT_PINK = "rgba(255, 194, 213, 1)";
 const PINK = "rgba(255, 25, 94, 1)";
 const CYAN = "rgba(0, 240, 255, 1)";
@@ -28,8 +23,6 @@ const DARK_BLUE = "rgba(29, 81, 153, 1)";
 function withAlpha(color, alpha) {
   return color.replace(/[\d.]+\)$/, `${alpha})`);
 }
-
-// ---- Dot drawing ----
 
 function getDotSize(name, st) {
   const drag = st.simulationDraggable;
@@ -49,15 +42,10 @@ function drawDot(ctx, name, color, pos, st, vw, vh, cw, ch) {
 
   ctx.save();
   ctx.fillStyle = dragging ? withAlpha(color, 0.5) : color;
-  if (hovering && !dragging) {
+  if (hovering || dragging) {
     ctx.shadowColor = withAlpha(color, 0.5);
-    ctx.shadowBlur = 4;
-    ctx.shadowOffsetY = 3;
-  }
-  if (dragging) {
-    ctx.shadowColor = withAlpha(color, 0.5);
-    ctx.shadowBlur = 5;
-    ctx.shadowOffsetY = 4;
+    ctx.shadowBlur = dragging ? 5 : 4;
+    ctx.shadowOffsetY = dragging ? 4 : 3;
   }
   ctx.beginPath();
   ctx.ellipse(pos[0], pos[1], sx, sy, 0, 0, 2 * Math.PI);
@@ -71,7 +59,6 @@ function drawProbe(ctx, geo, w2c, st, vw, vh, cw, ch) {
   const first = positions[0];
   const last = positions[positions.length - 1];
 
-  // Draw line connecting elements
   ctx.beginPath();
   ctx.strokeStyle = CYAN;
   ctx.lineWidth = 2;
@@ -81,11 +68,9 @@ function drawProbe(ctx, geo, w2c, st, vw, vh, cw, ch) {
   }
   ctx.stroke();
 
-  // Corner dots
   drawDot(ctx, "corner-1", DARK_BLUE, first, st, vw, vh, cw, ch);
   drawDot(ctx, "corner-2", DARK_BLUE, last, st, vw, vh, cw, ch);
 
-  // Element dots
   for (const [x, y] of positions) {
     ctx.save();
     ctx.fillStyle = DARK_BLUE;
@@ -98,14 +83,12 @@ function drawProbe(ctx, geo, w2c, st, vw, vh, cw, ch) {
   }
 }
 
-/** Draw simulation UI overlay (probe, virtual source dot, sample point dot). */
 export function drawSimulationUI(canvas, st) {
   const [vw, vh] = st.simulationContainerSize;
   if (!vw || !vh) return;
 
   const cw = canvas.width || vw;
   const ch = canvas.height || vh;
-  // Resize canvas to match viewport pixel ratio
   const dpr = window.devicePixelRatio || 1;
   const expectedW = Math.round(vw * dpr);
   const expectedH = Math.round(vh * dpr);
@@ -130,7 +113,6 @@ export function drawSimulationUI(canvas, st) {
   drawDot(ctx, "virtual-source", PINK, vsCanvas, st, vw, vh, canvas.width, canvas.height);
   drawDot(ctx, "sample-point", BLUE, spCanvas, st, vw, vh, canvas.width, canvas.height);
 
-  // Beam profile sample line
   const lp = state.plotLeftMostPos.value;
   const rp = state.plotRightMostPos.value;
   if (lp && rp) {
@@ -142,7 +124,6 @@ export function drawSimulationUI(canvas, st) {
     ctx.stroke();
   }
 
-  // Beam profile hover dot
   const hoverPos = state.plotHoverPos.value;
   const hoverUvX = state.plotHoverPosUvX.value;
   if (hoverPos && hoverUvX != null && hoverUvX >= -1 && hoverUvX <= 1) {
@@ -150,8 +131,6 @@ export function drawSimulationUI(canvas, st) {
     drawDot(ctx, "plot/hover-pos", DARK_BLUE, hpC, st, vw, vh, canvas.width, canvas.height);
   }
 }
-
-// ---- Wave Geometry ----
 
 function drawPolygon(ctx, points, fillStyle) {
   ctx.save();
@@ -171,7 +150,6 @@ function getSide(v1, v2, v) {
   return Math.sign(sx * sy2 - sy * sx2);
 }
 
-/** Draw simplified wave geometry overlay. */
 export function drawWaveGeometry(canvas, st) {
   if (!st.showSimplifiedGeometry) return;
 
@@ -228,7 +206,6 @@ function drawFocusedGeometry(ctx, st, geo, w2c, aspect, diagLength) {
     );
   }
 
-  // Dashed line from wave origin beyond focus
   const beyondVs = add(woC, mul(normalize(sub(vsC, woC)), diagLength * 10));
   ctx.save();
   ctx.lineWidth = 5;
@@ -241,7 +218,6 @@ function drawFocusedGeometry(ctx, st, geo, w2c, aspect, diagLength) {
   ctx.stroke();
   ctx.restore();
 
-  // Full ellipse (light pink)
   ctx.save();
   ctx.lineWidth = 5;
   ctx.lineCap = "round";
@@ -250,7 +226,6 @@ function drawFocusedGeometry(ctx, st, geo, w2c, aspect, diagLength) {
   ctx.ellipse(vsC[0], vsC[1], radius * aspect, radius / aspect, 0, 0, 2 * Math.PI);
   ctx.stroke();
 
-  // Active arc (pink)
   if (geo.nElements > 1) {
     let a1 = geo.corner1VsAzimuth;
     let a2 = geo.corner2VsAzimuth;
@@ -258,12 +233,7 @@ function drawFocusedGeometry(ctx, st, geo, w2c, aspect, diagLength) {
       a1 += Math.PI;
       a2 += Math.PI;
     }
-    const side = getSide(c1C, c2C, vsC);
-    if (side > 0) {
-      [a1, a2] = [a1, a2];
-    } else {
-      [a1, a2] = [a2, a1];
-    }
+    if (getSide(c1C, c2C, vsC) <= 0) [a1, a2] = [a2, a1];
     ctx.beginPath();
     ctx.strokeStyle = PINK;
     ctx.arc(vsC[0], vsC[1], radius, a1, a2);
@@ -309,7 +279,6 @@ function drawPlaneGeometry(ctx, st, geo, w2c, aspect, diagLength) {
   ctx.lineWidth = 5;
   ctx.lineCap = "round";
 
-  // Dashed line
   ctx.setLineDash([10, 20]);
   ctx.strokeStyle = LIGHT_PINK;
   ctx.beginPath();
@@ -318,7 +287,6 @@ function drawPlaneGeometry(ctx, st, geo, w2c, aspect, diagLength) {
   ctx.stroke();
   ctx.restore();
 
-  // Wavefront line (light pink, full width)
   ctx.save();
   ctx.lineWidth = 5;
   ctx.lineCap = "round";
@@ -330,7 +298,6 @@ function drawPlaneGeometry(ctx, st, geo, w2c, aspect, diagLength) {
   ctx.lineTo(p[0] - diagLength * 10 * waveDir90[0], p[1] - diagLength * 10 * waveDir90[1]);
   ctx.stroke();
 
-  // Active wavefront (pink, probe width only)
   ctx.strokeStyle = PINK;
   ctx.beginPath();
   ctx.moveTo(p[0], p[1]);
@@ -373,7 +340,6 @@ function drawDivergingGeometry(ctx, st, geo, w2c, aspect, diagLength) {
   ctx.lineWidth = 5;
   ctx.lineCap = "round";
 
-  // Dashed line
   ctx.setLineDash([10, 20]);
   ctx.strokeStyle = LIGHT_PINK;
   ctx.beginPath();
@@ -382,7 +348,6 @@ function drawDivergingGeometry(ctx, st, geo, w2c, aspect, diagLength) {
   ctx.stroke();
   ctx.restore();
 
-  // Ellipse
   ctx.save();
   ctx.lineWidth = 5;
   ctx.lineCap = "round";
@@ -391,7 +356,6 @@ function drawDivergingGeometry(ctx, st, geo, w2c, aspect, diagLength) {
   ctx.ellipse(vsFlippedC[0], vsFlippedC[1], radius * aspect, radius / aspect, 0, 0, 2 * Math.PI);
   ctx.stroke();
 
-  // Active arc
   if (geo.nElements > 1) {
     let a1 = geo.corner1VsAzimuth;
     let a2 = geo.corner2VsAzimuth;
@@ -399,12 +363,7 @@ function drawDivergingGeometry(ctx, st, geo, w2c, aspect, diagLength) {
       a1 += Math.PI;
       a2 += Math.PI;
     }
-    const side = getSide(c1C, c2C, vsFlippedC);
-    if (side < 0) {
-      [a1, a2] = [a1, a2];
-    } else {
-      [a1, a2] = [a2, a1];
-    }
+    if (getSide(c1C, c2C, vsFlippedC) >= 0) [a1, a2] = [a2, a1];
     ctx.beginPath();
     ctx.strokeStyle = PINK;
     ctx.arc(vsFlippedC[0], vsFlippedC[1], radius, a1, a2);
@@ -413,6 +372,3 @@ function drawDivergingGeometry(ctx, st, geo, w2c, aspect, diagLength) {
   ctx.restore();
 }
 
-export function Overlays() {
-  return null; // Overlays are drawn imperatively via drawSimulationUI/drawWaveGeometry
-}

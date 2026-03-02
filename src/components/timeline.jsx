@@ -1,8 +1,7 @@
 import { useRef, useEffect } from "preact/hooks";
 import * as state from "../state.js";
-import { initTimeline, renderTimelineFrame, elementGeometry } from "../simulation.js";
+import { initTimeline, renderTimelineFrame } from "../simulation.js";
 
-/** Read timeline-relevant state into a plain object. */
 function getTimelineState() {
   return {
     camera: state.camera.value,
@@ -30,8 +29,6 @@ function getTimelineState() {
   };
 }
 
-// ---- Timeline Ticks ----
-
 function TimelineTicks() {
   const [width, height] = state.timelineContainerSize.value;
   if (!width || !height) return null;
@@ -42,7 +39,6 @@ function TimelineTicks() {
   const microsecondsPerPx = (length / width) * 1e6;
   const rawIntervalUs = microsecondsPerPx * minTickSpacingPx;
 
-  // Find smallest tick interval from pattern: 1, 2, 5, 10, 20, 50, ...
   let tickIntervalUs = null;
   for (let mag = 1; !tickIntervalUs; mag *= 10) {
     for (const m of [1, 2, 5]) {
@@ -80,8 +76,6 @@ function TimelineTicks() {
   return <div>{ticks}</div>;
 }
 
-// ---- Time Cursor ----
-
 function TimeCursor() {
   const interval = state.timelineLength.value;
   const perc = (state.time.value - state.timelineOffset.value) / interval;
@@ -101,8 +95,6 @@ function TimeCursor() {
   );
 }
 
-// ---- Timeline Container ----
-
 export function Timeline() {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
@@ -119,7 +111,6 @@ export function Timeline() {
     window.addEventListener("resize", updateSize);
     updateSize();
 
-    // Timeline interaction: click/drag to set time
     let dragging = false;
 
     const setTimeFromPointer = (e) => {
@@ -154,7 +145,6 @@ export function Timeline() {
     el.addEventListener("pointermove", onPointerMove);
     el.addEventListener("pointerup", onPointerUp);
 
-    // Init timeline WebGL rendering
     const hiddenCanvas = document.createElement("canvas");
     const gl = hiddenCanvas.getContext("webgl2", {
       alpha: true,
