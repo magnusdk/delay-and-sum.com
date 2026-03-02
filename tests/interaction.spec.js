@@ -297,7 +297,10 @@ test.describe("Interaction tests", () => {
 
     const timelineSelector = "#timelineContainer";
 
-    // Click at roughly 70% along the timeline to move the time cursor
+    // Click at roughly 70% along the timeline to move the time cursor.
+    // Use Playwright's native mouse API (page.mouse.click) which generates
+    // real browser-level pointer events. Synthetic PointerEvent dispatch
+    // doesn't trigger the original ClojureScript app's Replicant event system.
     for (const page of [newPage, origPage]) {
       const box = await page.evaluate((sel) => {
         const el = document.querySelector(sel);
@@ -309,35 +312,7 @@ test.describe("Interaction tests", () => {
       const clickX = box.left + box.width * 0.7;
       const clickY = box.top + box.height * 0.5;
 
-      // Use pointer events since the timeline uses pointerdown
-      await page.evaluate(
-        ({ sel, cx, cy }) => {
-          const el = document.querySelector(sel);
-          el.dispatchEvent(
-            new PointerEvent("pointerdown", {
-              clientX: cx,
-              clientY: cy,
-              pageX: cx + window.pageXOffset,
-              pageY: cy + window.pageYOffset,
-              bubbles: true,
-              cancelable: true,
-              pointerId: 1,
-            })
-          );
-          el.dispatchEvent(
-            new PointerEvent("pointerup", {
-              clientX: cx,
-              clientY: cy,
-              pageX: cx + window.pageXOffset,
-              pageY: cy + window.pageYOffset,
-              bubbles: true,
-              cancelable: true,
-              pointerId: 1,
-            })
-          );
-        },
-        { sel: timelineSelector, cx: clickX, cy: clickY }
-      );
+      await page.mouse.click(clickX, clickY);
     }
 
     await compareAndAssert(newPage, origPage, "click-timeline", 15);
