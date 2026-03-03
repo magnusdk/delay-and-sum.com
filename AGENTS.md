@@ -1,89 +1,143 @@
-# delay-and-sum.com — Agent Guide
+# delay-and-sum.com -- Agent Guide
 
-Interactive ultrasound beamforming simulator. Rewritten from ClojureScript + Three.js to JavaScript + Preact + WebGL2.
+Interactive ultrasound beamforming simulator built with Preact + Signals + WebGL2.
 
 ## Quick Start
 
 ```bash
-npm run dev      # Start dev server on port 3000
-npm run build    # Production build → dist/
-npm run test     # Playwright tests (requires browser)
+npm run dev          # Vite dev server on port 3000
+npm run build        # Production build -> dist/
+npm run test         # Playwright E2E tests (needs Chromium + SwiftShader)
+npx playwright test  # Same, explicit
 ```
 
-## File Map (21 files, ~4400 LOC)
+Tech stack: **Preact 10** + **@preact/signals** + **WebGL2** + **Vite 6** + **vite-plugin-glsl** (shader `#include`).
 
-| File | Purpose | Key exports |
-|------|---------|-------------|
-| `src/state.js` | All app state as Preact Signals + URL serialization | `camera`, `probe`, `virtualSource`, `time`, `displayMode`, ... |
-| `src/simulation.js` | Probe math, camera matrices, WebGL render pipeline | `elementGeometry`, `clipToWorldMatrix`, `initMainSimulation`, `renderMainFrame`, `initTimeline`, `renderTimelineFrame`, `initBeamProfile`, `renderBeamProfileFrame` |
-| `src/webgl.js` | WebGL2 abstraction (shader compile, FBO, render pass) | `createRenderPass`, `createFramebuffer`, `createDataTexture` |
-| `src/interaction.js` | Pointer/wheel/touch input → camera transforms + dragging | `initInteraction` |
-| `src/components/main-view.jsx` | Canvas stack (WebGL + Canvas2D overlay + grid) | `MainView` |
-| `src/components/overlays.jsx` | Canvas2D: wave geometry arcs, probe dots, drag points | `Overlays` |
-| `src/components/grid.jsx` | CSS grid lines + tick labels | `Grid` |
-| `src/components/timeline.jsx` | Timeline panel (WebGL + cursor + ticks) | `Timeline` |
-| `src/components/beam-profile.jsx` | Beam profile plot (WebGL + hover line) | `BeamProfile` |
-| `src/components/menu.jsx` | Settings menu (sliders, selects, checkboxes) | `Menu` |
-| `src/shaders/common.glsl` | GLSL utilities: pack/unpack, dB, rand, lineSDF | included by all shaders |
-| `src/shaders/elements.glsl` | Element struct, signal math (requires uniform declarations) | included by simulation/timeline/beam-profile |
-| `src/shaders/simulation.frag` | Field simulation (fixed-time + stochastic via `u_stochastic`) | |
-| `src/shaders/postprocess.frag` | Display modes: phase/envelope/intensity/time-delays | |
-| `src/shaders/timeline.frag` | Timeline rendering (probe + scatterer modes) | |
-| `src/shaders/beam-profile.frag` | Beam profile (fixed + stochastic + postprocess) | |
-| `src/shaders/utility.frag` | Clear, copy, select-max (via `u_operation` flag) | |
-| `src/shaders/vertex.glsl` | Fullscreen quad vertex shader | |
-| `src/style.css` | All CSS (~420 lines) | |
-| `src/app.jsx` | Root layout: MainView + Timeline + Menu + BeamProfile | `App` |
-| `src/main.jsx` | Mount point (5 lines) | |
+## Project Structure
 
-## Architecture
+| File | Lines | Purpose |
+|------|------:|---------|
+| `src/main.jsx` | 5 | Mount point: renders `<App>` into `#root` |
+| `src/app.jsx` | 35 | Root layout: MainView + Timeline + Menu + BeamProfile |
+| `src/state.js` | 186 | All app state as Preact Signals; URL serialization (base64 JSON diff) |
+| `src/webgl.js` | 204 | WebGL2 helpers: shader compile, FBO/MRT, render pass, data textures |
+| `src/simulation.js` | 505 | Probe math, camera matrices, three WebGL render pipelines (main/timeline/beam-profile) |
+| `src/interaction.js` | 206 | Pointer/wheel/touch FSM: draggable protocol + camera gestures |
+| `src/style.css` | 360 | All CSS: layout, menu, timeline, controls, mobile responsive |
+| `src/components/main-view.jsx` | 684 | Simulation canvas stack + Canvas2D overlays (wave geometry, probe, dots, grid) |
+| `src/components/menu.jsx` | 370 | Data-driven settings panel: MENU_SECTIONS array, Slider/Select/Checkbox |
+| `src/components/timeline.jsx` | 154 | Timeline panel: WebGL canvas + time cursor + tick labels |
+| `src/components/beam-profile.jsx` | 114 | Floating beam profile plot: WebGL canvas + hover line |
+| `src/shaders/vertex.glsl` | 7 | Fullscreen quad vertex shader (shared by all passes) |
+| `src/shaders/common.glsl` | 117 | GLSL utilities: pack/unpack, dB conversion, rand, lineSDF, displayPhaseKernel |
+| `src/shaders/elements.glsl` | 98 | Element struct, getElement() texture lookup, gaussianWeightedSine, signalForPoint |
+| `src/shaders/simulation.frag` | 57 | Main field simulation (deterministic + stochastic via `u_stochastic` flag) |
+| `src/shaders/postprocess.frag` | 46 | Display mode mapping: phase/envelope/intensity/time-delays |
+| `src/shaders/timeline.frag` | 84 | Timeline rendering (probe mode + scatterer mode, raw + postprocess) |
+| `src/shaders/beam-profile.frag` | 81 | Beam profile (lateral/axial, deterministic/stochastic, simulation/postprocess) |
+| `src/shaders/utility.frag` | 51 | Utility ops via `u_operation`: clear, copy, copy-MRT, select-max |
+| **Total** | **3364** | **10 JS/JSX + 8 GLSL/frag + 1 CSS = 19 source files** |
 
-### State → Signals → URL
-Every piece of app state is a Preact Signal in `state.js`. Components subscribe automatically. Changes auto-save to `?state=` URL param (base64-encoded JSON diff against defaults). Backward compatible with original ClojureScript URL format.
+Config files: `vite.config.js`, `package.json`, `playwright.config.js`, `index.html`.
+
+## Architecture Overview
+
+### State Layer
+
+All application state lives as Preact Signals in `src/state.js`. The `DEFAULTS` object defines every parameter (camera, probe geometry, display settings, etc.). Each default becomes an individually exported signal. Components re-render automatically on signal changes. State is serialized to the URL `?state=` param as a base64-encoded JSON diff against defaults, with debounced saves via `effect()`. `getState()` snapshots all signals into a plain object for the render loops.
+
+-> See `docs/state.md`
 
 ### Rendering Pipeline
-Multi-pass fullscreen-quad WebGL2 rendering on a hidden canvas, then `drawImage()` to visible canvas.
 
-**Standard mode:** Clear → Simulate (`simulation.frag`) → Postprocess (`postprocess.frag`) → drawImage
+Three independent WebGL render loops run via `requestAnimationFrame` -- one each for the main simulation view, the timeline, and the beam profile. Each uses a **hidden offscreen GL context** (`createHiddenGL()`) that renders to FBOs, then blits to a visible `<canvas>` via `ctx.drawImage(gl.canvas)`. The main simulation has two modes: single-frame deterministic and iterative stochastic max-amplitude (500 iterations with ping-pong FBOs). All rendering is fullscreen-quad based.
 
-**Max-amplitude mode:** Clear → 500x stochastic iterations (simulate → select-max ping-pong) → Postprocess → drawImage
+-> See `docs/rendering.md`
 
-### WebGL Abstraction
-`webgl.js` provides three key functions:
-- `createRenderPass(gl, vertSrc, fragSrc)` → `{ program, draw(uniforms, fbo?) }`
-- `createFramebuffer(gl, w, h, count)` → FBO with MRT color attachments
-- `createDataTexture(gl, data, w, h)` → RGBA32F texture
+### Shader System
 
-### Shader Consolidation
-19 original shaders → 7 files via uniform flags (`u_stochastic`, `u_displayMode`, `u_operation`, `u_postprocess`, `u_sampleMode`). `vite-plugin-glsl` resolves `#include` at build time.
+Eight GLSL files in `src/shaders/`. `common.glsl` and `elements.glsl` are shared via `#include` (resolved at build time by vite-plugin-glsl). Shaders use **uniform flags** to combine what were originally many separate files: `u_stochastic` (deterministic vs stochastic), `u_postprocess` (simulation vs display), `u_operation` (utility ops), `u_sampleMode` (probe vs scatterer), `u_displayMode` (phase/envelope/intensity/time-delays). The vertex shader is a simple fullscreen quad; `webgl.js` also provides `FULLSCREEN_VERT` as an inline fallback.
+
+-> See `docs/shaders.md`
 
 ### Coordinate System
-- **Screen pixels** → `screenToClipMatrix` → **Clip [-1,1]** → `clipToWorldMatrix` → **World (meters)**
-- Camera: `{ scale: 0.08, pos: [0, -0.01] }` — scale is world-meters per clip-unit
-- All physics in meters; display converts to mm/MHz/etc in menu
 
-## How-To
+Three coordinate spaces connected by 3x3 row-major matrices (row-vector convention):
+- **Screen pixels** -> `screenToClipMatrix(w,h)` -> **Clip [-1,1]** -> `clipToWorldMatrix(w,h,camera)` -> **World (meters)**
+- Camera is `{ scale, pos }` where scale = world-meters per clip-unit
+- `worldToScreenMatrix`, `worldToCanvasMatrix`, and `screenToCanvasMatrix` provide the inverse/composite transforms
+- All physics computations use meters; the menu converts to mm/MHz/degrees for display
 
-### Add a new control to the menu
-1. Add default value in `state.js` → `DEFAULTS`
-2. Add signal: `export const myField = signal(DEFAULTS.myField);`
-3. Add to `SIGNAL_MAP` and `KEY_MAP` (if URL-serializable)
-4. Add slider/select/checkbox in `menu.jsx` under the appropriate section
+### Interaction System
 
-### Add a new display mode
-1. Add case in `postprocess.frag` → new `u_displayMode` value
-2. Add case in `simulation.js` → `displayModeIndex()`
-3. Add option in `menu.jsx` → display mode select
+`src/interaction.js` exports `initInteraction(element, options)` which sets up a pointer/wheel/touch **finite state machine** with states: idle, hovering, dragging, wheel-pan, wheel-zoom, touch. It implements a **draggable protocol**: callers provide `getDraggables()` returning objects with `{ name, type, pos/corners, update(prev, cur) }`. The FSM handles hit-testing (nearest draggable within `hoverDistance`), drag start/continue/end, Shift-to-snap-to-grid, camera wheel zoom (Ctrl+wheel) and pan (plain wheel), and two-finger touch gestures. `main-view.jsx` defines draggables for: virtual-source, sample-point, corner-1, corner-2, probe-body.
 
-### Add a new shader pass
-1. Create or modify shader in `src/shaders/`
-2. In `simulation.js`, add `createRenderPass(gl, null, fragSrc)` in the init function
-3. Add draw call in the render function: `passes.myPass.draw(uniforms, targetFbo)`
+### Menu System
 
-### Modify probe geometry
-Edit `elementGeometry()` in `simulation.js`. It computes element positions, delays (focused/plane/diverging), weights (Tukey apodization), and packs them into a 512x1 RGBA32F texture.
+`src/components/menu.jsx` uses a data-driven `MENU_SECTIONS` array. Each section has a title (collapsible) and an array of control descriptors: `{ type, signal, path, ...opts }`. A generic `renderControl()` dispatcher maps types to components (`Slider`, `Select`, `Checkbox`, or `custom` render functions). The `Slider` component supports drag-to-adjust (pointer events) and direct text input, with configurable magnitude/sensitivity/units/clamping.
 
-### Add a new draggable object
-1. Add it to the draggables list in `main-view.jsx` → `getDraggables()`
-2. Provide `type` ("point" or "line"), position data, and `update` callback
-3. The interaction system handles hover detection and drag FSM automatically
+-> See `docs/menu.md`
+
+## Common Tasks
+
+### 1. Add a new signal/parameter
+- `src/state.js`: add to `DEFAULTS`, it auto-creates a signal; add to destructured export
+- `src/components/menu.jsx`: add control to appropriate `MENU_SECTIONS` entry
+
+### 2. Add a new display mode
+- `src/shaders/postprocess.frag`: add new `u_displayMode` case
+- `src/simulation.js`: add entry to `DISPLAY_MODES` map
+- `src/components/menu.jsx`: add option to the display mode `Select` (in "Field display options" section)
+
+### 3. Add a new shader pass
+- `src/shaders/`: create or modify a `.frag` file (use `#include "./common.glsl"` and `"./elements.glsl"` as needed)
+- `src/simulation.js`: import the shader, add `createRenderPass()` in the relevant `init*()` function, add draw call in the `render*Frame()` function
+
+### 4. Modify probe/element geometry
+- `src/simulation.js`: `elementGeometry()` (positions, delays, weights, Tukey apodization) and `packElementTexture()` (RGBA32F texture layout)
+
+### 5. Add a new draggable to the simulation view
+- `src/components/main-view.jsx`: add to `getDraggables()` array with `{ name, type, pos, update }` protocol
+- `src/components/main-view.jsx`: add drawing logic in `drawSimulationUI()` if it needs a visual indicator
+
+### 6. Add a new overlay visualization
+- `src/components/main-view.jsx`: add drawing function (Canvas2D), call it from `drawSimulationUI()` or `drawWaveGeometry()`
+- Uses `worldToCanvasMatrix` to transform world coords to canvas pixels
+
+### 7. Modify the timeline
+- `src/components/timeline.jsx`: component structure, pointer events, tick labels
+- `src/simulation.js`: `initTimeline()` and `renderTimelineFrame()` for WebGL rendering
+- `src/shaders/timeline.frag`: shader logic (probe mode vs scatterer mode)
+
+### 8. Modify the beam profile plot
+- `src/components/beam-profile.jsx`: component, hover interaction, sample line computation
+- `src/simulation.js`: `initBeamProfile()` and `renderBeamProfileFrame()`
+- `src/shaders/beam-profile.frag`: shader logic (lateral vs axial, deterministic vs stochastic)
+
+### 9. Change CSS/layout
+- `src/style.css`: all styles (layout containers, menu, timeline, controls, grid ticks, mobile responsive breakpoint at 750px)
+- `src/app.jsx`: top-level DOM structure
+
+### 10. Add or modify tests
+- `tests/smoke.spec.js`: basic page load, layout, controls, URL round-trip
+- `tests/interaction.spec.js`: drag, zoom, pan, timeline click, select changes (compares against reference app side-by-side)
+- `tests/visual-regression.spec.js`: pixel-diff screenshots across random states using fast-check
+- `tests/feedback-loop.spec.js`: verifies no WebGL feedback loop errors
+
+## Testing
+
+Four Playwright test suites in `tests/`:
+
+| Suite | File | What it tests |
+|-------|------|---------------|
+| Smoke | `smoke.spec.js` | Page loads, layout, controls, URL serialization, screenshot |
+| Interaction | `interaction.spec.js` | Drag, zoom, pan, timeline click, select changes (side-by-side comparison with reference app on port 3001) |
+| Visual regression | `visual-regression.spec.js` | Pixel-diff screenshots across random states (fast-check) |
+| Feedback loop | `feedback-loop.spec.js` | No WebGL GL_INVALID_OPERATION or feedback loop errors |
+
+```bash
+npx playwright test                          # Run all suites
+npx playwright test tests/smoke.spec.js      # Run one suite
+```
+
+Playwright is configured for Chromium with `--use-gl=swiftshader` for headless WebGL. The `webServer` config auto-starts Vite on port 3000. Interaction and visual regression tests require a reference app running on port 3001 for side-by-side comparison. Tests use generous timeouts (30-120s) to accommodate SwiftShader's slow rendering.
