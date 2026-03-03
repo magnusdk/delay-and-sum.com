@@ -89,3 +89,29 @@ float lineSDF(vec2 p, vec2 a, vec2 b) {
     h = clamp(h, 0.0, 1.0);
     return length(pa - h * ba);
 }
+
+// --- Display ---
+vec4 displayPhaseKernel(vec2 v, int displayMode, float minimumDb, float maximumDb, bool useDb) {
+    float minDecibels = minimumDb;
+    float maxDecibels = maximumDb;
+    float amp = length(v);
+
+    if(displayMode == 2) {
+        amp = pow(amp, 2.0);
+    }
+    if(useDb) {
+        amp = dB(amp);
+    } else {
+        minDecibels = invDB(minDecibels);
+        maxDecibels = invDB(maxDecibels);
+    }
+
+    float alpha = (amp - minDecibels) / (maxDecibels - minDecibels);
+    if(displayMode == 0) {
+        float real = v.x;
+        float positivePressure = real > 0.0 ? 1.0 : 0.0;
+        vec3 color = PINK * positivePressure + BLUE * (1.0 - positivePressure);
+        return vec4(color, alpha);
+    }
+    return vec4(0.0, 0.0, 0.0, alpha);
+}

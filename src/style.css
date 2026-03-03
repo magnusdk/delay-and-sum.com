@@ -55,14 +55,6 @@ html, body {
     width: 100%;
 }
 
-#side-panel {
-    height: 100%;
-    width: 200px;
-    z-index: 1;
-    background-color: white;
-    box-shadow: 0 0 5px 0 var(--dark-blue-50);
-}
-
 .grid-tick {
     position: absolute;
     white-space: nowrap;
@@ -97,12 +89,6 @@ html, body {
     position: absolute;
     border-radius: 4px;
     pointer-events: none;
-}
-
-.timeline-time-cursor-hovering {
-    transform: translate(-2px, 2.5px);
-    height: 95px;
-    width: 4px;
 }
 
 .timeline-time-cursor-dragging {
@@ -297,14 +283,6 @@ input:focus {
 .control-select select:hover, .control-select select:focus {
     border: #0085FF solid 2px;
     outline: none;
-}
-
-.controlContainer {
-    padding: 0 8px;
-}
-
-#beamProfileCanvas {
-    width: 100%;
 }
 
 hr {

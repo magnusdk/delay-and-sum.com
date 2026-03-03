@@ -1,33 +1,8 @@
 import { useRef, useEffect } from "preact/hooks";
 import * as state from "../state.js";
+import { getState } from "../state.js";
 import { initTimeline, renderTimelineFrame } from "../simulation.js";
-
-function getTimelineState() {
-  return {
-    camera: state.camera.value,
-    virtualSource: state.virtualSource.value,
-    samplePoint: state.samplePoint.value,
-    samplePointStrength: state.samplePointStrength.value,
-    centerFrequency: state.centerFrequency.value,
-    pulseLength: state.pulseLength.value,
-    soundSpeed: state.soundSpeed.value,
-    soundSpeedTx: state.soundSpeedTx.value,
-    delayModel: state.delayModel.value,
-    attenuationFactor: state.attenuationFactor.value,
-    tukeyRoll: state.tukeyRoll.value,
-    displayMode: state.displayMode.value,
-    minimumDb: state.minimumDb.value,
-    maximumDb: state.maximumDb.value,
-    displayDb: state.displayDb.value,
-    sampleTimelineAt: state.sampleTimelineAt.value,
-    timelineGain: state.timelineGain.value,
-    timelineOffset: state.timelineOffset.value,
-    timelineLength: state.timelineLength.value,
-    probe: state.probe.value,
-    time: state.time.value,
-    simulationContainerSize: state.simulationContainerSize.value,
-  };
-}
+import { createHiddenGL } from "../webgl.js";
 
 function TimelineTicks() {
   const [width, height] = state.timelineContainerSize.value;
@@ -145,17 +120,12 @@ export function Timeline() {
     el.addEventListener("pointermove", onPointerMove);
     el.addEventListener("pointerup", onPointerUp);
 
-    const hiddenCanvas = document.createElement("canvas");
-    const gl = hiddenCanvas.getContext("webgl2", {
-      alpha: true,
-      premultipliedAlpha: false,
-      powerPreference: "high-performance",
-    });
+    const gl = createHiddenGL();
     if (gl) {
       renderDataRef.current = initTimeline(gl);
 
       function renderLoop() {
-        const st = getTimelineState();
+        const st = getState();
         const rd = renderDataRef.current;
         if (rd && canvasRef.current) {
           renderTimelineFrame(rd, st, canvasRef.current);

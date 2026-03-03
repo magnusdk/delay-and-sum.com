@@ -39,17 +39,19 @@ function compareImages(img1, img2) {
 
 /**
  * Open both apps side-by-side and wait for rendering.
+ * Accepts either a single stateParam (used for both) or separate newStateParam/origStateParam.
  */
-async function openBothApps(browser, stateParam) {
+async function openBothApps(browser, stateParam, origStateParam) {
   const [newPage, origPage] = await Promise.all([
     browser.newPage(),
     browser.newPage(),
   ]);
 
-  const suffix = stateParam ? `/?state=${stateParam}` : "/";
+  const newSuffix = stateParam ? `/?state=${stateParam}` : "/";
+  const origSuffix = (origStateParam || stateParam) ? `/?state=${origStateParam || stateParam}` : "/";
   await Promise.all([
-    newPage.goto(`${NEW_URL}${suffix}`),
-    origPage.goto(`${ORIGINAL_URL}${suffix}`),
+    newPage.goto(`${NEW_URL}${newSuffix}`),
+    origPage.goto(`${ORIGINAL_URL}${origSuffix}`),
   ]);
 
   // Wait for WebGL rendering to stabilize (SwiftShader is slow)
@@ -320,33 +322,37 @@ test.describe("Interaction tests", () => {
   });
 
   test("change delay model to plane wave", async ({ browser }) => {
-    // Use URL state to set the delay model, which works identically on both apps
-    const stateParam = btoa(JSON.stringify({ "delay-model": "plane" }));
-    const { newPage, origPage } = await openBothApps(browser, stateParam);
+    // New app uses camelCase keys, original uses kebab-case
+    const newParam = btoa(JSON.stringify({ delayModel: "plane" }));
+    const origParam = btoa(JSON.stringify({ "delay-model": "plane" }));
+    const { newPage, origPage } = await openBothApps(browser, newParam, origParam);
 
     await compareAndAssert(newPage, origPage, "delay-model-plane", 15);
     await Promise.all([newPage.close(), origPage.close()]);
   });
 
   test("change delay model to diverging wave", async ({ browser }) => {
-    const stateParam = btoa(JSON.stringify({ "delay-model": "diverging" }));
-    const { newPage, origPage } = await openBothApps(browser, stateParam);
+    const newParam = btoa(JSON.stringify({ delayModel: "diverging" }));
+    const origParam = btoa(JSON.stringify({ "delay-model": "diverging" }));
+    const { newPage, origPage } = await openBothApps(browser, newParam, origParam);
 
     await compareAndAssert(newPage, origPage, "delay-model-diverging", 15);
     await Promise.all([newPage.close(), origPage.close()]);
   });
 
   test("switch to display envelope mode", async ({ browser }) => {
-    const stateParam = btoa(JSON.stringify({ "display-mode": "envelope" }));
-    const { newPage, origPage } = await openBothApps(browser, stateParam);
+    const newParam = btoa(JSON.stringify({ displayMode: "envelope" }));
+    const origParam = btoa(JSON.stringify({ "display-mode": "envelope" }));
+    const { newPage, origPage } = await openBothApps(browser, newParam, origParam);
 
     await compareAndAssert(newPage, origPage, "display-envelope", 15);
     await Promise.all([newPage.close(), origPage.close()]);
   });
 
   test("switch to display intensity mode", async ({ browser }) => {
-    const stateParam = btoa(JSON.stringify({ "display-mode": "intensity" }));
-    const { newPage, origPage } = await openBothApps(browser, stateParam);
+    const newParam = btoa(JSON.stringify({ displayMode: "intensity" }));
+    const origParam = btoa(JSON.stringify({ "display-mode": "intensity" }));
+    const { newPage, origPage } = await openBothApps(browser, newParam, origParam);
 
     await compareAndAssert(newPage, origPage, "display-intensity", 15);
     await Promise.all([newPage.close(), origPage.close()]);

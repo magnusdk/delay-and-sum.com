@@ -34,31 +34,6 @@ out vec4 outColor;
 #include "./common.glsl"
 #include "./elements.glsl"
 
-vec4 displayPhaseKernel(vec2 v) {
-    float minDecibels = u_minimumDb;
-    float maxDecibels = u_maximumDb;
-    float amp = length(v);
-
-    if(u_displayMode == 2) {
-        amp = pow(amp, 2.0);
-    }
-    if(u_useDb) {
-        amp = dB(amp);
-    } else {
-        minDecibels = invDB(minDecibels);
-        maxDecibels = invDB(maxDecibels);
-    }
-
-    float alpha = (amp - minDecibels) / (maxDecibels - minDecibels);
-    if(u_displayMode == 0) {
-        float real = v.x;
-        float positivePressure = real > 0.0 ? 1.0 : 0.0;
-        vec3 color = PINK * positivePressure + BLUE * (1.0 - positivePressure);
-        return vec4(color, alpha);
-    }
-    return vec4(0.0, 0.0, 0.0, alpha);
-}
-
 vec2 getSample(int offsetXPixels) {
     float offsetX = float(offsetXPixels) / float(u_textureWidth);
     vec2 coord = vec2(v_uv.x / 2.0 + 0.5 - offsetX, 0.0);
@@ -87,7 +62,7 @@ void main() {
         if (u_sampleMode == 0) {
             // Probe mode: postprocess with displayPhaseKernel
             vec4 previousColor = texture(t_simulatedField, v_uv / 2.0 + vec2(0.5, 0.5));
-            outColor = displayPhaseKernel(unpackVec4ToVec2(previousColor));
+            outColor = displayPhaseKernel(unpackVec4ToVec2(previousColor), u_displayMode, u_minimumDb, u_maximumDb, u_useDb);
         } else {
             // Scatterer mode: line plot SDF
             float lineThickness = 0.05;

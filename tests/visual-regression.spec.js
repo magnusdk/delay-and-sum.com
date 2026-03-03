@@ -48,16 +48,16 @@ function compareImages(img1, img2) {
 /**
  * Generate a random URL state parameter.
  */
-function randomStateArbitrary() {
+function randomStateValues() {
   return fc.record({
-    "center-frequency": fc.double({ min: 1e5, max: 1e7 }),
-    "pulse-length": fc.double({ min: 0.5, max: 10 }),
-    "sound-speed": fc.integer({ min: 500, max: 3000 }),
-    "delay-model": fc.constantFrom("focused", "plane", "diverging"),
-    "display-mode": fc.constantFrom("phase", "envelope", "intensity"),
-    "minimum-db": fc.double({ min: -120, max: -10 }),
-    "maximum-db": fc.double({ min: -10, max: 6 }),
-    "virtual-source": fc.tuple(
+    centerFrequency: fc.double({ min: 1e5, max: 1e7 }),
+    pulseLength: fc.double({ min: 0.5, max: 10 }),
+    soundSpeed: fc.integer({ min: 500, max: 3000 }),
+    delayModel: fc.constantFrom("focused", "plane", "diverging"),
+    displayMode: fc.constantFrom("phase", "envelope", "intensity"),
+    minimumDb: fc.double({ min: -120, max: -10 }),
+    maximumDb: fc.double({ min: -10, max: 6 }),
+    virtualSource: fc.tuple(
       fc.double({ min: -0.05, max: 0.05 }),
       fc.double({ min: 0.01, max: 0.1 })
     ),
@@ -69,14 +69,33 @@ function randomStateArbitrary() {
       ),
     }),
     probe: fc.record({
-      "n-elements": fc.integer({ min: 1, max: 256 }),
-      "array-width": fc.double({ min: 1e-3, max: 0.05 }),
-      "normal-azimuth": fc.double({ min: -180, max: 180 }),
+      nElements: fc.integer({ min: 1, max: 256 }),
+      arrayWidth: fc.double({ min: 1e-3, max: 0.05 }),
+      normalAzimuth: fc.double({ min: -180, max: 180 }),
     }),
   });
 }
 
+function toKebabCase(obj) {
+  const MAP = {
+    centerFrequency: "center-frequency", pulseLength: "pulse-length",
+    soundSpeed: "sound-speed", delayModel: "delay-model",
+    displayMode: "display-mode", minimumDb: "minimum-db",
+    maximumDb: "maximum-db", virtualSource: "virtual-source",
+    nElements: "n-elements", arrayWidth: "array-width", normalAzimuth: "normal-azimuth",
+  };
+  const out = {};
+  for (const [k, v] of Object.entries(obj)) {
+    const key = MAP[k] || k;
+    out[key] = v && typeof v === "object" && !Array.isArray(v) ? toKebabCase(v) : v;
+  }
+  return out;
+}
+
 test.describe("Visual regression", () => {
+  // SwiftShader rendering is slow — give each test plenty of time
+  test.setTimeout(120000);
+
   test("default state matches original", async ({ browser }) => {
     const [newPage, origPage] = await Promise.all([
       browser.newPage(),
@@ -117,11 +136,11 @@ test.describe("Visual regression", () => {
   });
 
   test("random states match original (5 samples)", async ({ browser }) => {
-    const samples = fc.sample(randomStateArbitrary(), 5);
+    const samples = fc.sample(randomStateValues(), 5);
 
     for (let i = 0; i < samples.length; i++) {
-      const stateParam = btoa(JSON.stringify(samples[i]));
-      const url = `?state=${stateParam}`;
+      const newUrl = `?state=${btoa(JSON.stringify(samples[i]))}`;
+      const origUrl = `?state=${btoa(JSON.stringify(toKebabCase(samples[i])))}`;
 
       const [newPage, origPage] = await Promise.all([
         browser.newPage(),
@@ -129,8 +148,8 @@ test.describe("Visual regression", () => {
       ]);
 
       await Promise.all([
-        newPage.goto(`${NEW_URL}/${url}`),
-        origPage.goto(`${ORIGINAL_URL}/${url}`),
+        newPage.goto(`${NEW_URL}/${newUrl}`),
+        origPage.goto(`${ORIGINAL_URL}/${origUrl}`),
       ]);
 
       await Promise.all([

@@ -1,5 +1,6 @@
 import { useRef, useEffect } from "preact/hooks";
 import * as state from "../state.js";
+import { getState } from "../state.js";
 import {
   initBeamProfile,
   renderBeamProfileFrame,
@@ -9,29 +10,7 @@ import {
   mul,
   rot90,
 } from "../simulation.js";
-
-function getBeamProfileState() {
-  return {
-    virtualSource: state.virtualSource.value,
-    samplePoint: state.samplePoint.value,
-    samplePointStrength: state.samplePointStrength.value,
-    centerFrequency: state.centerFrequency.value,
-    pulseLength: state.pulseLength.value,
-    soundSpeed: state.soundSpeed.value,
-    soundSpeedTx: state.soundSpeedTx.value,
-    time: state.time.value,
-    delayModel: state.delayModel.value,
-    attenuationFactor: state.attenuationFactor.value,
-    tukeyRoll: state.tukeyRoll.value,
-    plotType: state.plotType.value,
-    plotUseMaximumAmplitude: state.plotUseMaximumAmplitude.value,
-    beamProfileSampleLineLength: state.beamProfileSampleLineLength.value,
-    plotMinimumDb: state.plotMinimumDb.value,
-    plotMaximumDb: state.plotMaximumDb.value,
-    probe: state.probe.value,
-    simulationContainerSize: state.simulationContainerSize.value,
-  };
-}
+import { createHiddenGL } from "../webgl.js";
 
 function computeSampleLine(st) {
   const geo = elementGeometry(st);
@@ -50,15 +29,14 @@ function computeSampleLine(st) {
 }
 
 function HoveredLine() {
-  const x = state.plotHoverPosOffsetX.value;
-  const uvX = state.plotHoverPosUvX.value;
-  if (x == null || uvX == null || uvX < -1 || uvX > 1) return null;
+  const hover = state.plotHover.value;
+  if (!hover || hover.uvX == null || hover.uvX < -1 || hover.uvX > 1) return null;
 
   return (
     <div style={{
       pointerEvents: "none",
       position: "absolute",
-      left: x,
+      left: hover.offsetX,
       top: 0,
       height: "100%",
       width: "2px",
@@ -79,25 +57,19 @@ export function BeamProfile() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const hiddenCanvas = document.createElement("canvas");
-    const gl = hiddenCanvas.getContext("webgl2", {
-      alpha: true,
-      premultipliedAlpha: false,
-      powerPreference: "high-performance",
-    });
+    const gl = createHiddenGL();
 
     if (gl) {
       renderDataRef.current = initBeamProfile(gl);
 
       function renderLoop() {
-        const st = getBeamProfileState();
+        const st = getState();
         const rd = renderDataRef.current;
         if (rd && canvas) {
           renderBeamProfileFrame(rd, st, canvas);
 
           const line = computeSampleLine(st);
-          state.plotLeftMostPos.value = line.left;
-          state.plotRightMostPos.value = line.right;
+          state.plotSampleLine.value = { left: line.left, right: line.right };
         }
         animFrameRef.current = requestAnimationFrame(renderLoop);
       }
@@ -106,18 +78,15 @@ export function BeamProfile() {
 
     const onPointerMove = (e) => {
       const uvX = (e.offsetX / canvas.offsetWidth) * 2 - 1;
-      state.plotHoverPosUvX.value = uvX;
-      state.plotHoverPosOffsetX.value = e.offsetX;
 
-      const st = getBeamProfileState();
+      const st = getState();
       const line = computeSampleLine(st);
-      state.plotHoverPos.value = add(line.center, mul(line.beamDir, uvX * st.beamProfileSampleLineLength / 2));
+      const pos = add(line.center, mul(line.beamDir, uvX * st.beamProfileSampleLineLength / 2));
+      state.plotHover.value = { pos, uvX, offsetX: e.offsetX };
     };
 
     const onPointerLeave = () => {
-      state.plotHoverPosUvX.value = null;
-      state.plotHoverPosOffsetX.value = null;
-      state.plotHoverPos.value = null;
+      state.plotHover.value = null;
     };
 
     canvas.addEventListener("pointermove", onPointerMove);

@@ -1,5 +1,6 @@
 import { useRef, useEffect, useCallback } from "preact/hooks";
 import * as state from "../state.js";
+import { tukey } from "../simulation.js";
 
 function clamp(x, min, max) {
   if (min != null && max != null) return Math.max(min, Math.min(max, x));
@@ -184,22 +185,6 @@ function Checkbox({ signal: sig, path, label }) {
   );
 }
 
-function tukey(n, r) {
-  const w = [];
-  for (let i = 1; i <= n; i++) {
-    const x = i / (n + 1);
-    if (x < r / 2) {
-      w.push(0.5 * (1 + Math.cos((2 * Math.PI / r) * (x - r / 2))));
-    } else if (x < 1 - r / 2) {
-      w.push(1);
-    } else {
-      w.push(0.5 * (1 + Math.cos((2 * Math.PI / r) * (x - (1 - r / 2)))));
-    }
-  }
-  const mean = w.reduce((a, b) => a + b, 0) / n;
-  return w.map(v => v / mean);
-}
-
 function ApodizationPlot() {
   const canvasRef = useRef(null);
 
@@ -253,28 +238,114 @@ function ApodizationPlot() {
   );
 }
 
+// ---------------------------------------------------------------------------
+// Data-driven menu configuration
+// ---------------------------------------------------------------------------
+
+const mm = { magnitude: 1e-3, nDecimals: 1, sensitivity: 0.1, units: "mm" };
+const dB = { sensitivity: 0.1, nDecimals: 1, units: "dB" };
+const plotVisible = { visible: () => state.plotType.value !== "no-plot" };
+
+const MENU_SECTIONS = [
+  { title: "Array", controls: [
+    { type: "slider", label: "No. of elements", signal: () => state.probe, path: ["nElements"], min: 1, max: 256 },
+    { type: "slider", label: "X", signal: () => state.probe, path: ["center", 0], ...mm },
+    { type: "slider", label: "Y", signal: () => state.probe, path: ["center", 1], ...mm },
+    { type: "slider", label: "Width", signal: () => state.probe, path: ["arrayWidth"], ...mm, min: 0 },
+    { type: "slider", label: "Normal azimuth", signal: () => state.probe, path: ["normalAzimuth"], nDecimals: 1, wrapAround: 180, units: "\u00B0" },
+  ]},
+  { title: "Transmitted wave", controls: [
+    { type: "select", signal: () => state.delayModel, options: [["focused", "Focused wave"], ["plane", "Plane wave"], ["diverging", "Diverging wave"]] },
+    { type: "slider", label: "Focus X", signal: () => state.virtualSource, path: [0], ...mm },
+    { type: "slider", label: "Focus Y", signal: () => state.virtualSource, path: [1], ...mm },
+    { type: "slider", label: "Center frequency", signal: () => state.centerFrequency, magnitude: 1e6, sensitivity: 0.01, nDecimals: 2, min: 0.01, units: "MHz" },
+    { type: "slider", label: "Pulse length", signal: () => state.pulseLength, sensitivity: 0.1, nDecimals: 2, min: 0.1, units: "\u03BB" },
+    { type: "slider", label: "Attenuation", signal: () => state.attenuationFactor, min: 0, sensitivity: 0.1, nDecimals: 2 },
+    { type: "slider", label: "Sound speed", signal: () => state.soundSpeed, min: 1, units: "m/s" },
+    { type: "slider", label: "Sound speed assumed during focusing", signal: () => state.soundSpeedTx, min: 1, units: "m/s" },
+    { type: "custom", render: () => <div class="content"><h2>Transmit apodization</h2></div> },
+    { type: "custom", render: () => <ApodizationPlot /> },
+    { type: "slider", label: "Tukey roll", signal: () => state.tukeyRoll, sensitivity: 0.01, nDecimals: 2, min: 0, max: 1 },
+  ]},
+  { title: "Field display options", controls: [
+    { type: "custom", render: () => {
+      const opts = [["phase", "Display phase"], ["envelope", "Display envelope"], ["intensity", "Display intensity"]];
+      if (state.maximumAmplitudeSimulation.value) opts.push(["time-delays", "Display time delays"]);
+      return <Select signal={state.displayMode} options={opts} />;
+    }},
+    { type: "slider", label: "Minimum dB", signal: () => state.minimumDb, ...dB },
+    { type: "slider", label: "Maximum dB", signal: () => state.maximumDb, ...dB },
+    { type: "checkbox", signal: () => state.maximumAmplitudeSimulation, label: "Show maximum amplitude" },
+    { type: "checkbox", signal: () => state.displayDb, label: "Display in dB" },
+    { type: "checkbox", signal: () => state.showSimplifiedGeometry, label: "Show simplified geometry" },
+    { type: "checkbox", signal: () => state.showGrid, label: "Show grid" },
+  ]},
+  { title: "Timeline display options", controls: [
+    { type: "select", signal: () => state.sampleTimelineAt, options: [["probe", "Probe (render channel data)"], ["sample-point", "Sample point"]] },
+    { type: "slider", label: "Timeline gain", signal: () => state.timelineGain, sensitivity: 0.1, nDecimals: 1, visible: () => state.sampleTimelineAt.value === "sample-point" },
+    { type: "slider", label: "Timeline offset", signal: () => state.timelineOffset, magnitude: 1e-6, sensitivity: 0.1, nDecimals: 1, units: "\u03BCs" },
+    { type: "slider", label: "Timeline length", signal: () => state.timelineLength, magnitude: 1e-6, sensitivity: 0.1, nDecimals: 1, min: 0, units: "\u03BCs" },
+  ]},
+  { title: "Plot", controls: [
+    { type: "select", signal: () => state.plotType, options: [["no-plot", "Don't display plot"], ["lateral-beam-profile", "Lateral beam profile"], ["axial-beam-profile", "Axial beam profile"]] },
+    { type: "slider", label: "Beam profile sample line width", signal: () => state.beamProfileSampleLineLength, ...mm, min: 0, ...plotVisible, on: {
+      pointerdown: () => {}, pointermove: () => {},
+      pointerup: () => { state.plotSampleLine.value = null; },
+      pointerleave: () => { state.plotSampleLine.value = null; },
+    }},
+    { type: "checkbox", signal: () => state.plotUseMaximumAmplitude, label: "Sample maximum amplitude", ...plotVisible },
+    { type: "slider", label: "Minimum dB", signal: () => state.plotMinimumDb, ...dB, ...plotVisible },
+    { type: "slider", label: "Maximum dB", signal: () => state.plotMaximumDb, ...dB, ...plotVisible },
+  ]},
+  { title: "General", controls: [
+    { type: "checkbox", signal: () => state.forceCurrentTimeAtFocus, label: "Force wavefront to be at focus point" },
+    { type: "custom", render: () => (
+      <div class="control">
+        <label>Disable point scatterer</label>
+        <input type="checkbox" checked={state.samplePointStrength.value === 0} onChange={(e) => { state.samplePointStrength.value = e.target.checked ? 0 : 1; }} />
+        <span class="control-units" />
+      </div>
+    )},
+    { type: "custom", render: () => <div class="control"><button onClick={() => state.resetState()}>Reset all state</button></div> },
+    { type: "custom", render: () => (
+      <>
+        <hr />
+        <div class="content">
+          <h2>About</h2>
+          <p>Developed at and funded by NTNU.{" "}<a href="https://github.com/magnusdk/delay-and-sum.com">Find the source code on GitHub.</a></p>
+          <p>This work was presented as a poster at IUS 2024.{" "}<a href="https://delay-and-sum.com/poster_delay_and_sum_com.pdf">Click here to view the poster as a PDF.</a></p>
+          <p>If you find any bugs or have suggestions for improvements,{" "}<a href="https://github.com/magnusdk/delay-and-sum.com/issues/new">please create an issue on GitHub.</a>{" "}Thank you! {"<3"}</p>
+          <p>Otherwise, to get in touch:{" "}<a href="mailto:magnus.kvalevag@ntnu.no">magnus.kvalevag@ntnu.no</a></p>
+        </div>
+        <div style={{ height: "120px" }} />
+      </>
+    )},
+  ]},
+];
+
+// ---------------------------------------------------------------------------
+// Generic renderer
+// ---------------------------------------------------------------------------
+
+const COMPONENTS = { slider: Slider, select: Select, checkbox: Checkbox };
+
+function renderControl(control, index) {
+  if (control.visible && !control.visible()) return null;
+  if (control.type === "custom") return <span key={index}>{control.render()}</span>;
+  const { type, visible, signal: sigFn, ...props } = control;
+  const Component = COMPONENTS[type];
+  return Component ? <Component key={index} signal={sigFn()} {...props} /> : null;
+}
+
 export function Menu() {
   const isOpen = state.menuOpen.value;
   const dragging = state.isDragging.value;
-  const displayModeValue = state.displayMode.value;
-  const maxAmpSim = state.maximumAmplitudeSimulation.value;
-  const sampleAt = state.sampleTimelineAt.value;
-  const plotTypeValue = state.plotType.value;
 
   const containerClass = [
     "menu-container",
     isOpen && "is-open",
     dragging && "is-updating-parameter",
   ].filter(Boolean).join(" ");
-
-  const displayModeOptions = [
-    ["phase", "Display phase"],
-    ["envelope", "Display envelope"],
-    ["intensity", "Display intensity"],
-  ];
-  if (maxAmpSim) {
-    displayModeOptions.push(["time-delays", "Display time delays"]);
-  }
 
   return (
     <div class={containerClass}>
@@ -288,117 +359,11 @@ export function Menu() {
             <button onClick={() => state.menuOpen.value = false}>Close menu</button>
           </div>
         )}
-
-        <MenuSection title="Array">
-          <Slider label="No. of elements" signal={state.probe} path={["nElements"]} min={1} max={256} />
-          <Slider label="X" signal={state.probe} path={["center", 0]} magnitude={1e-3} nDecimals={1} sensitivity={0.1} units="mm" />
-          <Slider label="Y" signal={state.probe} path={["center", 1]} magnitude={1e-3} nDecimals={1} sensitivity={0.1} units="mm" />
-          <Slider label="Width" signal={state.probe} path={["arrayWidth"]} magnitude={1e-3} nDecimals={1} sensitivity={0.1} min={0} units="mm" />
-          <Slider label="Normal azimuth" signal={state.probe} path={["normalAzimuth"]} nDecimals={1} wrapAround={180} units={"\u00B0"} />
-        </MenuSection>
-
-        <MenuSection title="Transmitted wave">
-          <Select signal={state.delayModel} options={[
-            ["focused", "Focused wave"],
-            ["plane", "Plane wave"],
-            ["diverging", "Diverging wave"],
-          ]} />
-          <Slider label="Focus X" signal={state.virtualSource} path={[0]} magnitude={1e-3} nDecimals={1} sensitivity={0.1} units="mm" />
-          <Slider label="Focus Y" signal={state.virtualSource} path={[1]} magnitude={1e-3} nDecimals={1} sensitivity={0.1} units="mm" />
-          <Slider label="Center frequency" signal={state.centerFrequency} magnitude={1e6} sensitivity={0.01} nDecimals={2} min={0.01} units="MHz" />
-          <Slider label="Pulse length" signal={state.pulseLength} sensitivity={0.1} nDecimals={2} min={0.1} units={"\u03BB"} />
-          <Slider label="Attenuation" signal={state.attenuationFactor} min={0} sensitivity={0.1} nDecimals={2} />
-          <Slider label="Sound speed" signal={state.soundSpeed} min={1} units="m/s" />
-          <Slider label="Sound speed assumed during focusing" signal={state.soundSpeedTx} min={1} units="m/s" />
-          <div class="content"><h2>Transmit apodization</h2></div>
-          <ApodizationPlot />
-          <Slider label="Tukey roll" signal={state.tukeyRoll} sensitivity={0.01} nDecimals={2} min={0} max={1} />
-        </MenuSection>
-
-        <MenuSection title="Field display options">
-          <Select signal={state.displayMode} options={displayModeOptions} />
-          <Slider label="Minimum dB" signal={state.minimumDb} sensitivity={0.1} nDecimals={1} units="dB" />
-          <Slider label="Maximum dB" signal={state.maximumDb} sensitivity={0.1} nDecimals={1} units="dB" />
-          <Checkbox signal={state.maximumAmplitudeSimulation} label="Show maximum amplitude" />
-          <Checkbox signal={state.displayDb} label="Display in dB" />
-          <Checkbox signal={state.showSimplifiedGeometry} label="Show simplified geometry" />
-          <Checkbox signal={state.showGrid} label="Show grid" />
-        </MenuSection>
-
-        <MenuSection title="Timeline display options">
-          <Select signal={state.sampleTimelineAt} options={[
-            ["probe", "Probe (render channel data)"],
-            ["sample-point", "Sample point"],
-          ]} />
-          {sampleAt === "sample-point" && (
-            <Slider label="Timeline gain" signal={state.timelineGain} sensitivity={0.1} nDecimals={1} />
-          )}
-          <Slider label="Timeline offset" signal={state.timelineOffset} magnitude={1e-6} sensitivity={0.1} nDecimals={1} units={"\u03BCs"} />
-          <Slider label="Timeline length" signal={state.timelineLength} magnitude={1e-6} sensitivity={0.1} nDecimals={1} min={0} units={"\u03BCs"} />
-        </MenuSection>
-
-        <MenuSection title="Plot">
-          <Select signal={state.plotType} options={[
-            ["no-plot", "Don't display plot"],
-            ["lateral-beam-profile", "Lateral beam profile"],
-            ["axial-beam-profile", "Axial beam profile"],
-          ]} />
-          {plotTypeValue !== "no-plot" && (
-            <>
-              <Slider
-                label="Beam profile sample line width" signal={state.beamProfileSampleLineLength}
-                min={0} magnitude={1e-3} nDecimals={1} sensitivity={0.1} units="mm"
-                on={{
-                  pointerdown: () => { /* TODO: beam profile start/end pos */ },
-                  pointermove: () => { /* TODO: beam profile start/end pos */ },
-                  pointerup: () => { state.plotLeftMostPos.value = null; state.plotRightMostPos.value = null; },
-                  pointerleave: () => { state.plotLeftMostPos.value = null; state.plotRightMostPos.value = null; },
-                }}
-              />
-              <Checkbox signal={state.plotUseMaximumAmplitude} label="Sample maximum amplitude" />
-              <Slider label="Minimum dB" signal={state.plotMinimumDb} sensitivity={0.1} nDecimals={1} units="dB" />
-              <Slider label="Maximum dB" signal={state.plotMaximumDb} sensitivity={0.1} nDecimals={1} units="dB" />
-            </>
-          )}
-        </MenuSection>
-
-        <MenuSection title="General">
-          <Checkbox signal={state.forceCurrentTimeAtFocus} label="Force wavefront to be at focus point" />
-          <div class="control">
-            <label>Disable point scatterer</label>
-            <input
-              type="checkbox"
-              checked={state.samplePointStrength.value === 0}
-              onChange={(e) => { state.samplePointStrength.value = e.target.checked ? 0 : 1; }}
-            />
-            <span class="control-units" />
-          </div>
-          <div class="control">
-            <button onClick={() => state.resetState()}>Reset all state</button>
-          </div>
-          <hr />
-          <div class="content">
-            <h2>About</h2>
-            <p>
-              Developed at and funded by NTNU.{" "}
-              <a href="https://github.com/magnusdk/delay-and-sum.com">Find the source code on GitHub.</a>
-            </p>
-            <p>
-              This work was presented as a poster at IUS 2024.{" "}
-              <a href="https://delay-and-sum.com/poster_delay_and_sum_com.pdf">Click here to view the poster as a PDF.</a>
-            </p>
-            <p>
-              If you find any bugs or have suggestions for improvements,{" "}
-              <a href="https://github.com/magnusdk/delay-and-sum.com/issues/new">please create an issue on GitHub.</a>
-              {" "}Thank you! {"<3"}
-            </p>
-            <p>
-              Otherwise, to get in touch:{" "}
-              <a href="mailto:magnus.kvalevag@ntnu.no">magnus.kvalevag@ntnu.no</a>
-            </p>
-          </div>
-          <div style={{ height: "120px" }} />
-        </MenuSection>
+        {MENU_SECTIONS.map((section, si) => (
+          <MenuSection key={si} title={section.title}>
+            {section.controls.map((control, ci) => renderControl(control, ci))}
+          </MenuSection>
+        ))}
       </div>
     </div>
   );

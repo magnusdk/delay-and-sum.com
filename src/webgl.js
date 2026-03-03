@@ -178,11 +178,6 @@ export function createFramebuffer(gl, width, height, count = 1) {
   return createFBOInternal(gl, width, height, count, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE);
 }
 
-export function createFloatFramebuffer(gl, width, height, count = 1) {
-  gl.getExtension("EXT_color_buffer_float");
-  return createFBOInternal(gl, width, height, count, gl.RGBA32F, gl.RGBA, gl.FLOAT);
-}
-
 export function createDataTexture(gl, data, width, height) {
   gl.getExtension("EXT_color_buffer_float");
   const tex = gl.createTexture();
@@ -197,4 +192,13 @@ export function updateDataTexture(gl, texture, data, width, height) {
   gl.bindTexture(gl.TEXTURE_2D, texture);
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, width, height, 0, gl.RGBA, gl.FLOAT, data);
   gl.bindTexture(gl.TEXTURE_2D, null);
+}
+
+export function createHiddenGL() {
+  const canvas = document.createElement("canvas");
+  return canvas.getContext("webgl2", {
+    alpha: true,
+    premultipliedAlpha: false,
+    powerPreference: "high-performance",
+  });
 }

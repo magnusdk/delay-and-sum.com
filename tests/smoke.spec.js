@@ -88,8 +88,8 @@ test.describe("Smoke tests", () => {
     // Load with a custom state
     const customState = btoa(
       JSON.stringify({
-        "center-frequency": 5e6,
-        "delay-model": "plane",
+        centerFrequency: 5e6,
+        delayModel: "plane",
       })
     );
     await page.goto(`/?state=${customState}`);

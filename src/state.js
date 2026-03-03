@@ -70,53 +70,27 @@ export const menuOpen = signal(false);
 export const isDragging = signal(false);
 export const simulationDraggable = signal({ hovering: null, dragging: null });
 export const timelineDraggable = signal({ hovering: null, dragging: null });
-export const plotHoverPos = signal(null);
-export const plotHoverPosUvX = signal(null);
-export const plotHoverPosOffsetX = signal(null);
-export const plotLeftMostPos = signal(null);
-export const plotRightMostPos = signal(null);
 
-// JS camelCase <-> JSON kebab-case for backward compat with ClojureScript app
-const KEY_MAP = {
-  centerFrequency: "center-frequency",
-  pulseLength: "pulse-length",
-  soundSpeed: "sound-speed",
-  soundSpeedTx: "sound-speed-tx",
-  delayModel: "delay-model",
-  attenuationFactor: "attenuation-factor",
-  tukeyRoll: "tukey-roll",
-  displayMode: "display-mode",
-  maximumAmplitudeSimulation: "maximum-amplitude-simulation?",
-  timelineOffset: "timeline-offset",
-  timelineLength: "timeline-length",
-  minimumDb: "minimum-db",
-  maximumDb: "maximum-db",
-  displayDb: "display-db?",
-  showSimplifiedGeometry: "show-simplified-geometry?",
-  showGrid: "show-grid?",
-  sampleTimelineAt: "sample-timeline-at",
-  timelineGain: "timeline-gain",
-  virtualSource: "virtual-source",
-  samplePoint: "sample-point",
-  samplePointStrength: "sample-point-strength",
-  forceCurrentTimeAtFocus: "force-current-time-at-focus",
-  nPixels: "n-pixels",
-  plotType: "plot-type",
-  plotUseMaximumAmplitude: "plot-use-maximum-amplitude?",
-  beamProfileSampleLineLength: "beam-profile-sample-line-length",
-  plotMinimumDb: "plot-minimum-db",
-  plotMaximumDb: "plot-maximum-db",
-};
+// plotHover: { pos, uvX, offsetX } or null
+export const plotHover = signal(null);
+// plotSampleLine: { left, right } or null
+export const plotSampleLine = signal(null);
 
-const PROBE_KEY_MAP = {
-  nElements: "n-elements",
-  arrayWidth: "array-width",
-  elementWidth: "element-width",
-  normalAzimuth: "normal-azimuth",
-};
-
-const REVERSE_KEY_MAP = Object.fromEntries(Object.entries(KEY_MAP).map(([k, v]) => [v, k]));
-const REVERSE_PROBE_KEY_MAP = Object.fromEntries(Object.entries(PROBE_KEY_MAP).map(([k, v]) => [v, k]));
+/** Snapshot all signal values into a plain object. */
+export function getState() {
+  const st = Object.fromEntries(
+    Object.entries(signals).map(([k, sig]) => [k, sig.value])
+  );
+  st.simulationContainerSize = simulationContainerSize.value;
+  st.timelineContainerSize = timelineContainerSize.value;
+  st.menuOpen = menuOpen.value;
+  st.isDragging = isDragging.value;
+  st.simulationDraggable = simulationDraggable.value;
+  st.timelineDraggable = timelineDraggable.value;
+  st.plotHover = plotHover.value;
+  st.plotSampleLine = plotSampleLine.value;
+  return st;
+}
 
 function deepEqual(a, b) {
   if (a === b) return true;
@@ -127,10 +101,6 @@ function deepEqual(a, b) {
     return ka.length === Object.keys(b).length && ka.every(k => deepEqual(a[k], b[k]));
   }
   return false;
-}
-
-function mapKeys(obj, map) {
-  return Object.fromEntries(Object.entries(obj).map(([k, v]) => [map[k] || k, v]));
 }
 
 function mergeDiff(original, diff) {
@@ -154,12 +124,11 @@ export function loadFromURL() {
   catch (e) { console.warn("Failed to parse state from URL:", e); return; }
 
   batch(() => {
-    for (const [jsonKey, val] of Object.entries(changes)) {
-      const jsKey = REVERSE_KEY_MAP[jsonKey] || jsonKey;
-      const sig = signals[jsKey];
+    for (const [key, val] of Object.entries(changes)) {
+      const sig = signals[key];
       if (!sig) continue;
-      if (jsKey === "probe") sig.value = mergeDiff(DEFAULTS.probe, mapKeys(val, REVERSE_PROBE_KEY_MAP));
-      else if (jsKey === "camera") sig.value = mergeDiff(DEFAULTS.camera, val);
+      if (key === "probe") sig.value = mergeDiff(DEFAULTS.probe, val);
+      else if (key === "camera") sig.value = mergeDiff(DEFAULTS.camera, val);
       else sig.value = val;
     }
   });
@@ -167,20 +136,20 @@ export function loadFromURL() {
 
 function computeDiff() {
   const diff = {};
-  for (const [jsKey, sig] of Object.entries(signals)) {
-    const val = sig.value, def = DEFAULTS[jsKey];
-    if (jsKey === "probe") {
+  for (const [key, sig] of Object.entries(signals)) {
+    const val = sig.value, def = DEFAULTS[key];
+    if (key === "probe") {
       const probeDiff = {};
       let hasDiff = false;
       for (const [pk, pv] of Object.entries(val)) {
         if (!deepEqual(pv, def[pk])) {
-          probeDiff[PROBE_KEY_MAP[pk] || pk] = pv;
+          probeDiff[pk] = pv;
           hasDiff = true;
         }
       }
       if (hasDiff) diff["probe"] = probeDiff;
     } else if (!deepEqual(val, def)) {
-      diff[KEY_MAP[jsKey] || jsKey] = val;
+      diff[key] = val;
     }
   }
   return Object.keys(diff).length > 0 ? diff : null;
