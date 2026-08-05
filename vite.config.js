@@ -4,4 +4,5 @@ import glsl from "vite-plugin-glsl";
 
 export default defineConfig({
   plugins: [preact(), glsl()],
+  server: { host: true },
 });

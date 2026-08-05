@@ -115,6 +115,20 @@ function mergeDiff(original, diff) {
   return diff != null ? diff : original;
 }
 
+// URL state is user-editable, so a value that does not match the shape of its
+// default is rejected rather than fed into the render loops -- a NaN or a
+// string where a number belongs can wedge downstream math.
+function matchesShape(def, val) {
+  if (typeof def === "number") return typeof val === "number" && Number.isFinite(val);
+  if (typeof def === "boolean" || typeof def === "string") return typeof val === typeof def;
+  if (Array.isArray(def))
+    return Array.isArray(val) && val.every((v, i) => i >= def.length || matchesShape(def[i], v));
+  if (def && typeof def === "object")
+    return !!val && typeof val === "object" && !Array.isArray(val)
+      && Object.entries(val).every(([k, v]) => !(k in def) || matchesShape(def[k], v));
+  return true;
+}
+
 export function loadFromURL() {
   const stateParam = new URL(window.location.href).searchParams.get("state");
   if (!stateParam) return;
@@ -127,6 +141,10 @@ export function loadFromURL() {
     for (const [key, val] of Object.entries(changes)) {
       const sig = signals[key];
       if (!sig) continue;
+      if (!matchesShape(DEFAULTS[key], val)) {
+        console.warn(`Ignoring out-of-shape value for "${key}" in URL state:`, val);
+        continue;
+      }
       if (key === "probe") sig.value = mergeDiff(DEFAULTS.probe, val);
       else if (key === "camera") sig.value = mergeDiff(DEFAULTS.camera, val);
       else sig.value = val;
@@ -167,6 +185,9 @@ export function resetState() {
   batch(() => {
     for (const [jsKey, sig] of Object.entries(signals))
       sig.value = cloneDefault(DEFAULTS[jsKey]);
+    // UI-only signals are not in `signals`, but stale overlays would survive.
+    plotHover.value = null;
+    plotSampleLine.value = null;
   });
 }
 

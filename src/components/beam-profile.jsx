@@ -47,13 +47,17 @@ function HoveredLine() {
 
 export function BeamProfile() {
   const plotType = state.plotType.value;
-  if (plotType === "no-plot") return null;
+  // This component stays mounted even with no plot open, so the hooks below
+  // must run unconditionally -- bailing out before them would leave the render
+  // loop and its cleanup stranded.
+  const active = plotType !== "no-plot";
 
   const canvasRef = useRef(null);
   const renderDataRef = useRef(null);
   const animFrameRef = useRef(null);
 
   useEffect(() => {
+    if (!active) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
 
@@ -65,8 +69,11 @@ export function BeamProfile() {
       function renderLoop() {
         const st = getState();
         const rd = renderDataRef.current;
-        if (rd && canvas) {
-          renderBeamProfileFrame(rd, st, canvas);
+        // Read the ref each frame: closing and reopening the plot swaps in a
+        // new canvas element.
+        const target = canvasRef.current;
+        if (rd && target) {
+          renderBeamProfileFrame(rd, st, target);
 
           const line = computeSampleLine(st);
           state.plotSampleLine.value = { left: line.left, right: line.right };
@@ -96,8 +103,18 @@ export function BeamProfile() {
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerleave", onPointerLeave);
       if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      animFrameRef.current = null;
+      renderDataRef.current = null;
+      // WebGL contexts are a limited resource; dropping the reference is not
+      // enough, the browser evicts the oldest live context instead.
+      if (gl) gl.getExtension("WEBGL_lose_context")?.loseContext();
+      // These overlays belong to the plot, so they must not outlive it.
+      state.plotSampleLine.value = null;
+      state.plotHover.value = null;
     };
-  }, [plotType]);
+  }, [active, plotType]);
+
+  if (!active) return null;
 
   const title = plotType === "lateral-beam-profile"
     ? "Lateral Beam Profile"

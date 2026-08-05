@@ -10,6 +10,9 @@ function TimelineTicks() {
 
   const offset = state.timelineOffset.value;
   const length = state.timelineLength.value;
+  // The tick-interval search below runs until it finds an interval large
+  // enough, which never terminates for a non-finite target.
+  if (!Number.isFinite(offset) || !Number.isFinite(length) || length <= 0) return null;
   const minTickSpacingPx = 80;
   const microsecondsPerPx = (length / width) * 1e6;
   const rawIntervalUs = microsecondsPerPx * minTickSpacingPx;

@@ -355,8 +355,6 @@ function drawDivergingGeometry(ctx, st, geo, w2c, aspect, diagLength) {
 }
 
 function drawWaveGeometry(canvas, st) {
-  if (!st.showSimplifiedGeometry) return;
-
   const [vw, vh] = st.simulationContainerSize;
   if (!vw || !vh) return;
 
@@ -370,6 +368,8 @@ function drawWaveGeometry(canvas, st) {
 
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
+  // Clear before this check so toggling the option off wipes the last frame.
+  if (!st.showSimplifiedGeometry) return;
 
   const cam = st.camera;
   const w2c = worldToCanvasMatrix(vw, vh, canvas.width, canvas.height, cam);

@@ -445,8 +445,20 @@ export function initBeamProfile(gl) {
       maxAmplitudeCompare: createFramebuffer(gl, N_BEAM_SAMPLES, 256),
     },
     elementsTexture: createDataTexture(gl, new Float32Array(512 * 4), 512, 1),
-    gl, iteration: 0,
+    gl, iteration: 0, prevStateKey: null,
   };
+}
+
+// Everything that changes what the beam profile samples. Unlike the main
+// simulation, time and the sample-line length matter here: they position the
+// sample line along the beam.
+function beamProfileStateKey(state) {
+  return JSON.stringify([
+    state.probe, state.virtualSource, state.centerFrequency, state.pulseLength,
+    state.soundSpeed, state.soundSpeedTx, state.tukeyRoll, state.attenuationFactor,
+    state.samplePoint, state.samplePointStrength, state.delayModel, state.time,
+    state.plotType, state.beamProfileSampleLineLength,
+  ]);
 }
 
 export function renderBeamProfileFrame(renderData, state, canvas) {
@@ -473,6 +485,14 @@ export function renderBeamProfileFrame(renderData, state, canvas) {
 
   let sourceTex;
   if (state.plotUseMaximumAmplitude) {
+    // Restart the accumulation when the sampled state changes, otherwise the
+    // running maximum can only ever grow and the plot never comes back down.
+    const key = beamProfileStateKey(state);
+    if (key !== renderData.prevStateKey) {
+      renderData.prevStateKey = key;
+      renderData.iteration = 0;
+    }
+
     const stochUniforms = { ...baseUniforms, u_stochastic: true, u_postprocess: false };
     if (renderData.iteration === 0)
       passes.calculate.draw({ ...stochUniforms, u_seed: Math.random() * 1000 }, fbos.maxAmplitudeCurrent);

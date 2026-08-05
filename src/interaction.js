@@ -56,7 +56,8 @@ export function initInteraction(element, options) {
     previousPos = currentPos = pointerPos;
     dragState = "dragging";
     onDragChange?.(draggedDraggable);
-    draggedDraggable.update(pointerPos.simulation, pointerPos.simulation);
+    const space = snapToGrid ? "simulationSnapToGrid" : "simulation";
+    draggedDraggable.update(pointerPos[space], pointerPos[space], snapToGrid);
   }
 
   function continueDrag(pointerPos) {
@@ -182,7 +183,6 @@ export function initInteraction(element, options) {
   element.addEventListener("mousedown", handleMouseDown);
   document.addEventListener("mousemove", handleMouseMove);
   document.addEventListener("mouseup", handleMouseUp);
-  document.addEventListener("mousecancel", handleMouseUp);
   element.addEventListener("touchstart", handleTouch, { passive: false });
   element.addEventListener("touchmove", handleTouch, { passive: false });
   element.addEventListener("touchcancel", handleTouch, { passive: false });
@@ -195,7 +195,6 @@ export function initInteraction(element, options) {
     element.removeEventListener("mousedown", handleMouseDown);
     document.removeEventListener("mousemove", handleMouseMove);
     document.removeEventListener("mouseup", handleMouseUp);
-    document.removeEventListener("mousecancel", handleMouseUp);
     element.removeEventListener("touchstart", handleTouch);
     element.removeEventListener("touchmove", handleTouch);
     element.removeEventListener("touchcancel", handleTouch);
