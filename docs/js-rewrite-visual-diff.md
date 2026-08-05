@@ -1,5 +1,11 @@
 # Visual Diff Analysis: New (Preact+WebGL2) vs Original (ClojureScript+Three.js)
 
+*Historical record from the ClojureScript-to-JavaScript rewrite. The
+side-by-side comparison suites that produced these numbers have since been
+removed, along with the reference build they needed on port 3001; see git
+history for `tests/interaction.spec.js` and `tests/visual-regression.spec.js`.*
+
+
 ## Summary
 
 The visual regression tests showed **1.20% pixel difference** for the default state and **0.28-0.40%** for random states. Differences fall into two categories: (A) **number formatting** in the menu panel, and (B) **overlay geometry rendering** on the Canvas2D layer. The simulation WebGL output itself is pixel-identical.
