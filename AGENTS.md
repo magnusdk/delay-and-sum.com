@@ -119,25 +119,54 @@ Three coordinate spaces connected by 3x3 row-major matrices (row-vector conventi
 - `src/app.jsx`: top-level DOM structure
 
 ### 10. Add or modify tests
-- `tests/smoke.spec.js`: basic page load, layout, controls, URL round-trip
-- `tests/interaction.spec.js`: drag, zoom, pan, timeline click, select changes (compares against reference app side-by-side)
-- `tests/visual-regression.spec.js`: pixel-diff screenshots across random states using fast-check
-- `tests/feedback-loop.spec.js`: verifies no WebGL feedback loop errors
+- `tests/helpers.js`: shared selectors and wait helpers -- use these rather than fixed sleeps
+- `tests/smoke.spec.js`: page load, layout, controls, in one page load
+- `tests/url-state.spec.js`: URL state round-trip and malformed-input handling
+- `tests/*.spec.js` tagged `@slow`: WebGL-heavy regression tests (see Testing below)
 
 ## Testing
 
-Four Playwright test suites in `tests/`:
-
-| Suite | File | What it tests |
-|-------|------|---------------|
-| Smoke | `smoke.spec.js` | Page loads, layout, controls, URL serialization, screenshot |
-| Interaction | `interaction.spec.js` | Drag, zoom, pan, timeline click, select changes (side-by-side comparison with reference app on port 3001) |
-| Visual regression | `visual-regression.spec.js` | Pixel-diff screenshots across random states (fast-check) |
-| Feedback loop | `feedback-loop.spec.js` | No WebGL GL_INVALID_OPERATION or feedback loop errors |
+**Do not run the test suite after every edit.** It drives real WebGL through
+software rendering, so even the fast subset takes about a minute -- far too slow
+for an inner loop. Write code, reason about it, and run the tests **once, before
+committing**.
 
 ```bash
-npx playwright test                          # Run all suites
-npx playwright test tests/smoke.spec.js      # Run one suite
+npm test         # fast subset, ~1 min -- run this before committing
+npm run test:all # everything including @slow, ~3.5 min
+npx playwright test tests/smoke.spec.js   # a single file
 ```
 
-Playwright is configured for Chromium with `--use-gl=swiftshader` for headless WebGL. The `webServer` config auto-starts Vite on port 3000. Interaction and visual regression tests require a reference app running on port 3001 for side-by-side comparison. Tests use generous timeouts (30-120s) to accommodate SwiftShader's slow rendering.
+Tests tagged `@slow` are excluded from `npm test`. They cover WebGL resource
+lifecycle and the stochastic accumulator, which need many seconds of real
+rendering to say anything meaningful.
+
+| File | Tag | What it covers |
+|------|-----|----------------|
+| `smoke.spec.js` | fast | Page loads and renders, layout, menu controls, no console errors |
+| `url-state.spec.js` | fast | URL state round-trip; malformed state must not wedge the app |
+| `wave-geometry.spec.js` | fast | The geometry overlay clears when switched off and repaints when switched on |
+| `beam-profile.spec.js` | `@slow` | Beam profiles track state changes after the accumulator converges |
+| `plot-lifecycle.spec.js` | `@slow` | Plots survive close/reopen; overlays and WebGL contexts are released |
+| `feedback-loop.spec.js` | `@slow` | No GL_INVALID_OPERATION or feedback-loop errors across parameter changes |
+
+### When a test fails
+
+**Report the failure to the user and let them decide.** Do not assume the test is
+correct and rewrite the code to satisfy it, and do not "fix" the test to make it
+pass. A red test means *something changed* -- whether that change is a bug or an
+intended new behaviour is the user's call, not yours. Say which test failed, what
+it asserted, and what the code now does.
+
+Verification here is ultimately visual: the maintainers check behaviour by looking
+at the running app. The suite is a coarse safety net for regressions that are easy
+to miss by eye (a canvas that never clears, a leaked WebGL context), not a
+specification of correct output.
+
+### Notes
+
+Playwright runs Chromium with `--use-gl=swiftshader` for headless WebGL, and the
+`webServer` config auto-starts Vite on port 3000. Rendering is slow and timing
+varies with load, so tests poll for conditions via `tests/helpers.js` instead of
+sleeping for fixed durations. `retries: 1` is set, since occasional cold-start
+races are expected.

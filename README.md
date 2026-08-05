@@ -41,13 +41,14 @@ Playwright end-to-end tests, run against headless Chromium with SwiftShader:
 
 ```bash
 npx playwright install chromium   # once
-npm test                          # all suites
-npx playwright test tests/smoke.spec.js
+npm test                          # fast subset, ~1 min
+npm run test:all                  # everything, ~3.5 min
 ```
 
-`interaction.spec.js` and `visual-regression.spec.js` compare this app side by side
-with a reference build on port 3001, and will fail unless one is running there. The
-remaining suites are self-contained.
+The suite drives real WebGL, so it is slow by nature — it's meant to be run before
+committing, not on every edit. A failure means something changed; whether that is a
+bug is a judgement call for a human, since behaviour here is ultimately verified by
+looking at the running app.
 
 ## Further reading
 

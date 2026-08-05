@@ -1,82 +1,32 @@
 import { test, expect } from "@playwright/test";
+import { waitForApp, waitForRender } from "./helpers.js";
 
-test.describe("WebGL feedback loop", () => {
-  test("no feedback loop errors in default state", async ({ page }) => {
-    const feedbackErrors = [];
-    page.on("console", (msg) => {
-      const text = msg.text();
-      if (text.includes("Feedback loop") || text.includes("GL_INVALID_OPERATION")) {
-        feedbackErrors.push(text);
-      }
-    });
-
-    await page.goto("/");
-    await page.waitForTimeout(5000);
-
-    console.log(`Feedback loop errors: ${feedbackErrors.length}`);
-    feedbackErrors.forEach((e) => console.log(`  - ${e}`));
-    expect(feedbackErrors).toEqual([]);
+// One page, one error listener, several parameter changes. Previously three
+// separate tests reloaded the app to assert the same thing.
+test("no WebGL feedback loop errors across parameter changes @slow", async ({ page }) => {
+  const errors = [];
+  page.on("console", (msg) => {
+    const t = msg.text();
+    if (t.includes("Feedback loop") || t.includes("GL_INVALID_OPERATION")) errors.push(t);
   });
 
-  test("no feedback loop errors with max amplitude enabled", async ({ page }) => {
-    const feedbackErrors = [];
-    page.on("console", (msg) => {
-      const text = msg.text();
-      if (text.includes("Feedback loop") || text.includes("GL_INVALID_OPERATION")) {
-        feedbackErrors.push(text);
-      }
-    });
+  await waitForApp(page);
 
-    await page.goto("/");
-    await page.waitForTimeout(3000);
-
-    // Enable "Show maximum amplitude" checkbox
-    const checkboxes = page.locator(".checkbox-control");
-    const count = await checkboxes.count();
-    for (let i = 0; i < count; i++) {
-      const text = await checkboxes.nth(i).textContent();
-      if (text.includes("maximum amplitude")) {
-        await checkboxes.nth(i).locator("input").click();
-        break;
-      }
-    }
-
-    // Let it run stochastic iterations
-    await page.waitForTimeout(5000);
-
-    console.log(`Feedback loop errors: ${feedbackErrors.length}`);
-    feedbackErrors.forEach((e) => console.log(`  - ${e}`));
-    expect(feedbackErrors).toEqual([]);
+  // Stochastic max-amplitude mode: ping-pong FBOs, the likeliest source of a
+  // read-and-write-same-texture bug.
+  await page.evaluate(() => {
+    const control = [...document.querySelectorAll(".control")].find(
+      (el) => el.querySelector("label")?.textContent === "Show maximum amplitude"
+    );
+    control.querySelector("input[type=checkbox]").click();
   });
+  await waitForRender(page);
 
-  test("no feedback loop after changing parameters", async ({ page }) => {
-    test.setTimeout(60000);
-    const feedbackErrors = [];
-    page.on("console", (msg) => {
-      const text = msg.text();
-      if (text.includes("Feedback loop") || text.includes("GL_INVALID_OPERATION")) {
-        feedbackErrors.push(text);
-      }
-    });
+  const select = page.locator(".control-select select").first();
+  for (const model of ["plane", "diverging", "focused"]) {
+    await select.selectOption(model);
+    await waitForRender(page);
+  }
 
-    // Load with custom state
-    const customState = btoa(JSON.stringify({
-      "virtual-source": [0.00512, 0.04056],
-    }));
-    await page.goto(`/?state=${customState}`);
-    await page.waitForTimeout(3000);
-
-    // Change delay model
-    const select = page.locator(".control-select select").first();
-    await select.selectOption("plane");
-    await page.waitForTimeout(3000);
-
-    // Change back
-    await select.selectOption("focused");
-    await page.waitForTimeout(3000);
-
-    console.log(`Feedback loop errors: ${feedbackErrors.length}`);
-    feedbackErrors.forEach((e) => console.log(`  - ${e}`));
-    expect(feedbackErrors).toEqual([]);
-  });
+  expect(errors).toEqual([]);
 });

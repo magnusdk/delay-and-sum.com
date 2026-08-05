@@ -17,7 +17,8 @@ export default defineConfig({
     command: "npx vite --port 3000",
     port: 3000,
     reuseExistingServer: true,
-    timeout: 10000,
+    // Generous: a cold Vite start on a fresh clone has to compile on first hit.
+    timeout: 60000,
   },
   projects: [
     {
