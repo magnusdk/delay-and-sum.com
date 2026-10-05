@@ -67,6 +67,18 @@
    :get-value #(re/rget *state :attenuation-factor)
    :update!   (get-default-update-fn! :u_attenuationFactor)})
 
+(defmethod get-uniform :u_spreadingMinimumDistance [_]
+  ; Minimum distance for the 1/r geometric spreading, converted from wavelengths to
+  ; meters. 0 turns the geometric spreading off in the shaders.
+  {:name      :u_spreadingMinimumDistance
+   :initial   {:value 0}
+   :get-value #(if (re/rget *state :geometric-spreading?)
+                 (* (re/rget *state :spreading-minimum-distance)
+                    (/ (re/rget *state :sound-speed)
+                       (re/rget *state :center-frequency)))
+                 0)
+   :update!   (get-default-update-fn! :u_spreadingMinimumDistance)})
+
 (defmethod get-uniform :u_minimumTime [_]
   {:name      :u_minimumTime
    :initial   {:value nil}

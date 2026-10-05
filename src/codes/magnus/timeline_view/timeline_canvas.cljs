@@ -87,14 +87,14 @@
          (resource/inline "shaders/timeline_sampled_at_probe.frag")
          [:u_elementsTexture :u_nElements :u_samplePoint :u_samplePointStrength :u_centerFrequency
           :u_pulseLength :u_soundSpeed :u_minimumTime :u_maximumTime
-          :u_attenuationFactor])
+          :u_attenuationFactor :u_spreadingMinimumDistance])
 
         calculate-field-at-scatterer-pass
         (three-common/create-pass
          (resource/inline "shaders/timeline_sampled_at_scatterer.frag")
          [:u_elementsTexture :u_nElements :u_samplePoint :u_samplePointStrength :u_centerFrequency
           :u_pulseLength :u_soundSpeed :u_minimumTime :u_maximumTime
-          :u_attenuationFactor])
+          :u_attenuationFactor :u_spreadingMinimumDistance])
 
         postprocess-channel-data-pass
         (three-common/create-pass
