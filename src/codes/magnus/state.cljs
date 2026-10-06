@@ -21,6 +21,8 @@
    :time               (/ 0.065 1540)
    :delay-model        "focused"
    :attenuation-factor 1
+   :geometric-spreading?       false
+   :spreading-minimum-distance 3  ; In wavelengths
    :tukey-roll         0
 
    :display-mode                  "phase"  ; #{"phase" "envelope" "intensity" "time-delays"}

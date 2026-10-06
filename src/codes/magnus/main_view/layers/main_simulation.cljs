@@ -130,13 +130,13 @@
          (resource/inline "shaders/main_simulation.frag")
          [:u_cameraMatrix :u_elementsTexture :u_samplePoint :u_samplePointStrength :u_nElements
           :u_centerFrequency :u_pulseLength :u_time :u_soundSpeed
-          :u_attenuationFactor])
+          :u_attenuationFactor :u_spreadingMinimumDistance])
 
         calculate-field-stochasticly-pass
         (three-common/create-pass
          (resource/inline "shaders/stochastic_time_simulation.frag")
          [:u_cameraMatrix :u_elementsTexture :u_nElements :u_centerFrequency
-          :u_pulseLength :u_soundSpeed :u_attenuationFactor :u_seed])
+          :u_pulseLength :u_soundSpeed :u_attenuationFactor :u_spreadingMinimumDistance :u_seed])
 
         clear-pass
         (three-common/create-pass
