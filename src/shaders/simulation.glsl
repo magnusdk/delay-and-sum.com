@@ -2,7 +2,9 @@
 #include <packedElements>
 
 vec2 gaussianWeightedSine(float time, float centerFrequency, float pulseLength) {
-  float gauss = exp(-pow(time * centerFrequency / pulseLength * 2.0, 2.0));
+  // a * a instead of pow(a, 2.0), which is undefined for a < 0 in GLSL
+  float a = time * centerFrequency / pulseLength * 2.0;
+  float gauss = exp(-a * a);
   float real = sin(time * centerFrequency * TAU) * gauss;
   float imag = cos(time * centerFrequency * TAU) * gauss;
   return vec2(real, imag) / SQRT2;
@@ -10,6 +12,25 @@ vec2 gaussianWeightedSine(float time, float centerFrequency, float pulseLength) 
 
 float attenuation(float distance, float attenuationCoefficient) {
   return exp(-distance * attenuationCoefficient);
+}
+
+// Strength of the point scatterer. 0 disables it. Passes that do not set this uniform
+// get the default 0, which is fine since they only use signalForPointScatter0.
+uniform float u_samplePointStrength;
+
+// Minimum distance for the geometric spreading, in meters. A value of 0 turns the
+// geometric spreading off. Passes that do not set this uniform get the default 0.
+uniform float u_spreadingMinimumDistance;
+
+// Geometric spreading 1/r of the wave from a point source (an element or the point
+// scatterer). The distance is limited from below by u_spreadingMinimumDistance to
+// avoid the singularity at the source. The factor is 1 at the minimum distance and
+// falls as 1/r beyond it.
+float spreading(float distance) {
+  if(u_spreadingMinimumDistance <= 0.0) {
+    return 1.0;
+  }
+  return u_spreadingMinimumDistance / max(distance, u_spreadingMinimumDistance);
 }
 
 vec2 signalForPointScatter1(vec2 pointPos, float time) {
@@ -26,6 +47,7 @@ vec2 signalForPointScatter1(vec2 pointPos, float time) {
     float phaseScatter0 = basePhase - distElementPixel / u_soundSpeed;
     vec2 signalScatter0 = gaussianWeightedSine(phaseScatter0, u_centerFrequency, u_pulseLength);
     signalScatter0 *= attenuation(distElementPixel, u_attenuationFactor);
+    signalScatter0 *= spreading(distElementPixel);
     signalScatter0 *= element.weight;
 
     // Get the signal for the pixel after reflecting off of the scatterer.
@@ -38,6 +60,8 @@ vec2 signalForPointScatter1(vec2 pointPos, float time) {
     // scatterer (dependent on the distance between the element and the scatterer), 
     // times the attenuation weighting from the scatterer to the pixel.
     signalScatter1 *= attenuation(distElementScatterer, u_attenuationFactor) * attenuationScattererPixel;
+    // Spreading from the element to the scatterer, and from the scatterer to the pixel.
+    signalScatter1 *= spreading(distElementScatterer) * spreading(distScattererPixel);
     signalScatter1 *= element.weight;
     signalScatter1 *= u_samplePointStrength;
 
@@ -63,6 +87,7 @@ vec2 signalForPointScatter0(vec2 pointPos, float time) {
     float phaseScatter0 = basePhase - distElementPixel / u_soundSpeed;
     vec2 signalScatter0 = gaussianWeightedSine(phaseScatter0, u_centerFrequency, u_pulseLength);
     signalScatter0 *= attenuation(distElementPixel, u_attenuationFactor);
+    signalScatter0 *= spreading(distElementPixel);
     signalScatter0 *= element.weight;
     v += signalScatter0;
   }

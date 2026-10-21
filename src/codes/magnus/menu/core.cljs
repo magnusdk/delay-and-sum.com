@@ -283,6 +283,13 @@
              :n-decimals  2
              :min         1e-1
              :units       "λ")
+     (checkbox [:geometric-spreading?] "Geometric spreading")
+     (when (re/rget *state :geometric-spreading?)
+       (slider "Minimum distance" [:spreading-minimum-distance]
+               :min         1e-1
+               :sensitivity 1e-1
+               :n-decimals  1
+               :units       "λ"))
      (slider "Attenuation" [:attenuation-factor]
              :min         0
              :sensitivity 1e-1
