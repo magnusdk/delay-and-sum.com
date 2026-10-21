@@ -12,6 +12,10 @@ float attenuation(float distance, float attenuationCoefficient) {
   return exp(-distance * attenuationCoefficient);
 }
 
+// Strength of the point scatterer. 0 disables it. Passes that do not set this uniform
+// get the default 0, which is fine since they only use signalForPointScatter0.
+uniform float u_samplePointStrength;
+
 // Minimum distance for the geometric spreading, in meters. A value of 0 turns the
 // geometric spreading off. Passes that do not set this uniform get the default 0.
 uniform float u_spreadingMinimumDistance;
