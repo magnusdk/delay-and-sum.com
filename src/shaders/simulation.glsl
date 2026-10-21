@@ -2,7 +2,9 @@
 #include <packedElements>
 
 vec2 gaussianWeightedSine(float time, float centerFrequency, float pulseLength) {
-  float gauss = exp(-pow(time * centerFrequency / pulseLength * 2.0, 2.0));
+  // a * a instead of pow(a, 2.0), which is undefined for a < 0 in GLSL
+  float a = time * centerFrequency / pulseLength * 2.0;
+  float gauss = exp(-a * a);
   float real = sin(time * centerFrequency * TAU) * gauss;
   float imag = cos(time * centerFrequency * TAU) * gauss;
   return vec2(real, imag) / SQRT2;
